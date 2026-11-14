@@ -2,3 +2,6 @@
 check_interval_seconds = 10
 dislike_icon_threshold = 3
 startup_wait_seconds = 30
+
+[artifact_adventure]
+min_win_rate_percent = 80

@@ -1,0 +1,34 @@
+# Clash of Critters
+
+Game module for Clash of Critters (`com.farlightgames.pgame.gp.vn`, base resolution 1080x1920). Code in `main.py`, settings in `settings.py`, template images in `templates/`.
+
+## Command Categories
+
+| Category | Commands |
+| --- | --- |
+| Battle | `keep_game_running` (Tự Chiến Đấu) |
+| Events | `artifact_adventure` (Phiêu Lưu Cổ Vật) |
+
+## Events Category Rules
+
+- **Every command in the `Events` category must make sure the pinball screen is open first.** Camp screen shows the "Pinball" tab (`pinball_tab.png`); pinball screen shows the "Camp" tab (`camp_tab.png`; the crop excludes the optional pinball-ball bubble so it matches with or without it). Already on pinball: stay; on camp: tap "Pinball".
+- Use the shared helper `_open_pinball_screen()` as the first step after `open_eyes()`. Do not re-implement it per command.
+- A new Events command must call `_open_pinball_screen()` first.
+
+Example:
+
+```python
+@register_command(gui=GUIMetadata(label="...", category="Events"))
+def my_event(self) -> None:
+    self.open_eyes(device_streaming=False)
+    self._open_pinball_screen()
+    ...
+```
+
+## Templates
+
+- `templates/pinball_tab.png` is the crop of the "Pinball" tab (bottom-right of the main screen, icon + label, x 880-1060, y 1745-1900 of 1080x1920). Also required: `camp_tab.png` (crop of the "Camp" tab, x 900-1050, y 1790-1900, on the pinball screen).
+- The whole `templates/` folder is bundled via `src-tauri/tauri.bundle.templates.json`; no per-file registration is needed.
+- `templates/artifact_adventure_icon.png` is the black-cat card on the pinball screen (right side). It is cropped to the ear/eye area (x 930-990, y 725-772) on purpose: the torch count bubble, the number in the middle and the "ends in N days" label are dynamic and must stay out of the crop.
+- Artifact Adventure templates: `artifact_adventure_start_button.png` (text of "Bắt Đầu Phiêu Lưu!"; the "1x" badge above is dynamic), `artifact_adventure_advance_button.png` ("Tiến Lên" torch + text; the torch count below is dynamic and excluded), `artifact_adventure_tap_to_continue.png` ("Chạm điểm bất kì để tiếp tục"). `artifact_adventure` loops over these three screens; if none is seen for 60s it stops.
+- Fight-or-retreat choice (`artifact_adventure_retreat_button.png` / `_fight_button.png`, icon + title only): the win rate is read by RapidOCR from the line under the Fight card and all `N%` values are summed (base + bonus). Fight if the sum is >= `artifact_adventure.min_win_rate_percent` (default 80), otherwise retreat; an unreadable rate also retreats. After a retreat the reward screen is closed with `artifact_adventure_accept_button.png` ("Chấp Nhận").
