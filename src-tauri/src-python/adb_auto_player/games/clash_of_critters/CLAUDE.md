@@ -7,7 +7,7 @@ Game module for Clash of Critters (`com.farlightgames.pgame.gp.vn`, base resolut
 | Category | Commands |
 | --- | --- |
 | Battle | `keep_game_running` (Tự Chiến Đấu) |
-| Events | `artifact_adventure` (Phiêu Lưu Cổ Vật) |
+| Events | `artifact_adventure` (Phiêu Lưu Cổ Vật), `artifact_adventure_limited` (Phiêu Lưu Cổ Vật Giới Hạn) |
 
 ## Events Category Rules
 
@@ -32,3 +32,4 @@ def my_event(self) -> None:
 - `templates/artifact_adventure_icon.png` is the black-cat card on the pinball screen (right side). It is cropped to the ear/eye area (x 930-990, y 725-772) on purpose: the torch count bubble, the number in the middle and the "ends in N days" label are dynamic and must stay out of the crop.
 - Artifact Adventure templates: `artifact_adventure_start_button.png` (text of "Bắt Đầu Phiêu Lưu!"; the "1x" badge above is dynamic), `artifact_adventure_advance_button.png` ("Tiến Lên" torch + text; the torch count below is dynamic and excluded), `artifact_adventure_tap_to_continue.png` ("Chạm điểm bất kì để tiếp tục"). `artifact_adventure` loops over these three screens; if none is seen for 60s it stops.
 - Fight-or-retreat choice (`artifact_adventure_retreat_button.png` / `_fight_button.png`, icon + title only): the win rate is read by RapidOCR from the line under the Fight card and all `N%` values are summed (base + bonus). Fight if the sum is >= `artifact_adventure.min_win_rate_percent` (default 80), otherwise retreat; an unreadable rate also retreats. After a retreat the reward screen is closed with `artifact_adventure_accept_button.png` ("Chấp Nhận").
+- `artifact_adventure_limited` shares all logic with `artifact_adventure` via `_artifact_adventure(max_advances)`; it counts "Tiến Lên" presses and stops at the next stage / new-adventure screen once `artifact_adventure.limited_advance_count` is reached (pending tap-to-continue, fight/retreat and reward screens are still handled first).

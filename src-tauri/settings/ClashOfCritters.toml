@@ -4,4 +4,5 @@ dislike_icon_threshold = 3
 startup_wait_seconds = 30
 
 [artifact_adventure]
-min_win_rate_percent = 80
+min_win_rate_percent = 40
+limited_advance_count = 100

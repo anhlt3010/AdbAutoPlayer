@@ -9,6 +9,7 @@ CheckIntervalSeconds = Annotated[int, Field(ge=1, le=600)]
 StartupWaitSeconds = Annotated[int, Field(ge=5, le=300)]
 DislikeIconThreshold = Annotated[int, Field(ge=1, le=30)]
 WinRatePercent = Annotated[int, Field(ge=0, le=100)]
+AdvanceCount = Annotated[int, Field(ge=1, le=1000)]
 
 
 class KeepAliveSettings(BaseModel):
@@ -44,6 +45,13 @@ class ArtifactAdventureSettings(BaseModel):
             "On a fight-or-retreat choice, fight only if the win rate shown on "
             "screen (base + bonus) is at least this value; otherwise retreat. "
             "Retreat is also chosen when the win rate cannot be read."
+        ),
+    )
+    limited_advance_count: AdvanceCount = Field(
+        default=100,
+        title="Limited Run: Advances",
+        description=(
+            "Phiêu Lưu Cổ Vật Giới Hạn stops after pressing Tiến Lên this many times."
         ),
     )
 

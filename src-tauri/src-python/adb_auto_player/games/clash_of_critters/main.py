@@ -109,6 +109,29 @@ class ClashOfCritters(Game):
         )
     )
     def artifact_adventure(self) -> None:
+        self._artifact_adventure(max_advances=None)
+
+    @register_command(
+        gui=GUIMetadata(
+            label="Phiêu Lưu Cổ Vật Giới Hạn",
+            category="Events",
+            tooltip=(
+                "Artifact Adventure event, stops after a configurable number of "
+                "Tiến Lên presses."
+            ),
+        )
+    )
+    def artifact_adventure_limited(self) -> None:
+        limit = self.settings.artifact_adventure.limited_advance_count
+        self._artifact_adventure(max_advances=limit)
+
+    def _artifact_adventure(self, max_advances: int | None) -> None:
+        """Open the Artifact Adventure event and play it.
+
+        Args:
+            max_advances: Stop after this many "Tiến Lên" presses, or None for
+                no limit.
+        """
         self.open_eyes(device_streaming=False)
         adventure_screens = [
             ARTIFACT_ADVENTURE_TAP_TO_CONTINUE,
@@ -121,7 +144,7 @@ class ClashOfCritters(Game):
             self._open_artifact_adventure_from_pinball(adventure_screens)
         else:
             logging.info("Already on Artifact Adventure screen.")
-        self._run_artifact_adventure(adventure_screens)
+        self._run_artifact_adventure(adventure_screens, max_advances)
 
     def _open_artifact_adventure_from_pinball(
         self, adventure_screens: list[str]
@@ -149,7 +172,9 @@ class ClashOfCritters(Game):
             timeout_message="Artifact Adventure screen did not open.",
         )
 
-    def _run_artifact_adventure(self, adventure_screens: list[str]) -> None:
+    def _run_artifact_adventure(
+        self, adventure_screens: list[str], max_advances: int | None = None
+    ) -> None:
         """Advance through stages until no adventure screen is seen for a while.
 
         - Stage screen: press "Tiến Lên".
@@ -161,7 +186,10 @@ class ClashOfCritters(Game):
 
         Args:
             adventure_screens: Templates of the adventure screens to react to.
+            max_advances: Stop on the next stage/new-adventure screen once
+                "Tiến Lên" was pressed this many times; None for no limit.
         """
+        advances = 0
         idle_since = monotonic()
         while monotonic() - idle_since < _ADVENTURE_IDLE_LIMIT_SECONDS:
             result = self.find_any_template(adventure_screens)
@@ -170,6 +198,14 @@ class ClashOfCritters(Game):
                 continue
 
             idle_since = monotonic()
+            limit_reached = max_advances is not None and advances >= max_advances
+            if limit_reached and result.template in (
+                ARTIFACT_ADVENTURE_ADVANCE_BUTTON,
+                ARTIFACT_ADVENTURE_START_BUTTON,
+            ):
+                logging.info(f"Reached the limit of {max_advances} advances, stopping.")
+                return
+
             if result.template == ARTIFACT_ADVENTURE_TAP_TO_CONTINUE:
                 logging.info("Stage event finished, tapping to continue.")
             elif result.template == ARTIFACT_ADVENTURE_ACCEPT_BUTTON:
@@ -179,14 +215,15 @@ class ClashOfCritters(Game):
                 sleep(_ADVANCE_SETTLE_SECONDS)
                 continue
             elif result.template == ARTIFACT_ADVENTURE_ADVANCE_BUTTON:
-                logging.info("Advancing to the next stage.")
+                advances += 1
+                logging.info(f"Advancing to the next stage (advance {advances}).")
                 self.tap(result, log=False)
                 sleep(_ADVANCE_SETTLE_SECONDS)
                 continue
             else:
                 logging.info(
-                    f"New adventure, waiting {_START_SCREEN_WAIT_SECONDS}s "
-                    "before starting."
+                    f"Chờ {_START_SCREEN_WAIT_SECONDS}s để người dùng thay đổi "
+                    "setting phù hợp"
                 )
                 sleep(_START_SCREEN_WAIT_SECONDS)
                 logging.info("Starting adventure.")
