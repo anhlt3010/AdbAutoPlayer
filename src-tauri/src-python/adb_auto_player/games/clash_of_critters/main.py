@@ -27,7 +27,8 @@ CAMP_TAB = "camp_tab.png"
 # Cat card on the pinball screen. Cropped to the ear/eye area only: the torch count,
 # the number in the middle and the "ends in N days" label all change.
 ARTIFACT_ADVENTURE_ICON = "artifact_adventure_icon.png"
-# "Tiến Lên" button on the stage screen; the torch count below it is dynamic.
+# "Tiến Lên" text of the button on the stage screen. The torch icon (changes with the
+# torch type) above it and the torch count below it are dynamic and excluded.
 ARTIFACT_ADVENTURE_ADVANCE_BUTTON = "artifact_adventure_advance_button.png"
 # "Chạm điểm bất kì để tiếp tục" hint shown after every stage event.
 ARTIFACT_ADVENTURE_TAP_TO_CONTINUE = "artifact_adventure_tap_to_continue.png"
