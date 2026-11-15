@@ -44,6 +44,8 @@ _WIN_RATE_TOP, _WIN_RATE_BOTTOM = 0.85, 0.89
 _WIN_RATE_PATTERN = re.compile(r"(\d{1,3})\s*%")
 # "Chấp Nhận" button on the "Phiêu Lưu Kết Thúc" reward screen.
 ARTIFACT_ADVENTURE_ACCEPT_BUTTON = "artifact_adventure_accept_button.png"
+# "Nhận Ngay" button of the "Bàn Tay Vàng" popup shown mid-adventure.
+ARTIFACT_ADVENTURE_CLAIM_BUTTON = "artifact_adventure_claim_button.png"
 _EVENT_ICON_TIMEOUT_SECONDS = 10
 # Pause on the "new adventure" screen before pressing the start button.
 _START_SCREEN_WAIT_SECONDS = 20
@@ -140,6 +142,7 @@ class ClashOfCritters(Game):
             ARTIFACT_ADVENTURE_START_BUTTON,
             ARTIFACT_ADVENTURE_RETREAT_BUTTON,
             ARTIFACT_ADVENTURE_ACCEPT_BUTTON,
+            ARTIFACT_ADVENTURE_CLAIM_BUTTON,
         ]
         if self.find_any_template(adventure_screens) is None:
             self._open_artifact_adventure_from_pinball(adventure_screens)
@@ -183,6 +186,7 @@ class ClashOfCritters(Game):
         - Fight-or-retreat choice: fight if the win rate reaches the configured
           minimum, otherwise retreat.
         - Adventure ended (reward screen): press "Chấp Nhận".
+        - Claim popup: press "Nhận Ngay".
         - New adventure screen: wait, then press "Bắt Đầu Phiêu Lưu!".
 
         Args:
@@ -211,6 +215,8 @@ class ClashOfCritters(Game):
                 logging.info("Stage event finished, tapping to continue.")
             elif result.template == ARTIFACT_ADVENTURE_ACCEPT_BUTTON:
                 logging.info("Adventure ended, accepting rewards.")
+            elif result.template == ARTIFACT_ADVENTURE_CLAIM_BUTTON:
+                logging.info("Claim popup shown, pressing Nhận Ngay.")
             elif result.template == ARTIFACT_ADVENTURE_RETREAT_BUTTON:
                 self._fight_or_retreat(result)
                 sleep(_ADVANCE_SETTLE_SECONDS)

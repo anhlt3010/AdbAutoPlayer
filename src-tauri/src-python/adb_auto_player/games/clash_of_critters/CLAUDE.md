@@ -30,6 +30,30 @@ def my_event(self) -> None:
 - `templates/pinball_tab.png` is the crop of the "Pinball" tab (bottom-right of the main screen, icon + label, x 880-1060, y 1745-1900 of 1080x1920). Also required: `camp_tab.png` (crop of the "Camp" tab, x 900-1050, y 1790-1900, on the pinball screen).
 - The whole `templates/` folder is bundled via `src-tauri/tauri.bundle.templates.json`; no per-file registration is needed.
 - `templates/artifact_adventure_icon.png` is the black-cat card on the pinball screen (right side). It is cropped to the ear/eye area (x 930-990, y 725-772) on purpose: the torch count bubble, the number in the middle and the "ends in N days" label are dynamic and must stay out of the crop.
-- Artifact Adventure templates: `artifact_adventure_start_button.png` (text of "Bắt Đầu Phiêu Lưu!"; the "1x" badge above is dynamic), `artifact_adventure_advance_button.png` ("Tiến Lên" text only; the torch icon changes with the torch type and the torch count below is dynamic, so both are excluded), `artifact_adventure_tap_to_continue.png` ("Chạm điểm bất kì để tiếp tục"). `artifact_adventure` loops over these three screens; if none is seen for 60s it stops.
+- Artifact Adventure templates: `artifact_adventure_start_button.png` (text of "Bắt Đầu Phiêu Lưu!"; the "1x" badge above is dynamic), `artifact_adventure_advance_button.png` ("Tiến Lên" text only; the torch icon changes with the torch type and the torch count below is dynamic, so both are excluded), `artifact_adventure_tap_to_continue.png` ("Chạm điểm bất kì để tiếp tục"). `artifact_adventure` loops over these three screens (plus the fight/retreat, reward and claim screens below); if none is seen for 60s it stops.
+- Claim popup (`artifact_adventure_claim_button.png`, "Nhận Ngay" text only, x 385-700, y 1735-1810): the "Bàn Tay Vàng" popup can appear mid-adventure; the loop taps the button to continue.
 - Fight-or-retreat choice (`artifact_adventure_retreat_button.png` / `_fight_button.png`, icon + title only): the win rate is read by RapidOCR from the line under the Fight card and all `N%` values are summed (base + bonus). Fight if the sum is >= `artifact_adventure.min_win_rate_percent` (default 80), otherwise retreat; an unreadable rate also retreats. After a retreat the reward screen is closed with `artifact_adventure_accept_button.png` ("Chấp Nhận").
 - `artifact_adventure_limited` shares all logic with `artifact_adventure` via `_artifact_adventure(max_advances)`; it counts "Tiến Lên" presses and stops at the next stage / new-adventure screen once `artifact_adventure.limited_advance_count` is reached (pending tap-to-continue, fight/retreat and reward screens are still handled first).
+
+## Packaging a Patch Zip for the Installed App
+
+When the user asks for a zip of this game to copy into their installed AdbAutoPlayer (`%LOCALAPPDATA%\AdbAutoPlayer`), build it with the layout below so the user can extract it straight over the install root.
+
+- Python code goes to `Lib/site-packages/adb_auto_player/games/clash_of_critters/`: `__init__.py`, `main.py`, `settings.py`.
+- Template images go to `games/clash_of_critters/templates/` (the install root, where Tauri bundles resources, per `src-tauri/tauri.bundle.templates.json`). This is the folder the app reads templates from.
+- Never include `__pycache__/`, `README.md`, `CLAUDE.md` or tests.
+- Default settings (`src-tauri/settings/ClashOfCritters.toml`) are compiled into the app and are not in the install folder; mention to the user that a new setting field only appears after the profile settings are reset or edited, and do not add the toml to the zip unless asked.
+- Output: `clash_of_critters_patch.zip` in `N:/00_PersonalProject/AdbAuto-CoC/` by default (or wherever the user names). Print the zip path and its file list when done.
+
+```powershell
+$src = "N:\00_PersonalProject\AdbAuto-CoC\GIT\AdbAutoPlayer\src-tauri\src-python\adb_auto_player\games\clash_of_critters"
+$stage = Join-Path $env:TEMP "coc_patch"
+Remove-Item $stage -Recurse -Force -ErrorAction SilentlyContinue
+$code = "$stage\Lib\site-packages\adb_auto_player\games\clash_of_critters"
+New-Item -ItemType Directory -Force $code, "$stage\games\clash_of_critters\templates" | Out-Null
+Copy-Item "$src\__init__.py", "$src\main.py", "$src\settings.py" $code
+Copy-Item "$src\templates\*" "$stage\games\clash_of_critters\templates"
+Compress-Archive -Path "$stage\*" -DestinationPath "N:\00_PersonalProject\AdbAuto-CoC\clash_of_critters_patch.zip" -Force
+```
+
+The user extracts the zip into `%LOCALAPPDATA%\AdbAutoPlayer` and overwrites existing files, then restarts the app.
