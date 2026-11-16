@@ -1,6 +1,7 @@
 """Tests for the Clash of Critters Artifact Adventure commands."""
 
 from itertools import count
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, call, patch
 
@@ -21,6 +22,8 @@ SCREENS = [
     main.ARTIFACT_ADVENTURE_RETREAT_BUTTON,
     main.ARTIFACT_ADVENTURE_ACCEPT_BUTTON,
     main.ARTIFACT_ADVENTURE_CLAIM_BUTTON,
+    main.OPEN_ALL_BUTTON,
+    main.OK_BUTTON,
 ]
 
 
@@ -119,6 +122,27 @@ def test_loop_taps_claim_button(bot: MagicMock) -> None:
     with patch.object(main, "monotonic", side_effect=count(step=IDLE_STEP_SECONDS)):
         bot._run_artifact_adventure(SCREENS)
     bot.tap.assert_called_once_with(claim, log=False)
+
+
+@pytest.mark.parametrize(
+    "template",
+    [
+        main.OPEN_ALL_BUTTON,
+        main.OK_BUTTON,
+    ],
+)
+def test_loop_taps_open_all_and_ok_buttons(bot: MagicMock, template: str) -> None:
+    button = _match(template)
+    bot.find_any_template.side_effect = [button, *[None] * 5]
+    with patch.object(main, "monotonic", side_effect=count(step=IDLE_STEP_SECONDS)):
+        bot._run_artifact_adventure(SCREENS)
+    bot.tap.assert_called_once_with(button, log=False)
+
+
+def test_open_all_and_ok_templates_exist() -> None:
+    templates = Path(main.__file__).parent / "templates"
+    assert (templates / main.OPEN_ALL_BUTTON).is_file()
+    assert (templates / main.OK_BUTTON).is_file()
 
 
 def test_loop_reacts_to_each_screen(bot: MagicMock, no_sleep: MagicMock) -> None:

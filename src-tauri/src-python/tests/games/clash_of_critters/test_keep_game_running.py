@@ -64,6 +64,27 @@ def test_taps_navigation_buttons(bot: MagicMock, template: str) -> None:
     bot.tap.assert_called_once_with(match, log=False)
 
 
+@pytest.mark.parametrize("template", [main.OPEN_ALL_BUTTON, main.OK_BUTTON])
+def test_taps_common_buttons_on_any_screen(bot: MagicMock, template: str) -> None:
+    button = _match(template)
+    # Only the common-button lookup sees the button; nothing else is on screen.
+    bot.find_any_template.side_effect = lambda templates: (
+        button if template in templates else None
+    )
+    bot._keep_alive_tick()
+    bot.tap.assert_called_once_with(button, log=False)
+
+
+def test_common_button_takes_priority_over_navigation(bot: MagicMock) -> None:
+    ok = _match(main.OK_BUTTON)
+    hub = _match(main.HUB_BATTLE_BUTTON)
+    bot.find_any_template.side_effect = lambda templates: (
+        ok if main.OK_BUTTON in templates else hub
+    )
+    bot._keep_alive_tick()
+    bot.tap.assert_called_once_with(ok, log=False)
+
+
 def _prep_screen(bot: MagicMock, dislikes: int) -> tuple[SimpleNamespace, ...]:
     """Make the bot see the preparation screen with `dislikes` Dislike icons."""
     auto_button = _match(main.AUTO_BATTLE_BUTTON)

@@ -46,6 +46,16 @@ _WIN_RATE_PATTERN = re.compile(r"(\d{1,3})\s*%")
 ARTIFACT_ADVENTURE_ACCEPT_BUTTON = "artifact_adventure_accept_button.png"
 # "Nhận Ngay" button of the "Bàn Tay Vàng" popup shown mid-adventure.
 ARTIFACT_ADVENTURE_CLAIM_BUTTON = "artifact_adventure_claim_button.png"
+# Buttons that can show up on any screen of the game; whenever one is seen it is
+# tapped, in every command. Text only (the "10/25" badge next to "Mở thêm nhóm" is
+# dynamic).
+OPEN_ALL_BUTTON = "open_all_button.png"  # "Mở Tất Cả"
+OK_BUTTON = "ok_button.png"  # "OK" on the "Phần Thưởng!" reward screen
+_COMMON_BUTTONS = [OPEN_ALL_BUTTON, OK_BUTTON]
+_COMMON_BUTTON_LOG = {
+    OPEN_ALL_BUTTON: "Mở Tất Cả button shown, pressing it.",
+    OK_BUTTON: "OK button shown, pressing it.",
+}
 _EVENT_ICON_TIMEOUT_SECONDS = 10
 # Pause on the "new adventure" screen before pressing the start button.
 _START_SCREEN_WAIT_SECONDS = 20
@@ -143,6 +153,7 @@ class ClashOfCritters(Game):
             ARTIFACT_ADVENTURE_RETREAT_BUTTON,
             ARTIFACT_ADVENTURE_ACCEPT_BUTTON,
             ARTIFACT_ADVENTURE_CLAIM_BUTTON,
+            *_COMMON_BUTTONS,
         ]
         if self.find_any_template(adventure_screens) is None:
             self._open_artifact_adventure_from_pinball(adventure_screens)
@@ -187,6 +198,7 @@ class ClashOfCritters(Game):
           minimum, otherwise retreat.
         - Adventure ended (reward screen): press "Chấp Nhận".
         - Claim popup: press "Nhận Ngay".
+        - "Mở Tất Cả" / "OK" buttons (tapped in every command): press them.
         - New adventure screen: wait, then press "Bắt Đầu Phiêu Lưu!".
 
         Args:
@@ -217,6 +229,8 @@ class ClashOfCritters(Game):
                 logging.info("Adventure ended, accepting rewards.")
             elif result.template == ARTIFACT_ADVENTURE_CLAIM_BUTTON:
                 logging.info("Claim popup shown, pressing Nhận Ngay.")
+            elif result.template in _COMMON_BUTTON_LOG:
+                logging.info(_COMMON_BUTTON_LOG[result.template])
             elif result.template == ARTIFACT_ADVENTURE_RETREAT_BUTTON:
                 self._fight_or_retreat(result)
                 sleep(_ADVANCE_SETTLE_SECONDS)
@@ -316,6 +330,9 @@ class ClashOfCritters(Game):
             sleep(self.settings.keep_alive.startup_wait_seconds)
             return
 
+        if self._tap_common_button():
+            return
+
         result = self.find_any_template(
             [AUTO_BATTLING, AUTO_BATTLE_BUTTON, STAGE_START_BUTTON, HUB_BATTLE_BUTTON]
         )
@@ -330,6 +347,19 @@ class ClashOfCritters(Game):
 
         logging.info(_NAVIGATION_LOG[result.template])
         self.tap(result, log=False)
+
+    def _tap_common_button(self) -> bool:
+        """Tap a button that may appear on any screen ("Mở Tất Cả", "OK").
+
+        Returns:
+            True if a button was tapped, False otherwise.
+        """
+        result = self.find_any_template(_COMMON_BUTTONS)
+        if result is None or result.template not in _COMMON_BUTTON_LOG:
+            return False
+        logging.info(_COMMON_BUTTON_LOG[result.template])
+        self.tap(result, log=False)
+        return True
 
     def _quick_deploy_if_needed(self) -> bool:
         """Press Quick Deploy once if the formation shows too many Dislike icons.

@@ -39,7 +39,7 @@ class ArtifactAdventureSettings(BaseModel):
     """Settings for the Phiêu Lưu Cổ Vật task."""
 
     min_win_rate_percent: WinRatePercent = Field(
-        default=40,
+        default=10,
         title="Min Win Rate (%)",
         description=(
             "On a fight-or-retreat choice, fight only if the win rate shown on "
