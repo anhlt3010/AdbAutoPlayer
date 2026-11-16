@@ -24,6 +24,7 @@ SCREENS = [
     main.ARTIFACT_ADVENTURE_CLAIM_BUTTON,
     main.OPEN_ALL_BUTTON,
     main.OK_BUTTON,
+    main.MORE_GROUP_BUTTON,
 ]
 
 
@@ -129,6 +130,7 @@ def test_loop_taps_claim_button(bot: MagicMock) -> None:
     [
         main.OPEN_ALL_BUTTON,
         main.OK_BUTTON,
+        main.MORE_GROUP_BUTTON,
     ],
 )
 def test_loop_taps_open_all_and_ok_buttons(bot: MagicMock, template: str) -> None:
@@ -143,6 +145,7 @@ def test_open_all_and_ok_templates_exist() -> None:
     templates = Path(main.__file__).parent / "templates"
     assert (templates / main.OPEN_ALL_BUTTON).is_file()
     assert (templates / main.OK_BUTTON).is_file()
+    assert (templates / main.MORE_GROUP_BUTTON).is_file()
 
 
 def test_loop_reacts_to_each_screen(bot: MagicMock, no_sleep: MagicMock) -> None:

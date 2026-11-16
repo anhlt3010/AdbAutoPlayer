@@ -51,10 +51,14 @@ ARTIFACT_ADVENTURE_CLAIM_BUTTON = "artifact_adventure_claim_button.png"
 # dynamic).
 OPEN_ALL_BUTTON = "open_all_button.png"  # "Mở Tất Cả"
 OK_BUTTON = "ok_button.png"  # "OK" on the "Phần Thưởng!" reward screen
-_COMMON_BUTTONS = [OPEN_ALL_BUTTON, OK_BUTTON]
+# "Mở thêm nhóm" when it is the only button on the screen (text only; the "5/6" badge
+# above it is dynamic). Listed after "Mở Tất Cả" so that one wins if both are shown.
+MORE_GROUP_BUTTON = "more_group_button.png"
+_COMMON_BUTTONS = [OPEN_ALL_BUTTON, OK_BUTTON, MORE_GROUP_BUTTON]
 _COMMON_BUTTON_LOG = {
     OPEN_ALL_BUTTON: "Mở Tất Cả button shown, pressing it.",
     OK_BUTTON: "OK button shown, pressing it.",
+    MORE_GROUP_BUTTON: "Mở thêm nhóm button shown, pressing it.",
 }
 _EVENT_ICON_TIMEOUT_SECONDS = 10
 # Pause on the "new adventure" screen before pressing the start button.

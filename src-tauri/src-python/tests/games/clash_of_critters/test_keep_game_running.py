@@ -64,7 +64,9 @@ def test_taps_navigation_buttons(bot: MagicMock, template: str) -> None:
     bot.tap.assert_called_once_with(match, log=False)
 
 
-@pytest.mark.parametrize("template", [main.OPEN_ALL_BUTTON, main.OK_BUTTON])
+@pytest.mark.parametrize(
+    "template", [main.OPEN_ALL_BUTTON, main.OK_BUTTON, main.MORE_GROUP_BUTTON]
+)
 def test_taps_common_buttons_on_any_screen(bot: MagicMock, template: str) -> None:
     button = _match(template)
     # Only the common-button lookup sees the button; nothing else is on screen.
