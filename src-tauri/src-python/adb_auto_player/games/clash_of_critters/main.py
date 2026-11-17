@@ -10,6 +10,7 @@ from adb_auto_player.game import Game
 from adb_auto_player.games.clash_of_critters.settings import Settings
 from adb_auto_player.models.decorators import GameGUIMetadata, GUIMetadata
 from adb_auto_player.models.device import Resolution
+from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.image_manipulation import CropRegions
 from adb_auto_player.models.template_matching import TemplateMatchResult
 from adb_auto_player.ocr import RapidOCRBackend
@@ -30,6 +31,21 @@ ARTIFACT_ADVENTURE_ICON = "artifact_adventure_icon.png"
 # Trophy card of the Zobo Hunt event on the pinball screen. Cropped to the Zobo face on
 # the trophy only: the coin bubble, the number and the "ends in N days" label change.
 ZOBO_HUNT_ICON = "zobo_hunt_icon.png"
+# Text of the "Bắt Đầu Ngay" button on the Zobo Hunt screen.
+ZOBO_HUNT_START_BUTTON = "zobo_hunt_start_button.png"
+# "X" close button at the bottom of the arena; shown for the whole hunt.
+ZOBO_HUNT_ARENA_CLOSE = "zobo_hunt_arena_close.png"
+# Buff labels. While a buff runs its label is replaced by a countdown, so a visible
+# label means the buff is ready to be pressed again.
+ZOBO_HUNT_RAGE_BUTTON = "zobo_hunt_rage_button.png"  # "Cuồng Nộ"
+ZOBO_HUNT_TARGET_LOCK_BUTTON = "zobo_hunt_target_lock_button.png"  # "Khóa Mục Tiêu"
+_ZOBO_HUNT_BUFF_LOG = {
+    ZOBO_HUNT_RAGE_BUTTON: "Activating Cuồng Nộ.",
+    ZOBO_HUNT_TARGET_LOCK_BUTTON: "Activating Khóa Mục Tiêu.",
+}
+# Holding the arena keeps shooting; buffs are re-checked after every hold.
+_ZOBO_HUNT_HOLD_POINT = Point(540, 950)
+_ZOBO_HUNT_HOLD_SECONDS = 3
 # "Tiến Lên" text of the button on the stage screen. The torch icon (changes with the
 # torch type) above it and the torch count below it are dynamic and excluded.
 ARTIFACT_ADVENTURE_ADVANCE_BUTTON = "artifact_adventure_advance_button.png"
@@ -149,19 +165,75 @@ class ClashOfCritters(Game):
         gui=GUIMetadata(
             label="Săn Bắn Zobo",
             category="Events",
-            tooltip="Zobo Hunt event (opens the event only for now).",
+            tooltip=(
+                "Zobo Hunt event: start a hunt, keep Cuồng Nộ and Khóa Mục Tiêu "
+                "on and hold the screen to shoot."
+            ),
         )
     )
     def zobo_hunt(self) -> None:
         self.open_eyes(device_streaming=False)
-        self._open_pinball_screen()
-        icon = self.wait_for_template(
-            ZOBO_HUNT_ICON,
+        if self.find_any_template([ZOBO_HUNT_ARENA_CLOSE]) is None:
+            self._start_zobo_hunt()
+        else:
+            logging.info("Already in the Zobo Hunt arena.")
+        self._run_zobo_hunt()
+
+    def _start_zobo_hunt(self) -> None:
+        """Open the Zobo Hunt event, wait for the user, then press Bắt Đầu Ngay.
+
+        Raises:
+            GameTimeoutError: The icon or the event screen was not found in time.
+        """
+        if self.find_any_template([ZOBO_HUNT_START_BUTTON]) is None:
+            self._open_pinball_screen()
+            icon = self.wait_for_template(
+                ZOBO_HUNT_ICON,
+                timeout=_EVENT_ICON_TIMEOUT_SECONDS,
+                timeout_message="Zobo Hunt icon not found on Pinball screen.",
+            )
+            logging.info("Opening Zobo Hunt.")
+            self.tap(icon, log=False)
+        else:
+            logging.info("Already on Zobo Hunt screen.")
+        start = self.wait_for_template(
+            ZOBO_HUNT_START_BUTTON,
             timeout=_EVENT_ICON_TIMEOUT_SECONDS,
-            timeout_message="Zobo Hunt icon not found on Pinball screen.",
+            timeout_message="Zobo Hunt screen did not open.",
         )
-        logging.info("Opening Zobo Hunt.")
-        self.tap(icon, log=False)
+        logging.info(
+            f"Chờ {_START_SCREEN_WAIT_SECONDS}s để người dùng thay đổi setting phù hợp"
+        )
+        sleep(_START_SCREEN_WAIT_SECONDS)
+        logging.info("Starting Zobo Hunt.")
+        self.tap(start, log=False)
+
+    def _run_zobo_hunt(self) -> None:
+        """Keep both buffs on and hold the arena to shoot until it closes.
+
+        Stops when the arena was not seen for a while (hunt over). Common buttons
+        ("OK", "Mở Tất Cả", ...) are pressed when they show up.
+        """
+        idle_since = monotonic()
+        while monotonic() - idle_since < _ADVENTURE_IDLE_LIMIT_SECONDS:
+            if self._tap_common_button():
+                idle_since = monotonic()
+                continue
+            if self.find_any_template([ZOBO_HUNT_ARENA_CLOSE]) is None:
+                sleep(_ADVENTURE_POLL_SECONDS)
+                continue
+
+            idle_since = monotonic()
+            for buff, message in _ZOBO_HUNT_BUFF_LOG.items():
+                result = self.find_any_template([buff])
+                if result is not None:
+                    logging.info(message)
+                    self.tap(result, log=False)
+            self.hold(
+                _ZOBO_HUNT_HOLD_POINT, duration=_ZOBO_HUNT_HOLD_SECONDS, log=False
+            )
+
+        logging.info("Zobo Hunt arena not seen anymore, stopping.")
 
     def _artifact_adventure(self, max_advances: int | None) -> None:
         """Open the Artifact Adventure event and play it.

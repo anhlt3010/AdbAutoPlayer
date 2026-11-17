@@ -333,10 +333,67 @@ def test_read_win_rate_ocrs_only_the_win_rate_line(bot: MagicMock) -> None:
 # --- Zobo Hunt -----------------------------------------------------------------
 
 
-def test_zobo_hunt_opens_pinball_then_taps_icon(bot: MagicMock) -> None:
+def test_zobo_hunt_opens_event_waits_then_starts(
+    bot: MagicMock, no_sleep: MagicMock
+) -> None:
     bot.wait_for_any_template.return_value = _match(main.CAMP_TAB)
     icon = _match(main.ZOBO_HUNT_ICON)
-    bot.wait_for_template.return_value = icon
+    start = _match(main.ZOBO_HUNT_START_BUTTON)
+    bot.wait_for_template.side_effect = [icon, start]
+    bot._run_zobo_hunt = MagicMock()
     bot.zobo_hunt()
-    assert bot.wait_for_template.call_args.args[0] == main.ZOBO_HUNT_ICON
-    bot.tap.assert_called_once_with(icon, log=False)
+    assert bot.tap.call_args_list == [call(icon, log=False), call(start, log=False)]
+    no_sleep.assert_called_once_with(main._START_SCREEN_WAIT_SECONDS)
+    bot._run_zobo_hunt.assert_called_once()
+
+
+def test_zobo_hunt_already_on_event_screen_skips_pinball(bot: MagicMock) -> None:
+    start = _match(main.ZOBO_HUNT_START_BUTTON)
+    bot.find_any_template.side_effect = [None, start]  # not in arena, on event
+    bot.wait_for_template.return_value = start
+    bot._run_zobo_hunt = MagicMock()
+    bot.zobo_hunt()
+    bot.wait_for_any_template.assert_not_called()
+    bot.tap.assert_called_once_with(start, log=False)
+
+
+def test_zobo_hunt_already_in_arena_skips_start(bot: MagicMock) -> None:
+    bot.find_any_template.return_value = _match(main.ZOBO_HUNT_ARENA_CLOSE)
+    bot._start_zobo_hunt = MagicMock()
+    bot._run_zobo_hunt = MagicMock()
+    bot.zobo_hunt()
+    bot._start_zobo_hunt.assert_not_called()
+    bot._run_zobo_hunt.assert_called_once()
+
+
+def _run_hunt(bot: MagicMock, screens: list) -> None:
+    """Run the arena loop over scripted find_any_template results, then idle out."""
+    bot.find_any_template.side_effect = [*screens] + [None] * 10
+    bot.hold = MagicMock()
+    clock = count(step=IDLE_STEP_SECONDS)
+    with patch.object(main, "monotonic", side_effect=lambda: next(clock)):
+        bot._run_zobo_hunt()
+
+
+def test_zobo_hunt_taps_ready_buffs_then_holds(bot: MagicMock) -> None:
+    rage = _match(main.ZOBO_HUNT_RAGE_BUTTON)
+    lock = _match(main.ZOBO_HUNT_TARGET_LOCK_BUTTON)
+    arena = _match(main.ZOBO_HUNT_ARENA_CLOSE)
+    # common button check, arena check, rage, target lock
+    _run_hunt(bot, [None, arena, rage, lock])
+    assert bot.tap.call_args_list == [call(rage, log=False), call(lock, log=False)]
+    bot.hold.assert_called_once_with(
+        main._ZOBO_HUNT_HOLD_POINT, duration=main._ZOBO_HUNT_HOLD_SECONDS, log=False
+    )
+
+
+def test_zobo_hunt_running_buffs_are_not_tapped(bot: MagicMock) -> None:
+    arena = _match(main.ZOBO_HUNT_ARENA_CLOSE)
+    _run_hunt(bot, [None, arena, None, None])  # both buffs show a countdown
+    bot.tap.assert_not_called()
+    bot.hold.assert_called_once()
+
+
+def test_zobo_hunt_no_arena_does_not_hold(bot: MagicMock) -> None:
+    _run_hunt(bot, [])
+    bot.hold.assert_not_called()
