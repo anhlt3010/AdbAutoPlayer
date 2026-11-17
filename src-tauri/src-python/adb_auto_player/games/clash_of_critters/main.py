@@ -27,6 +27,9 @@ CAMP_TAB = "camp_tab.png"
 # Cat card on the pinball screen. Cropped to the ear/eye area only: the torch count,
 # the number in the middle and the "ends in N days" label all change.
 ARTIFACT_ADVENTURE_ICON = "artifact_adventure_icon.png"
+# Trophy card of the Zobo Hunt event on the pinball screen. Cropped to the Zobo face on
+# the trophy only: the coin bubble, the number and the "ends in N days" label change.
+ZOBO_HUNT_ICON = "zobo_hunt_icon.png"
 # "Tiến Lên" text of the button on the stage screen. The torch icon (changes with the
 # torch type) above it and the torch count below it are dynamic and excluded.
 ARTIFACT_ADVENTURE_ADVANCE_BUTTON = "artifact_adventure_advance_button.png"
@@ -141,6 +144,24 @@ class ClashOfCritters(Game):
     def artifact_adventure_limited(self) -> None:
         limit = self.settings.artifact_adventure.limited_advance_count
         self._artifact_adventure(max_advances=limit)
+
+    @register_command(
+        gui=GUIMetadata(
+            label="Săn Bắn Zobo",
+            category="Events",
+            tooltip="Zobo Hunt event (opens the event only for now).",
+        )
+    )
+    def zobo_hunt(self) -> None:
+        self.open_eyes(device_streaming=False)
+        self._open_pinball_screen()
+        icon = self.wait_for_template(
+            ZOBO_HUNT_ICON,
+            timeout=_EVENT_ICON_TIMEOUT_SECONDS,
+            timeout_message="Zobo Hunt icon not found on Pinball screen.",
+        )
+        logging.info("Opening Zobo Hunt.")
+        self.tap(icon, log=False)
 
     def _artifact_adventure(self, max_advances: int | None) -> None:
         """Open the Artifact Adventure event and play it.

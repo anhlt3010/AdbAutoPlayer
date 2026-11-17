@@ -328,3 +328,15 @@ def test_read_win_rate_ocrs_only_the_win_rate_line(bot: MagicMock) -> None:
     crop = backend.return_value.extract_text.call_args.args[0]
     assert crop.shape[0] < 1920 * 0.1
     assert crop.shape[1] < 1080 * 0.5
+
+
+# --- Zobo Hunt -----------------------------------------------------------------
+
+
+def test_zobo_hunt_opens_pinball_then_taps_icon(bot: MagicMock) -> None:
+    bot.wait_for_any_template.return_value = _match(main.CAMP_TAB)
+    icon = _match(main.ZOBO_HUNT_ICON)
+    bot.wait_for_template.return_value = icon
+    bot.zobo_hunt()
+    assert bot.wait_for_template.call_args.args[0] == main.ZOBO_HUNT_ICON
+    bot.tap.assert_called_once_with(icon, log=False)
