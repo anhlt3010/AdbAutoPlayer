@@ -169,6 +169,7 @@ def test_a_victory_ends_the_preparation_visit(bot: MagicMock) -> None:
     bot._auto_battle_step()
     _show(bot, VICTORY_TITLE, CONTINUE_BUTTON)
     bot._auto_battle_step()
+    bot._read_stage.return_value = StageId(15, 48)  # the next stage
     _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
     bot._auto_battle_step()
     # The next stage is a new visit: Quick Deploy is pressed again.
@@ -208,11 +209,42 @@ def test_boss_stage_deploys_the_formation_then_fights(bot: MagicMock) -> None:
     assert _tapped(bot) == [FIGHT_BUTTON]
 
 
-def test_report_icon_forces_the_formation_on_a_normal_stage(bot: MagicMock) -> None:
+def test_quick_deploy_comes_first_even_when_the_report_icon_shows(
+    bot: MagicMock,
+) -> None:
+    # The stage may have been lost before (an earlier run, another deploy), but Quick
+    # Deploy was never pressed for it in this run.
+    _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON, PREP_REPORT_ICON)
+    bot._auto_battle_step()
+    bot._deploy_formation.assert_not_called()
+    assert _tapped(bot) == [QUICK_DEPLOY_BUTTON]
+
+
+def test_the_formation_is_used_once_quick_deploy_was_pressed_for_the_stage(
+    bot: MagicMock,
+) -> None:
+    _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
+    bot._auto_battle_step()  # Quick Deploy
+    bot._auto_battle_step()  # Fight
+    _show(bot)  # the fight, lost
+    bot._auto_battle_step()
     _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON, PREP_REPORT_ICON)
     bot._auto_battle_step()
     bot._deploy_formation.assert_called_once()
-    assert _tapped(bot) == [FIGHT_BUTTON]
+
+
+def test_every_stage_gets_its_own_quick_deploy(bot: MagicMock) -> None:
+    _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
+    bot._auto_battle_step()  # Quick Deploy for 15-49
+    bot._auto_battle_step()
+    _show(bot)
+    bot._auto_battle_step()
+    bot._read_stage.return_value = StageId(15, 48)
+    _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON, PREP_REPORT_ICON)
+    bot.tap.reset_mock()
+    bot._auto_battle_step()
+    assert _tapped(bot) == [QUICK_DEPLOY_BUTTON]
+    bot._deploy_formation.assert_not_called()
 
 
 def test_unreadable_stage_falls_back_to_quick_deploy(bot: MagicMock) -> None:
@@ -278,6 +310,7 @@ def test_quick_deploy_is_pressed_again_on_the_next_visit(bot: MagicMock) -> None
     bot._auto_battle_step()
     _show(bot)  # the fight itself: no known screen
     bot._auto_battle_step()
+    bot._read_stage.return_value = StageId(15, 48)  # won: the next stage
     _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
     bot._auto_battle_step()
     assert _tapped(bot) == [QUICK_DEPLOY_BUTTON, FIGHT_BUTTON, QUICK_DEPLOY_BUTTON]
@@ -376,10 +409,12 @@ def test_a_loss_ends_keeping_the_formation(bot: MagicMock) -> None:
     bot._auto_battle_step()
     _show(bot)
     bot._auto_battle_step()
-    # After a loss the stage's own formation is deployed (report icon).
+    # Quick Deploy was never pressed for this stage: it comes first.
     _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON, PREP_REPORT_ICON)
+    bot.tap.reset_mock()
     bot._auto_battle_step()
-    assert bot._deploy_formation.call_count == 2
+    assert _tapped(bot) == [QUICK_DEPLOY_BUTTON]
+    assert bot._deploy_formation.call_count == 1
 
 
 def test_an_empty_field_is_not_kept(bot: MagicMock) -> None:

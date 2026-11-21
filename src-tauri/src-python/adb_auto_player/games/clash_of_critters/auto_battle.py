@@ -62,6 +62,9 @@ class AutoBattleMixin(DeployMixin):
     # The last fight was won with a formation: the field is left as it is for the
     # next stages (until a boss, which has its own formation, or a loss).
     _keep_field: bool = False
+    # Stages for which Quick Deploy was pressed in this run. A normal stage gets its
+    # Quick Deploy first; its prepared formation is only used once that was not enough.
+    _quick_deploy_stages: set[StageId] | None = None
     _formation_stage: StageId | None = None
     _formation_attempts: int = 0
     # Preparation screens after a loss, counted per stage whatever way they are
@@ -83,6 +86,7 @@ class AutoBattleMixin(DeployMixin):
         self._prep_phase = None
         self._formation_in_use = False
         self._keep_field = False
+        self._quick_deploy_stages = set()
         self._formation_stage = None
         self._formation_attempts = 0
         self._loss_stage = None
@@ -219,7 +223,10 @@ class AutoBattleMixin(DeployMixin):
         is_boss = stage is not None and is_boss_stage(stage)
         if not lost_before and not is_boss and self._keep_formation():
             return True
-        wants_formation = lost_before or is_boss
+        # Boss: its formation. Otherwise the formation only after Quick Deploy was
+        # already pressed for this very stage (the report icon alone is not enough: the
+        # stage may have been lost with something else).
+        wants_formation = is_boss or self._quick_deploy_pressed(stage)
 
         formation = None
         if wants_formation and stage is not None:
@@ -232,7 +239,7 @@ class AutoBattleMixin(DeployMixin):
             logging.warning("Stage unreadable, using Quick Deploy.")
 
         if formation is None or stage is None:
-            self._quick_deploy(quick_deploy_button)
+            self._quick_deploy(quick_deploy_button, stage)
             return True
         return self._deploy_and_fight(stage, formation)
 
@@ -277,8 +284,20 @@ class AutoBattleMixin(DeployMixin):
         self._tap_fight()
         return True
 
-    def _quick_deploy(self, quick_deploy_button: object) -> None:
+    def _quick_deploy_pressed(self, stage: StageId | None) -> bool:
+        """Tell whether Quick Deploy was already pressed for a stage in this run."""
+        return (
+            stage is not None
+            and self._quick_deploy_stages is not None
+            and stage in self._quick_deploy_stages
+        )
+
+    def _quick_deploy(self, quick_deploy_button: object, stage: StageId | None) -> None:
         logging.info("Quick Deploy.")
+        if stage is not None:
+            if self._quick_deploy_stages is None:
+                self._quick_deploy_stages = set()
+            self._quick_deploy_stages.add(stage)
         self.tap(quick_deploy_button, log=False)
         self._prep_phase = _PHASE_QUICK
         self._formation_in_use = False
