@@ -37,8 +37,16 @@ python scripts/build_coc_patch.py <version>
 - Write the note in Vietnamese using `.github/RELEASE_TEMPLATE.md` sections: Patch (cập nhật tự động) and App (cần tải về).
 - List new settings with defaults, removed settings, and anything users must do by hand.
 - Show the draft to the user for approval. Do not write it to a file or `CHANGELOG.md` until they confirm.
+- Once approved, save it next to the zip as `release_note_coc-vn-v<X.Y.Z>.md` (same folder as `clash_of_critters_patch_v<X.Y.Z>.zip`, two levels above the repo). Do not write it into the repo or `CHANGELOG.md`.
 
 ## Step 4 - tag and push
 
 - Create the tag on `HEAD` once the zip is built: `git tag coc-vn-v<X.Y.Z>` (the zip packages `HEAD`, so commit everything first).
-- Push it only after the zip is built and the release note is approved: `git push origin coc-vn-v<X.Y.Z>`. Pushing the tag publishes it, so never push before the user has approved the note.
+- Push only after the zip is built and the release note is approved (pushing publishes the tag). Push the branch first, so the commit the tag points to exists on the remote, then the tag:
+
+```bash
+git push origin <current-branch>
+git push origin coc-vn-v<X.Y.Z>
+```
+
+- Check afterwards that `git ls-remote --tags origin coc-vn-v<X.Y.Z>` shows the commit of the branch head.
