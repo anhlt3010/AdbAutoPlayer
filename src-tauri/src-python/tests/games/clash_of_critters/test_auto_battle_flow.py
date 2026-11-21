@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from adb_auto_player.games.clash_of_critters import auto_battle
 from adb_auto_player.games.clash_of_critters.auto_battle import (
+    CONTINUE_BUTTON,
     DEFEAT_TITLE,
     FIGHT_BUTTON,
     HUB_BATTLE_BUTTON,
@@ -13,6 +14,7 @@ from adb_auto_player.games.clash_of_critters.auto_battle import (
     QUICK_DEPLOY_BUTTON,
     RETRY_BUTTON,
     STAGE_MAP_MARKER,
+    VICTORY_TITLE,
     AutoBattleMixin,
 )
 from adb_auto_player.games.clash_of_critters.formation import (
@@ -63,6 +65,7 @@ def bot() -> MagicMock:
     game._tap_common_button = MagicMock(return_value=False)
     game._read_stage = MagicMock(return_value=NORMAL)
     game._deploy_formation = MagicMock(return_value=15)
+    game._read_deployed_count = MagicMock(return_value=15)
     game.find_any_template = MagicMock(return_value=None)
     game.template_dir = MagicMock()
     game._screens: set[str] = set()
@@ -152,6 +155,28 @@ def test_defeat_taps_retry(bot: MagicMock) -> None:
     _show(bot, DEFEAT_TITLE, RETRY_BUTTON)
     assert bot._auto_battle_step() is True
     assert _tapped(bot) == [RETRY_BUTTON]
+
+
+def test_victory_taps_continue(bot: MagicMock) -> None:
+    _show(bot, VICTORY_TITLE, CONTINUE_BUTTON)
+    assert bot._auto_battle_step() is True
+    assert _tapped(bot) == [CONTINUE_BUTTON]
+
+
+def test_a_victory_ends_the_preparation_visit(bot: MagicMock) -> None:
+    _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
+    bot._auto_battle_step()
+    _show(bot, VICTORY_TITLE, CONTINUE_BUTTON)
+    bot._auto_battle_step()
+    _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
+    bot._auto_battle_step()
+    # The next stage is a new visit: Quick Deploy is pressed again.
+    assert _tapped(bot) == [QUICK_DEPLOY_BUTTON, CONTINUE_BUTTON, QUICK_DEPLOY_BUTTON]
+
+
+def test_stops_when_the_victory_screen_cannot_be_left(bot: MagicMock) -> None:
+    _show(bot, VICTORY_TITLE)  # the continue button is not found
+    assert POLLS_BEFORE_STUCK <= _steps_until_stop(bot) <= POLLS_BEFORE_STUCK + 1
 
 
 # --- the preparation screen ----------------------------------------------------------
@@ -247,6 +272,94 @@ def test_quick_deploy_is_pressed_again_on_the_next_visit(bot: MagicMock) -> None
     _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
     bot._auto_battle_step()
     assert _tapped(bot) == [QUICK_DEPLOY_BUTTON, FIGHT_BUTTON, QUICK_DEPLOY_BUTTON]
+
+
+# --- keeping the formation after a win ---------------------------------------------
+
+
+def _boss_fight_and_win(bot: MagicMock) -> None:
+    """A boss stage: formation deployed, the fight, then the victory screen."""
+    bot._read_stage.return_value = BOSS
+    _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
+    bot._auto_battle_step()
+    _show(bot)  # the fight
+    bot._auto_battle_step()
+    _show(bot, VICTORY_TITLE, CONTINUE_BUTTON)
+    bot._auto_battle_step()
+    _show(bot)  # the stage map, the next preparation screen ...
+    bot._auto_battle_step()
+
+
+def _next_stage(bot: MagicMock, stage: StageId = NORMAL) -> None:
+    bot._read_stage.return_value = stage
+    _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
+    bot._auto_battle_step()
+
+
+def test_after_a_win_with_the_formation_the_next_stage_keeps_it(
+    bot: MagicMock,
+) -> None:
+    _boss_fight_and_win(bot)
+    bot.tap.reset_mock()
+    _next_stage(bot)
+    assert _tapped(bot) == [FIGHT_BUTTON]  # no Quick Deploy
+    assert bot._deploy_formation.call_count == 1  # the boss's, not a new one
+
+
+def test_the_formation_is_kept_for_every_following_stage(bot: MagicMock) -> None:
+    _boss_fight_and_win(bot)
+    bot.tap.reset_mock()
+    for number in (51, 52, 53):
+        _next_stage(bot, StageId(15, number))
+        _show(bot)
+        bot._auto_battle_step()  # the fight
+        _show(bot, VICTORY_TITLE, CONTINUE_BUTTON)
+        bot._auto_battle_step()
+        _show(bot)
+        bot._auto_battle_step()
+    assert QUICK_DEPLOY_BUTTON not in _tapped(bot)
+    assert bot._deploy_formation.call_count == 1
+
+
+def test_after_a_win_with_quick_deploy_the_next_stage_uses_it_again(
+    bot: MagicMock,
+) -> None:
+    _next_stage(bot, NORMAL)  # Quick Deploy
+    bot._auto_battle_step()  # Fight
+    _show(bot, VICTORY_TITLE, CONTINUE_BUTTON)
+    bot._auto_battle_step()
+    _show(bot)
+    bot._auto_battle_step()
+    bot.tap.reset_mock()
+    _next_stage(bot, StageId(15, 48))
+    assert _tapped(bot) == [QUICK_DEPLOY_BUTTON]
+
+
+def test_a_new_boss_deploys_its_own_formation(bot: MagicMock) -> None:
+    _boss_fight_and_win(bot)
+    _next_stage(bot, StageId(15, 60))
+    assert bot._deploy_formation.call_count == 2
+
+
+def test_a_loss_ends_keeping_the_formation(bot: MagicMock) -> None:
+    _boss_fight_and_win(bot)
+    _next_stage(bot)  # kept formation, the fight ...
+    _show(bot, DEFEAT_TITLE, RETRY_BUTTON)
+    bot._auto_battle_step()
+    _show(bot)
+    bot._auto_battle_step()
+    # After a loss the stage's own formation is deployed (report icon).
+    _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON, PREP_REPORT_ICON)
+    bot._auto_battle_step()
+    assert bot._deploy_formation.call_count == 2
+
+
+def test_an_empty_field_is_not_kept(bot: MagicMock) -> None:
+    _boss_fight_and_win(bot)
+    bot._read_deployed_count.return_value = 0
+    bot.tap.reset_mock()
+    _next_stage(bot)
+    assert _tapped(bot) == [QUICK_DEPLOY_BUTTON]
 
 
 # --- unknown screens (for example a won fight) ---------------------------------------

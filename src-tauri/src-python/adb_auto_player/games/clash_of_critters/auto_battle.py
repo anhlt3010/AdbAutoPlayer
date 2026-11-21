@@ -11,6 +11,7 @@ from time import monotonic, sleep
 from adb_auto_player.games.clash_of_critters.battle_layout import STAGE_LABEL_BOX
 from adb_auto_player.games.clash_of_critters.deploy import DeployMixin
 from adb_auto_player.games.clash_of_critters.formation import (
+    Formation,
     StageId,
     is_boss_stage,
     load_formation,
@@ -30,12 +31,21 @@ FIGHT_BUTTON = "fight_button.png"  # "Chiến Đấu" on the preparation screen
 PREP_REPORT_ICON = "prep_report_icon.png"
 DEFEAT_TITLE = "defeat_title.png"  # "Thất Bại"
 RETRY_BUTTON = "retry_button.png"  # "Thử Lại"
+VICTORY_TITLE = "victory_title.png"  # "CHIẾN THẮNG!"
+CONTINUE_BUTTON = "continue_button.png"  # "Tiếp Tục", back to the stage map
 
-_SCREENS = [DEFEAT_TITLE, QUICK_DEPLOY_BUTTON, STAGE_MAP_MARKER, HUB_BATTLE_BUTTON]
+_SCREENS = [
+    DEFEAT_TITLE,
+    VICTORY_TITLE,
+    QUICK_DEPLOY_BUTTON,
+    STAGE_MAP_MARKER,
+    HUB_BATTLE_BUTTON,
+]
 
 
 _PHASE_QUICK = "quick"  # Quick Deploy was pressed on this preparation screen
 _PHASE_FORMATION = "formation"  # the formation was deployed on this one
+_PHASE_KEPT = "kept"  # the formation of the last win was kept on this one
 
 
 class AutoBattleMixin(DeployMixin):
@@ -45,6 +55,11 @@ class AutoBattleMixin(DeployMixin):
     # Deploy (_PHASE_QUICK) or the formation (_PHASE_FORMATION). The screen is
     # polled every few seconds, so a visit lasts several steps.
     _prep_phase: str | None = None
+    # The fight in progress uses a formation (deployed or kept), not Quick Deploy.
+    _formation_in_use: bool = False
+    # The last fight was won with a formation: the field is left as it is for the
+    # next stages (until a boss, which has its own formation, or a loss).
+    _keep_field: bool = False
     _formation_stage: StageId | None = None
     _formation_attempts: int = 0
     # Preparation screens after a loss, counted per stage whatever way they are
@@ -64,6 +79,8 @@ class AutoBattleMixin(DeployMixin):
         """Play until the game stops making progress or an attempt limit is hit."""
         self.open_eyes(device_streaming=False)
         self._prep_phase = None
+        self._formation_in_use = False
+        self._keep_field = False
         self._formation_stage = None
         self._formation_attempts = 0
         self._loss_stage = None
@@ -111,10 +128,18 @@ class AutoBattleMixin(DeployMixin):
         # Any other known screen means the next preparation screen is a new visit.
         self._prep_phase = None
         if screen.template == DEFEAT_TITLE:
+            self._keep_field = False
+            self._formation_in_use = False
             retry = self.find_any_template([RETRY_BUTTON])
             if retry is not None:
                 logging.info("Defeated, trying again.")
                 self.tap(retry, log=False)
+        elif screen.template == VICTORY_TITLE:
+            self._keep_field = self._formation_in_use
+            button = self.find_any_template([CONTINUE_BUTTON])
+            if button is not None:
+                logging.info("Victory, continuing to the stage map.")
+                self.tap(button, log=False)
         elif screen.template == STAGE_MAP_MARKER:
             logging.info("On the stage map, opening the battle preparation.")
             self.tap(STAGE_MAP_START_POINT, log=False)
@@ -189,7 +214,10 @@ class AutoBattleMixin(DeployMixin):
         lost_before = self.find_any_template([PREP_REPORT_ICON]) is not None
         if not self._count_lost_visit(stage, lost_before):
             return False
-        wants_formation = lost_before or (stage is not None and is_boss_stage(stage))
+        is_boss = stage is not None and is_boss_stage(stage)
+        if not lost_before and not is_boss and self._keep_formation():
+            return True
+        wants_formation = lost_before or is_boss
 
         formation = None
         if wants_formation and stage is not None:
@@ -202,11 +230,16 @@ class AutoBattleMixin(DeployMixin):
             logging.warning("Stage unreadable, using Quick Deploy.")
 
         if formation is None or stage is None:
-            logging.info("Quick Deploy.")
-            self.tap(quick_deploy_button, log=False)
-            self._prep_phase = _PHASE_QUICK
+            self._quick_deploy(quick_deploy_button)
             return True
+        return self._deploy_and_fight(stage, formation)
 
+    def _deploy_and_fight(self, stage: StageId, formation: Formation) -> bool:
+        """Deploy the formation of a stage and start the fight.
+
+        Returns:
+            False when the auto battle should stop.
+        """
         if stage != self._formation_stage:
             self._formation_stage = stage
             self._formation_attempts = 0
@@ -221,8 +254,34 @@ class AutoBattleMixin(DeployMixin):
             return False
         self._formation_attempts += 1
         self._prep_phase = _PHASE_FORMATION
+        self._formation_in_use = True
         self._tap_fight()
         return True
+
+    def _keep_formation(self) -> bool:
+        """Fight with the formation of the last win instead of Quick Deploy.
+
+        Returns:
+            False if there is nothing to keep (no win with a formation before, or
+            the field is empty).
+        """
+        if not self._keep_field or not self._field_has_units():
+            return False
+        logging.info("Keeping the formation of the last win.")
+        self._prep_phase = _PHASE_KEPT
+        self._formation_in_use = True
+        self._tap_fight()
+        return True
+
+    def _quick_deploy(self, quick_deploy_button: object) -> None:
+        logging.info("Quick Deploy.")
+        self.tap(quick_deploy_button, log=False)
+        self._prep_phase = _PHASE_QUICK
+        self._formation_in_use = False
+
+    def _field_has_units(self) -> bool:
+        """Tell whether the field still holds the formation (the counter is above 0)."""
+        return (self._read_deployed_count() or 0) > 0
 
     def _tap_fight(self) -> None:
         fight = self.find_any_template([FIGHT_BUTTON])
