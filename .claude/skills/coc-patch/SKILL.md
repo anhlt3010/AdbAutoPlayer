@@ -5,15 +5,19 @@ description: Build the Clash of Critters patch zip and write its release note. U
 
 # Clash of Critters patch and release note
 
-## Step 1 - ask the version first
+## Step 1 - pull, then ask the version
 
-Before running anything, ask the user for the patch version (format `X.Y.Z`, for example `0.2.0`). Show the latest tag as a hint:
+Always pull the latest source and tags first, so the tag hint and the release note range are current:
 
 ```bash
+git pull --ff-only
+git fetch --tags origin
 git tag --list "coc-vn-v*" --sort=-v:refname | head -3
 ```
 
-Also ask which ref to start the release note from if it is not obvious (default: the latest `coc-vn-v*` tag). Do not guess the version.
+If the pull is not a fast-forward or the working tree blocks it, stop and tell the user. Then ask the user for the patch version (format `X.Y.Z`, for example `0.4.0`; a leading `v` is accepted and ignored) and show the latest tag as a hint. Also ask which ref to start the release note from if it is not obvious (default: the latest `coc-vn-v*` tag). Do not guess the version.
+
+The tag is `coc-vn-v<X.Y.Z>`: input `0.4.0` or `v0.4.0` both give `coc-vn-v0.4.0`. Stop if that tag already exists.
 
 ## Step 2 - build the zip
 
@@ -33,3 +37,8 @@ python scripts/build_coc_patch.py <version>
 - Write the note in Vietnamese using `.github/RELEASE_TEMPLATE.md` sections: Patch (cập nhật tự động) and App (cần tải về).
 - List new settings with defaults, removed settings, and anything users must do by hand.
 - Show the draft to the user for approval. Do not write it to a file or `CHANGELOG.md` until they confirm.
+
+## Step 4 - tag and push
+
+- Create the tag on `HEAD` once the zip is built: `git tag coc-vn-v<X.Y.Z>` (the zip packages `HEAD`, so commit everything first).
+- Push it only after the zip is built and the release note is approved: `git push origin coc-vn-v<X.Y.Z>`. Pushing the tag publishes it, so never push before the user has approved the note.
