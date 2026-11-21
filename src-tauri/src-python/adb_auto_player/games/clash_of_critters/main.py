@@ -5,7 +5,7 @@ import re
 from time import monotonic, sleep
 
 from adb_auto_player.decorators import register_command, register_game
-from adb_auto_player.game import Game
+from adb_auto_player.games.clash_of_critters.auto_battle import AutoBattleMixin
 from adb_auto_player.games.clash_of_critters.settings import Settings
 from adb_auto_player.models.decorators import GameGUIMetadata, GUIMetadata
 from adb_auto_player.models.device import Resolution
@@ -13,10 +13,6 @@ from adb_auto_player.models.geometry import Point
 from adb_auto_player.models.template_matching import TemplateMatchResult
 from adb_auto_player.ocr import RapidOCRBackend
 
-# Navigation buttons used by the battle flow.
-STAGE_START_BUTTON = "stage_start_button.png"
-HUB_BATTLE_BUTTON = "hub_battle_button.png"
-QUICK_DEPLOY_BUTTON = "quick_deploy_button.png"
 PINBALL_TAB = "pinball_tab.png"  # shown on the camp screen
 # Shown on the pinball screen; the crop excludes the optional pinball-ball bubble.
 CAMP_TAB = "camp_tab.png"
@@ -91,7 +87,7 @@ _PINBALL_TAB_TIMEOUT_SECONDS = 10
     settings_file="ClashOfCritters.toml",
     gui_metadata=GameGUIMetadata(settings_class=Settings),
 )
-class ClashOfCritters(Game):
+class ClashOfCritters(AutoBattleMixin):
     def __init__(self) -> None:
         """Initialize ClashOfCritters."""
         super().__init__()
@@ -104,6 +100,19 @@ class ClashOfCritters(Game):
 
     def get_settings(self) -> Settings:
         return Settings.from_toml(self.settings_file_path)
+
+    @register_command(
+        gui=GUIMetadata(
+            label="Tự Động Chiến Đấu",
+            category="Battle",
+            tooltip=(
+                "Play the stages from the camp screen: Quick Deploy first, the "
+                "prepared formation on boss stages and after a lost fight."
+            ),
+        )
+    )
+    def auto_battle(self) -> None:
+        self._run_auto_battle()
 
     @register_command(
         gui=GUIMetadata(

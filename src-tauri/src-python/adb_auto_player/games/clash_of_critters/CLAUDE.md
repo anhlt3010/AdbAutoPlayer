@@ -1,13 +1,27 @@
 # Clash of Critters
 
-Game module for Clash of Critters (`com.farlightgames.pgame.gp.vn`, base resolution 1080x1920). Code in `main.py`, settings in `settings.py`, template images in `templates/`.
+Game module for Clash of Critters (`com.farlightgames.pgame.gp.vn`, base resolution 1080x1920). Code in `main.py` (commands) and the battle modules below, settings in `settings.py`, template images in `templates/`, tatari data in `tatari_db/` and `tatari_formations/`.
 
 ## Command Categories
 
 | Category | Commands |
 | --- | --- |
-| Battle | (being rewritten: `auto_battle`, Tự Động Chiến Đấu) |
+| Battle | `auto_battle` (Tự Động Chiến Đấu) |
 | Events | `artifact_adventure` (Phiêu Lưu Cổ Vật), `artifact_adventure_limited` (Phiêu Lưu Cổ Vật Giới Hạn), `zobo_hunt` (Săn Bắn Zobo) |
+
+## Auto Battle (Battle category)
+
+`auto_battle` runs `AutoBattleMixin._run_auto_battle()` (`auto_battle.py`): a loop of `_auto_battle_step()` that reads the screen and acts. `ClashOfCritters` inherits `AutoBattleMixin` -> `DeployMixin` -> `Game`; the game supplies `_tap_common_button()`.
+
+- Screens (templates in `auto_battle.py`): camp (`hub_battle_button`) -> stage map (`stage_map_marker`, then a fixed tap on the big yellow start button at (540, 1690): its label changes) -> preparation (`quick_deploy_button`) -> fight (`fight_button`) -> defeat (`defeat_title`, then `retry_button` "Thử Lại", which goes back to the preparation screen).
+- Preparation screen: the stage ("15-50") is read by OCR from `battle_layout.STAGE_LABEL_BOX`. **Boss stage** (number divisible by 10) **or the "Báo Cáo" icon** (`prep_report_icon`, only shown after a loss) -> deploy the prepared formation; otherwise press Quick Deploy once, then Chiến Đấu. No formation file or an unreadable stage -> Quick Deploy.
+- `auto_battle.max_formation_attempts` (default 3) caps the fights with the formation per stage; `idle_limit_seconds` stops the loop after a long time without a known screen. **The victory screen is not handled yet**; it ends in that idle stop unless the game moves on by itself.
+- Formations: `tatari_formations/<chapter>/<chapter>-<stage>.json` (`formation.py`, follows `shared_with`). Tatari data: `tatari_db/` (wiki sprites, `tatari_db.json`, `tatari_db.py`). Both folders are bundled (`tauri.bundle.templates.json`) and must be committed for CI builds.
+- Deploying (`deploy.py`): clear the field (button at (1000, 880)), then for each element of the formation: filter the tray by element, scan it to its end, walk back to its start dragging the wanted cards (`deployment_plan.py` picks the owned evolution: exact, then same tatari with the nearest tier, higher first). Every drag is checked against the "Đã triển khai: n/15" counter and repeated once.
+- **Drags from the tray must be steep** (|dx| <= 0.5 |dy|): a sideways drag scrolls the tray instead. `battle_layout.plan_drag` goes through a free intermediate cell and then moves the unit inside the field (checked by the target cell changing). The tray keeps gliding after a swipe: wait with `_wait_tray_stable()` before reading it, and find cards by the gaps between them (`find_card_lefts`), not by fixed slots.
+- Card recognition (`card_recognition.py`): the card's element from its icon colour; then a template from the player's own earlier cards (`CardTemplateStore`, PNGs in `<app config dir>/clash_of_critters_cards/<element>/<evolution_id>.png`; delete the folder to forget them); only for an unknown card the wiki sprites are matched (outline score + colour score, glitter twin by colour). Deployed cards (dimmed with a green check) are skipped.
+- Geometry constants (field cells, tray slots, boxes) are measured on 1080x1920 captures kept in `docs/superpowers/specs/assets/` and `tests/games/clash_of_critters/data/`.
+- **`Point` equality is always true in this repo** (a dataclass without fields): compare `(p.x, p.y)` in code and in tests.
 
 ## Events Category Rules
 
@@ -41,7 +55,8 @@ def my_event(self) -> None:
 
 When the user asks for a zip of this game to copy into their installed AdbAutoPlayer (`%LOCALAPPDATA%\AdbAutoPlayer`), build it with the layout below so the user can extract it straight over the install root.
 
-- Python code goes to `Lib/site-packages/adb_auto_player/games/clash_of_critters/`: `__init__.py`, `main.py`, `settings.py`.
+- Python code goes to `Lib/site-packages/adb_auto_player/games/clash_of_critters/`: every `.py` file of the folder (`__init__.py`, `main.py`, `settings.py`, `auto_battle.py`, `deploy.py`, `battle_layout.py`, `card_recognition.py`, `deployment_plan.py`, `formation.py`, `tatari_db.py`).
+- The data folders `tatari_db/` and `tatari_formations/` go to `games/clash_of_critters/` next to `templates/`.
 - Template images go to `games/clash_of_critters/templates/` (the install root, where Tauri bundles resources, per `src-tauri/tauri.bundle.templates.json`). This is the folder the app reads templates from.
 - Never include `__pycache__/`, `README.md`, `CLAUDE.md` or tests.
 - Default settings (`src-tauri/settings/ClashOfCritters.toml`) are compiled into the app and are not in the install folder; mention to the user that a new setting field only appears after the profile settings are reset or edited, and do not add the toml to the zip unless asked.
@@ -53,8 +68,9 @@ $stage = Join-Path $env:TEMP "coc_patch"
 Remove-Item $stage -Recurse -Force -ErrorAction SilentlyContinue
 $code = "$stage\Lib\site-packages\adb_auto_player\games\clash_of_critters"
 New-Item -ItemType Directory -Force $code, "$stage\games\clash_of_critters\templates" | Out-Null
-Copy-Item "$src\__init__.py", "$src\main.py", "$src\settings.py" $code
+Copy-Item "$src\*.py" $code
 Copy-Item "$src\templates\*" "$stage\games\clash_of_critters\templates"
+Copy-Item "$src\tatari_db", "$src\tatari_formations" "$stage\games\clash_of_critters" -Recurse
 Compress-Archive -Path "$stage\*" -DestinationPath "N:\00_PersonalProject\AdbAuto-CoC\clash_of_critters_patch.zip" -Force
 ```
 
