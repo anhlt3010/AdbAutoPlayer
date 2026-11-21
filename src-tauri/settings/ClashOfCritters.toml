@@ -9,3 +9,6 @@ tray_settle_poll_seconds = 0.5
 [artifact_adventure]
 min_win_rate_percent = 40
 limited_advance_count = 100
+
+[formation_view]
+stage = ""

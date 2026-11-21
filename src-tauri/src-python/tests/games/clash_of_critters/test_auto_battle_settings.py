@@ -3,6 +3,7 @@
 import pytest
 from adb_auto_player.games.clash_of_critters.settings import (
     AutoBattleSettings,
+    FormationViewSettings,
     Settings,
 )
 from pydantic import ValidationError
@@ -32,3 +33,8 @@ def test_bounds_rejected() -> None:
 def test_old_keep_alive_removed() -> None:
     assert "keep_alive" not in Settings.model_fields
     assert "auto_battle" in Settings.model_fields
+
+
+def test_formation_view_stage_is_empty_by_default() -> None:
+    assert FormationViewSettings().stage == ""
+    assert "formation_view" in Settings.model_fields

@@ -2,10 +2,20 @@
 
 import logging
 import re
+import tempfile
+import webbrowser
+from pathlib import Path
 from time import monotonic, sleep
 
 from adb_auto_player.decorators import register_command, register_game
 from adb_auto_player.games.clash_of_critters.auto_battle import AutoBattleMixin
+from adb_auto_player.games.clash_of_critters.formation_page import (
+    render_formation_page,
+)
+from adb_auto_player.games.clash_of_critters.formation_view import (
+    FormationViewResponse,
+    load_formation_view,
+)
 from adb_auto_player.games.clash_of_critters.settings import Settings
 from adb_auto_player.models.decorators import GameGUIMetadata, GUIMetadata
 from adb_auto_player.models.device import Resolution
@@ -81,6 +91,16 @@ _ADVENTURE_IDLE_LIMIT_SECONDS = 60
 
 _PINBALL_TAB_TIMEOUT_SECONDS = 10
 
+# What the Xem Đội Hình command tells when there is no page to show.
+_FORMATION_VIEW_LOG = {
+    "no_device": "Không chụp được màn hình thiết bị; hãy kết nối thiết bị hoặc nhập "
+    "số màn trong cài đặt.",
+    "stage_unreadable": "Không đọc được màn hiện tại; hãy mở màn chuẩn bị chiến đấu "
+    "hoặc nhập số màn trong cài đặt.",
+    "stage_invalid": "Số màn trong cài đặt không hợp lệ (ví dụ đúng: 15-50).",
+    "no_formation": "Màn này chưa có đội hình chuẩn bị.",
+}
+
 
 @register_game(
     name="Clash of Critters",
@@ -113,6 +133,38 @@ class ClashOfCritters(AutoBattleMixin):
     )
     def auto_battle(self) -> None:
         self._run_auto_battle()
+
+    @register_command(
+        gui=GUIMetadata(
+            label="Xem Đội Hình",
+            category="Battle",
+            tooltip=(
+                "Open a web page with the prepared formations of a stage (typed in "
+                "the settings, or read from the screen)."
+            ),
+        )
+    )
+    def show_formation(self) -> None:
+        stage = self.settings.formation_view.stage.strip() or None
+        response = load_formation_view(stage)
+        if response.status != "ok":
+            logging.warning(_FORMATION_VIEW_LOG[response.status])
+            return
+        self._open_formation_page(response)
+
+    def _open_formation_page(self, response: FormationViewResponse) -> None:
+        path = Path(tempfile.gettempdir()) / f"coc_formation_{response.stage}.html"
+        path.write_text(render_formation_page(response), encoding="utf-8")
+        try:
+            opened = webbrowser.open(path.as_uri())
+        except webbrowser.Error:
+            opened = False
+        if opened:
+            logging.info(f"Opened the formations of {response.stage}: {path}")
+        else:
+            logging.warning(
+                f"Could not open the browser, open the page yourself: {path}"
+            )
 
     @register_command(
         gui=GUIMetadata(
