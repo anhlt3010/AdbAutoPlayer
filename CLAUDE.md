@@ -35,7 +35,7 @@ Android Device
 
 Nested guides: [src/CLAUDE.md](src/CLAUDE.md), [src-tauri/src/CLAUDE.md](src-tauri/src/CLAUDE.md), [src-tauri/src-python/adb_auto_player/CLAUDE.md](src-tauri/src-python/adb_auto_player/CLAUDE.md), [games/afk_journey/CLAUDE.md](src-tauri/src-python/adb_auto_player/games/afk_journey/CLAUDE.md), [src-tauri/src-python/tests/CLAUDE.md](src-tauri/src-python/tests/CLAUDE.md).
 
-Project skills (`.claude/skills/`): `adb-screenshot` (manual capture on MuMuPlayer multi-display), `debug-guild-scan`, `release-bump`.
+Project skills (`.claude/skills/`): `adb-screenshot` (manual capture on MuMuPlayer multi-display), `debug-guild-scan`, `release-bump`, `coc-patch` (Clash of Critters patch zip + release note; asks the version first).
 
 ## Commands
 

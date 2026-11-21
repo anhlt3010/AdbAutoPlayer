@@ -60,18 +60,13 @@ When the user asks for a zip of this game to copy into their installed AdbAutoPl
 - Template images go to `games/clash_of_critters/templates/` (the install root, where Tauri bundles resources, per `src-tauri/tauri.bundle.templates.json`). This is the folder the app reads templates from.
 - Never include `__pycache__/`, `README.md`, `CLAUDE.md` or tests.
 - Default settings (`src-tauri/settings/ClashOfCritters.toml`) are compiled into the app and are not in the install folder; mention to the user that a new setting field only appears after the profile settings are reset or edited, and do not add the toml to the zip unless asked.
-- Output: `clash_of_critters_patch.zip` in `N:/00_PersonalProject/AdbAuto-CoC/` by default (or wherever the user names). Print the zip path and its file list when done.
+- Output: `clash_of_critters_patch_v<version>.zip` two levels above the repo (`N:/00_PersonalProject/AdbAuto-CoC/`) by default, or wherever the user names. Print the zip path and its file count when done.
+- Ask the user for the version (`X.Y.Z`) before building; never guess it.
 
-```powershell
-$src = "N:\00_PersonalProject\AdbAuto-CoC\GIT\AdbAutoPlayer\src-tauri\src-python\adb_auto_player\games\clash_of_critters"
-$stage = Join-Path $env:TEMP "coc_patch"
-Remove-Item $stage -Recurse -Force -ErrorAction SilentlyContinue
-$code = "$stage\Lib\site-packages\adb_auto_player\games\clash_of_critters"
-New-Item -ItemType Directory -Force $code, "$stage\games\clash_of_critters\templates" | Out-Null
-Copy-Item "$src\*.py" $code
-Copy-Item "$src\templates\*" "$stage\games\clash_of_critters\templates"
-Copy-Item "$src\tatari_db", "$src\tatari_formations" "$stage\games\clash_of_critters" -Recurse
-Compress-Archive -Path "$stage\*" -DestinationPath "N:\00_PersonalProject\AdbAuto-CoC\clash_of_critters_patch.zip" -Force
+Build it with the script (packages files from git `HEAD`, so commit first) or the `coc-patch` skill, which also drafts the release note:
+
+```bash
+python scripts/build_coc_patch.py <version> [--ref <git-ref>] [--out <dir>]
 ```
 
 The user extracts the zip into `%LOCALAPPDATA%\AdbAutoPlayer` and overwrites existing files, then restarts the app.
