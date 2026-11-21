@@ -56,6 +56,7 @@ class FormationUnit:
     evolution_id: str
     tier: int
     glitter: bool
+    name: str = ""
 
 
 @dataclass(frozen=True)
@@ -86,6 +87,7 @@ def _parse_unit(raw: dict) -> FormationUnit:
         evolution_id=str(raw["evolution_id"]),
         tier=int(raw["tier"]),
         glitter=bool(raw.get("glitter", False)),
+        name=str(raw.get("name", "")),
     )
     if not (1 <= unit.row <= _FIELD_SIZE and 1 <= unit.col <= _FIELD_SIZE):
         raise ValueError(f"Cell ({unit.row}, {unit.col}) is outside the field.")

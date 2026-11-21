@@ -60,7 +60,8 @@ def test_loads_every_formation_in_order(tmp_path: Path) -> None:
     assert result[0].stage == StageId(15, 1)
     assert result[0].level == 100
     assert result[1].level == 101
-    assert result[0].units[0] == FormationUnit(1, 1, "grass-4", "grass-4-2", 2, False)
+    expected = FormationUnit(1, 1, "grass-4", "grass-4-2", 2, False, name="X")
+    assert result[0].units[0] == expected
     assert result[0].units[1].evolution_id == "fire-3-2"
     assert len(result[1].units) == MIN_FORMATIONS
 
@@ -162,3 +163,17 @@ def test_real_data_has_stages_with_several_formations() -> None:
             )
             return
     pytest.fail("no stage with several formations in the data")
+
+
+def test_unit_keeps_its_name(tmp_path: Path) -> None:
+    unit = _unit(1, 1) | {"name": "Orchitoria"}
+    _write(tmp_path, "15-1", "15-1", [[unit]])
+    result = load_formations(tmp_path, StageId(15, 1))
+    assert result[0].units[0].name == "Orchitoria"
+
+
+def test_unit_without_name_has_empty_name(tmp_path: Path) -> None:
+    unit = {k: v for k, v in _unit(1, 1).items() if k != "name"}
+    _write(tmp_path, "15-1", "15-1", [[unit]])
+    result = load_formations(tmp_path, StageId(15, 1))
+    assert result[0].units[0].name == ""
