@@ -1,5 +1,6 @@
 """Tests for the battle preparation screen layout."""
 
+import itertools
 from pathlib import Path
 
 import cv2
@@ -59,7 +60,7 @@ def test_find_card_lefts_follows_a_scrolled_tray() -> None:
     # cards clipped at both tray edges are left out.
     assert len(lefts) == 4
     assert abs(lefts[0] - 170) <= SPACING_TOLERANCE
-    steps = [b - a for a, b in zip(lefts, lefts[1:], strict=False)]
+    steps = [b - a for a, b in itertools.pairwise(lefts)]
     assert all(abs(step - 178) <= SPACING_TOLERANCE for step in steps)
 
 
