@@ -4,6 +4,7 @@ Measured on real captures (``docs/superpowers/specs/assets/prep_screen_*.png``).
 Boxes are ``(left, top, right, bottom)``.
 """
 
+import numpy as np
 from adb_auto_player.models.geometry import Point
 
 # Player field, 5 rows x 5 columns, cell centres.
@@ -19,6 +20,23 @@ CARD_SIZE = (160, 190)
 ELEMENT_ICON_BOX = (2, 2, 58, 50)
 CARD_ART_BOX = (50, 52, 158, 162)
 TRAY_BOX = (20, 1180, 1040, 1590)
+# Rows of the first tray row used to find the gaps between cards, and what counts as
+# a gap (the light tray background) and as a whole card (cards clipped by the tray
+# edges are narrower).
+_CARD_BAND_ROWS = (1200, 1370)
+_GAP_MIN_BRIGHTNESS = 200
+_GAP_MIN_FRACTION = 0.9
+_CARD_WIDTH_RANGE = (154, 166)
+
+# Element filter buttons under the tray: show only the cards of one element.
+ALL_FILTER_POINT = Point(90, 1665)
+ELEMENT_FILTER_POINTS = {
+    "water": Point(240, 1665),
+    "fire": Point(360, 1665),
+    "grass": Point(480, 1665),
+    "rock": Point(600, 1665),
+    "lightning": Point(720, 1665),
+}
 
 # Right-edge button (download-style icon) that clears the whole field.
 CLEAR_FIELD_POINT = Point(1000, 880)
@@ -57,3 +75,32 @@ def card_box(center: Point) -> tuple[int, int, int, int]:
     left = center.x - width // 2
     top = center.y - height // 2
     return left, top, left + width, top + height
+
+
+def find_card_lefts(screenshot_bgr: np.ndarray) -> list[int]:
+    """Find the left edge of every whole card in the tray.
+
+    The tray scrolls with some momentum, so cards are not always on the slots of
+    ``tray_slots()``; the light gaps between the cards show where they are.
+
+    Args:
+        screenshot_bgr: A full 1080x1920 screenshot (BGR).
+
+    Returns:
+        The left edges, left to right, of the cards that are fully visible.
+    """
+    top, bottom = _CARD_BAND_ROWS
+    bright = screenshot_bgr[top:bottom].min(axis=2) > _GAP_MIN_BRIGHTNESS
+    is_gap = bright.mean(axis=0) > _GAP_MIN_FRACTION
+    lefts: list[int] = []
+    x = 0
+    while x < len(is_gap):
+        if is_gap[x]:
+            x += 1
+            continue
+        start = x
+        while x < len(is_gap) and not is_gap[x]:
+            x += 1
+        if _CARD_WIDTH_RANGE[0] <= x - start <= _CARD_WIDTH_RANGE[1]:
+            lefts.append(start)
+    return lefts

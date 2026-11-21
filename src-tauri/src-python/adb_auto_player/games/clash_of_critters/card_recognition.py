@@ -56,7 +56,7 @@ _FLAT_STD = 1e-3
 _BGR_CHANNELS = 3
 
 _DEFAULT_THRESHOLD = 0.35
-_DEFAULT_MARGIN = 0.06
+_DEFAULT_MARGIN = 0.05
 
 
 def classify_element(icon_bgr: np.ndarray) -> str | None:
