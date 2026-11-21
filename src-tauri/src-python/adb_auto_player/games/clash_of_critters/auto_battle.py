@@ -27,6 +27,8 @@ STAGE_MAP_MARKER = "stage_map_marker.png"
 STAGE_MAP_START_POINT = Point(540, 1690)
 QUICK_DEPLOY_BUTTON = "quick_deploy_button.png"  # "Triển Khai Nhanh"
 FIGHT_BUTTON = "fight_button.png"  # "Chiến Đấu" on the preparation screen
+# The same button on later stages says "Tự Động Chiến Đấu" (two lines).
+AUTO_FIGHT_BUTTON = "auto_fight_button.png"
 # "Báo Cáo" icon above the tray; only shown once the stage was lost.
 PREP_REPORT_ICON = "prep_report_icon.png"
 DEFEAT_TITLE = "defeat_title.png"  # "Thất Bại"
@@ -284,7 +286,7 @@ class AutoBattleMixin(DeployMixin):
         return (self._read_deployed_count() or 0) > 0
 
     def _tap_fight(self) -> None:
-        fight = self.find_any_template([FIGHT_BUTTON])
+        fight = self.find_any_template([FIGHT_BUTTON, AUTO_FIGHT_BUTTON])
         if fight is None:
             logging.warning("Fight button not found.")
             return

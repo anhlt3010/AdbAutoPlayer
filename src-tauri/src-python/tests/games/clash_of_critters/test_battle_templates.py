@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from adb_auto_player.games.clash_of_critters import auto_battle
 from adb_auto_player.games.clash_of_critters.auto_battle import (
+    AUTO_FIGHT_BUTTON,
     CONTINUE_BUTTON,
     DEFEAT_TITLE,
     FIGHT_BUTTON,
@@ -25,6 +26,7 @@ SCREENS = {
     "map": "stage_map_screen.png",
     "prep": "prep_screen_cleared.png",
     "prep_after_loss": "prep_screen_report.png",
+    "prep_auto_label": "prep_screen_auto_fight.png",
     "defeat": "defeat_screen.png",
     "victory": "victory_screen.png",
     "map_after_victory": "map_after_victory.png",
@@ -32,9 +34,11 @@ SCREENS = {
 SHOWN_ON = [
     (HUB_BATTLE_BUTTON, {"camp"}),
     (STAGE_MAP_MARKER, {"map", "map_after_victory"}),
-    (QUICK_DEPLOY_BUTTON, {"prep", "prep_after_loss"}),
+    (QUICK_DEPLOY_BUTTON, {"prep", "prep_after_loss", "prep_auto_label"}),
     # The yellow start button of the stage map says "Chiến Đấu" as well.
     (FIGHT_BUTTON, {"prep", "prep_after_loss", "map_after_victory"}),
+    # Later stages start with "Tự Động Chiến Đấu" instead of "Chiến Đấu".
+    (AUTO_FIGHT_BUTTON, {"prep_auto_label"}),
     # Only shown once the stage was lost: it must not match the first visit.
     (PREP_REPORT_ICON, {"prep_after_loss"}),
     (DEFEAT_TITLE, {"defeat"}),

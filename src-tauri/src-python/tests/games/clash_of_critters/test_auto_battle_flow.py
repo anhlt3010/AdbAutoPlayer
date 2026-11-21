@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from adb_auto_player.games.clash_of_critters import auto_battle
 from adb_auto_player.games.clash_of_critters.auto_battle import (
+    AUTO_FIGHT_BUTTON,
     CONTINUE_BUTTON,
     DEFEAT_TITLE,
     FIGHT_BUTTON,
@@ -189,6 +190,14 @@ def test_normal_stage_uses_quick_deploy_once_then_fights(bot: MagicMock) -> None
     bot._auto_battle_step()
     assert _tapped(bot) == [QUICK_DEPLOY_BUTTON, FIGHT_BUTTON, FIGHT_BUTTON]
     bot._deploy_formation.assert_not_called()
+
+
+def test_the_automatic_fight_label_is_pressed_too(bot: MagicMock) -> None:
+    # Later stages show "Tự Động Chiến Đấu" on the fight button.
+    _show(bot, QUICK_DEPLOY_BUTTON, AUTO_FIGHT_BUTTON)
+    bot._auto_battle_step()
+    bot._auto_battle_step()
+    assert _tapped(bot) == [QUICK_DEPLOY_BUTTON, AUTO_FIGHT_BUTTON]
 
 
 def test_boss_stage_deploys_the_formation_then_fights(bot: MagicMock) -> None:
