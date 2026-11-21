@@ -53,6 +53,7 @@ _SPRITE_SIZES = (110, 130, 150, 170, 190, 210, 240)
 _ALPHA_MIN = 128
 _HASH_SIZE = 8
 _FLAT_STD = 1e-3
+_BGR_CHANNELS = 3
 
 _DEFAULT_THRESHOLD = 0.35
 _DEFAULT_MARGIN = 0.06
@@ -203,7 +204,9 @@ class CardRecognizer:
         image = self._images.get(sprite.evolution_id)
         if image is None:
             image = cv2.imread(str(sprite.image_path), cv2.IMREAD_UNCHANGED)
-            if image.shape[2] == 3:  # no alpha channel: use the whole rectangle
+            if (
+                image.shape[2] == _BGR_CHANNELS
+            ):  # no alpha channel: use the whole rectangle
                 alpha = np.full(image.shape[:2], 255, np.uint8)
                 image = np.dstack([image, alpha])
             self._images[sprite.evolution_id] = image

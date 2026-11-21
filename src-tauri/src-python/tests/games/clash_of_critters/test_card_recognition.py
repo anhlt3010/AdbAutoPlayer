@@ -6,7 +6,11 @@ import cv2
 import numpy as np
 import pytest
 from adb_auto_player.games.clash_of_critters import card_recognition as cr_module
-from adb_auto_player.games.clash_of_critters.battle_layout import card_box, tray_slots
+from adb_auto_player.games.clash_of_critters.battle_layout import (
+    ELEMENT_ICON_BOX,
+    card_box,
+    tray_slots,
+)
 from adb_auto_player.games.clash_of_critters.card_recognition import (
     CardRecognizer,
     RecognitionCache,
@@ -66,10 +70,6 @@ def recognized(screen: np.ndarray, tmp_path_factory) -> list[str | None]:
 
 
 def test_classify_element_of_visible_cards(screen: np.ndarray) -> None:
-    from adb_auto_player.games.clash_of_critters.battle_layout import (
-        ELEMENT_ICON_BOX,
-    )
-
     left, top, right, bottom = ELEMENT_ICON_BOX
     found = [
         classify_element(_card(screen, i)[top:bottom, left:right]) for i in range(12)
