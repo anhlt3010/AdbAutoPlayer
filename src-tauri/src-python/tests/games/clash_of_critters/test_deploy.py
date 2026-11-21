@@ -75,6 +75,7 @@ def bot() -> MagicMock:
     game._scroll_tray = MagicMock(return_value=False)
     game._scan_owned = MagicMock(return_value=set())
     game._select_element = MagicMock()
+    game._get_recognizer = MagicMock()
     game._wait_tray_stable = MagicMock()
     game._drag_card = MagicMock(side_effect=drag)
     game._field_move = MagicMock(return_value=True)
@@ -215,6 +216,16 @@ def test_filter_is_reset_even_when_nothing_is_deployed(bot: MagicMock) -> None:
     bot._scan_owned.return_value = set()
     bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),)))
     assert bot._select_element.call_args_list == [call("grass"), call(None)]
+
+
+def test_unreadable_tatari_data_is_found_before_the_field_is_cleared(
+    bot: MagicMock,
+) -> None:
+    bot._get_recognizer.side_effect = FileNotFoundError("tatari_db.json")
+    formation = Formation(STAGE, (_unit("grass-4-2", 1, 1),))
+    assert bot._deploy_formation(formation) == 0
+    bot.tap.assert_not_called()
+    bot._drag_card.assert_not_called()
 
 
 # --- dragging across a long way ----------------------------------------------------

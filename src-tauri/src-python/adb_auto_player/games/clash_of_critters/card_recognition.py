@@ -57,6 +57,7 @@ _SPRITE_SIZES = (110, 130, 150, 170, 190, 210, 240)
 _ALPHA_MIN = 128
 _FLAT_STD = 1e-3
 _BGR_CHANNELS = 3
+_GRAY_DIMENSIONS = 2
 # Background removal for sprites without an alpha channel: how much neighbouring
 # pixels may differ (per channel) while still counting as background.
 _BACKGROUND_TOLERANCE = 14
@@ -283,7 +284,7 @@ class CardRecognizer:
         self._threshold = threshold
         self._margin = margin
         self._debug_dir = debug_dir
-        self._images: dict[str, np.ndarray] = {}
+        self._images: dict[str, np.ndarray | None] = {}
 
     def recognize(self, card_bgr: np.ndarray) -> str | None:
         """Recognize one tray card.
@@ -301,7 +302,8 @@ class CardRecognizer:
             return None
 
         known = self._templates.match(card_bgr, element)
-        if known is not None:
+        # A stray file in the template folder must not become an evolution id.
+        if known is not None and self._db.get(known) is not None:
             return known
         result = self._match(card_bgr, element)
         if result is None:
@@ -314,13 +316,19 @@ class CardRecognizer:
         self._templates.save(result, card_bgr)
         return result
 
-    def _load(self, sprite: Sprite) -> np.ndarray:
-        image = self._images.get(sprite.evolution_id)
+    def _load(self, sprite: Sprite) -> np.ndarray | None:
+        """Read a sprite as BGRA, or None if its file cannot be read."""
+        if sprite.evolution_id in self._images:
+            return self._images[sprite.evolution_id]
+        image = cv2.imread(str(sprite.image_path), cv2.IMREAD_UNCHANGED)
         if image is None:
-            image = cv2.imread(str(sprite.image_path), cv2.IMREAD_UNCHANGED)
+            logging.warning(f"Cannot read the sprite {sprite.image_path}, skipping it.")
+        else:
+            if image.ndim == _GRAY_DIMENSIONS:
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
             if image.shape[2] == _BGR_CHANNELS:  # no alpha channel
                 image = np.dstack([image, _alpha_from_background(image)])
-            self._images[sprite.evolution_id] = image
+        self._images[sprite.evolution_id] = image
         return image
 
     def _match(self, card_bgr: np.ndarray, element: str | None) -> str | None:
@@ -372,6 +380,8 @@ class CardRecognizer:
         """Score a sprite on the card by outline and by colour."""
         candidate = _Candidate(sprite)
         image = self._load(sprite)
+        if image is None:
+            return candidate
         height, width = image.shape[:2]
         th, tw = template.shape
         for long_side in _SPRITE_SIZES:

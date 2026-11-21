@@ -27,9 +27,12 @@ class AutoBattleSettings(BaseModel):
         description="How long to wait for the game to load after restarting it.",
     )
     idle_limit_seconds: IdleLimitSeconds = Field(
-        default=120,
+        default=300,
         title="Idle Limit (seconds)",
-        description="Stop when no known screen was seen for this long.",
+        description=(
+            "Stop when no known screen was seen for this long. A fight counts as an "
+            "unknown screen, so this must be longer than the longest fight."
+        ),
     )
     max_formation_attempts: FormationAttempts = Field(
         default=3,

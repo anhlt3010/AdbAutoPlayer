@@ -34,13 +34,27 @@ RETRY_BUTTON = "retry_button.png"  # "Thử Lại"
 _SCREENS = [DEFEAT_TITLE, QUICK_DEPLOY_BUTTON, STAGE_MAP_MARKER, HUB_BATTLE_BUTTON]
 
 
+_PHASE_QUICK = "quick"  # Quick Deploy was pressed on this preparation screen
+_PHASE_FORMATION = "formation"  # the formation was deployed on this one
+
+
 class AutoBattleMixin(DeployMixin):
     """The screen state machine of the auto battle."""
 
-    _quick_deployed: bool = False
+    # What was done on the current preparation screen: nothing yet (None), Quick
+    # Deploy (_PHASE_QUICK) or the formation (_PHASE_FORMATION). The screen is
+    # polled every few seconds, so a visit lasts several steps.
+    _prep_phase: str | None = None
     _formation_stage: StageId | None = None
     _formation_attempts: int = 0
+    # Preparation screens after a loss, counted per stage whatever way they are
+    # played (formation, Quick Deploy or an unreadable stage).
+    _loss_stage: StageId | None = None
+    _lost_visits: int = 0
     _idle_since: float | None = None
+    # The same known screen seen again and again means the taps do nothing.
+    _same_screen: str | None = None
+    _same_screen_polls: int = 0
 
     def _tap_common_button(self) -> bool:
         """Tap a button that may appear on any screen (see ``ClashOfCritters``)."""
@@ -49,10 +63,14 @@ class AutoBattleMixin(DeployMixin):
     def _run_auto_battle(self) -> None:
         """Play until the game stops making progress or an attempt limit is hit."""
         self.open_eyes(device_streaming=False)
-        self._quick_deployed = False
+        self._prep_phase = None
         self._formation_stage = None
         self._formation_attempts = 0
+        self._loss_stage = None
+        self._lost_visits = 0
         self._idle_since = None
+        self._same_screen = None
+        self._same_screen_polls = 0
         while self._auto_battle_step():
             sleep(self.settings.auto_battle.poll_interval_seconds)
         logging.info("Auto battle stopped.")
@@ -77,18 +95,21 @@ class AutoBattleMixin(DeployMixin):
 
         if self._tap_common_button():
             self._idle_since = None
+            self._same_screen = None
             return True
 
         screen = self.find_any_template(_SCREENS)
         if screen is None:
             return self._wait_on_unknown_screen()
         self._idle_since = None
+        if self._is_stuck(screen.template):
+            return False
 
         if screen.template == QUICK_DEPLOY_BUTTON:
             return self._prepare_and_fight(screen)
 
         # Any other known screen means the next preparation screen is a new visit.
-        self._quick_deployed = False
+        self._prep_phase = None
         if screen.template == DEFEAT_TITLE:
             retry = self.find_any_template([RETRY_BUTTON])
             if retry is not None:
@@ -102,15 +123,50 @@ class AutoBattleMixin(DeployMixin):
             self.tap(screen, log=False)
         return True
 
+    def _is_stuck(self, template: str) -> bool:
+        """Tell whether one known screen was seen poll after poll for too long."""
+        if template != self._same_screen:
+            self._same_screen = template
+            self._same_screen_polls = 0
+            return False
+        self._same_screen_polls += 1
+        battle = self.settings.auto_battle
+        limit = max(
+            1, battle.idle_limit_seconds // max(1, battle.poll_interval_seconds)
+        )
+        if self._same_screen_polls >= limit:
+            logging.warning(f"Still on the same screen ({template}), stopping.")
+            return True
+        return False
+
     def _wait_on_unknown_screen(self) -> bool:
         """Count the time without a known screen (a fight, a win screen, ...)."""
-        self._quick_deployed = False
+        self._prep_phase = None
+        self._same_screen = None
         now = monotonic()
         if self._idle_since is None:
             self._idle_since = now
             return True
         if now - self._idle_since >= self.settings.auto_battle.idle_limit_seconds:
             logging.warning("No known screen for a long time, stopping.")
+            return False
+        return True
+
+    def _count_lost_visit(self, stage: StageId | None, lost_before: bool) -> bool:
+        """Count a preparation screen that follows a loss.
+
+        Returns:
+            False once the stage was lost more often than the limit allows.
+        """
+        if stage != self._loss_stage:
+            self._loss_stage = stage
+            self._lost_visits = 0
+        if not lost_before:
+            return True
+        self._lost_visits += 1
+        limit = self.settings.auto_battle.max_formation_attempts
+        if self._lost_visits > limit:
+            logging.warning(f"Stage {stage} was lost {self._lost_visits} times.")
             return False
         return True
 
@@ -123,8 +179,16 @@ class AutoBattleMixin(DeployMixin):
         Returns:
             False when the auto battle should stop.
         """
+        if self._prep_phase is not None:
+            # This visit already started its fight: the fight just has not begun
+            # yet (a slow transition). Press Fight again, never deploy again.
+            self._tap_fight()
+            return True
+
         stage = self._read_stage()
         lost_before = self.find_any_template([PREP_REPORT_ICON]) is not None
+        if not self._count_lost_visit(stage, lost_before):
+            return False
         wants_formation = lost_before or (stage is not None and is_boss_stage(stage))
 
         formation = None
@@ -138,7 +202,10 @@ class AutoBattleMixin(DeployMixin):
             logging.warning("Stage unreadable, using Quick Deploy.")
 
         if formation is None or stage is None:
-            return self._quick_deploy_and_fight(quick_deploy_button)
+            logging.info("Quick Deploy.")
+            self.tap(quick_deploy_button, log=False)
+            self._prep_phase = _PHASE_QUICK
+            return True
 
         if stage != self._formation_stage:
             self._formation_stage = stage
@@ -153,15 +220,7 @@ class AutoBattleMixin(DeployMixin):
             logging.warning("No tatari could be deployed, stopping.")
             return False
         self._formation_attempts += 1
-        self._tap_fight()
-        return True
-
-    def _quick_deploy_and_fight(self, quick_deploy_button: object) -> bool:
-        if not self._quick_deployed:
-            logging.info("Quick Deploy.")
-            self.tap(quick_deploy_button, log=False)
-            self._quick_deployed = True
-            return True
+        self._prep_phase = _PHASE_FORMATION
         self._tap_fight()
         return True
 

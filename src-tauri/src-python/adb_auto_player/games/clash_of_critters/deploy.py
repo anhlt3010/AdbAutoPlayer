@@ -316,6 +316,12 @@ class DeployMixin(Game):
             The number of tatari on the field afterwards (0 if none could be
             placed).
         """
+        try:  # before the field is touched: unreadable data must not cost a clear
+            self._get_recognizer()
+        except (OSError, KeyError, ValueError, TypeError) as error:
+            logging.error(f"Cannot read the tatari data ({error!r}); not deploying.")
+            return 0
+
         self.tap(CLEAR_FIELD_POINT, log=False)
         sleep(_CLEAR_SETTLE_SECONDS)
         count = self._read_deployed_count()

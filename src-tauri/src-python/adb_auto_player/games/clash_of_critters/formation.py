@@ -8,6 +8,7 @@ from pathlib import Path
 
 _BOSS_EVERY = 10
 _MAX_SHARE_HOPS = 5
+_FIELD_SIZE = 5
 # A stage like "15-50"; digits must not touch other digits or letters, so an OCR
 # misread such as "15-5O" is rejected instead of read as "15-5".
 _STAGE_PATTERN = re.compile(r"(?<!\d)(\d{1,2})\s*-\s*(\d{1,3})(?![\dA-Za-z])")
@@ -68,9 +69,25 @@ class Formation:
 def _read_stage_file(root: Path, stage: StageId) -> dict | None:
     path = root / str(stage.chapter) / f"{stage}.json"
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
+    return data if isinstance(data, dict) else None
+
+
+def _parse_unit(raw: dict) -> FormationUnit:
+    """Build a unit from its JSON; raises if a key is missing or a value is bad."""
+    unit = FormationUnit(
+        row=int(raw["row"]),
+        col=int(raw["col"]),
+        tatari_id=str(raw["tatari_id"]),
+        evolution_id=str(raw["evolution_id"]),
+        tier=int(raw["tier"]),
+        glitter=bool(raw.get("glitter", False)),
+    )
+    if not (1 <= unit.row <= _FIELD_SIZE and 1 <= unit.col <= _FIELD_SIZE):
+        raise ValueError(f"Cell ({unit.row}, {unit.col}) is outside the field.")
+    return unit
 
 
 def load_formation(root: Path, stage: StageId) -> Formation | None:
@@ -91,20 +108,12 @@ def load_formation(root: Path, stage: StageId) -> Formation | None:
             return None
         units = data.get("units") or []
         if units:
-            return Formation(
-                stage,
-                tuple(
-                    FormationUnit(
-                        row=int(u["row"]),
-                        col=int(u["col"]),
-                        tatari_id=str(u["tatari_id"]),
-                        evolution_id=str(u["evolution_id"]),
-                        tier=int(u["tier"]),
-                        glitter=bool(u.get("glitter", False)),
-                    )
-                    for u in units
-                ),
-            )
+            try:
+                parsed = tuple(_parse_unit(u) for u in units)
+            except (KeyError, TypeError, ValueError, AttributeError) as error:
+                logging.warning(f"Formation of stage {current} is malformed: {error!r}")
+                return None
+            return Formation(stage, parsed)
         target = parse_stage(str(data.get("shared_with", "")))
         if target is None or target == current:
             return None

@@ -87,3 +87,24 @@ def test_real_boss_file_loads() -> None:
     assert result is not None
     assert result.units
     assert all(1 <= u.row <= 5 and 1 <= u.col <= 5 for u in result.units)
+
+
+@pytest.mark.parametrize(
+    "units",
+    [
+        [{"row": 1, "col": 1}],  # keys missing
+        [{**_unit(1, 1), "row": "x"}],  # not a number
+        [_unit(0, 1)],  # outside the 5x5 field
+        [_unit(1, 6)],
+        ["not a unit"],
+    ],
+)
+def test_a_malformed_unit_means_no_formation(tmp_path: Path, units: list) -> None:
+    _write(tmp_path, "15-1", "15-1", units)
+    assert load_formation(tmp_path, StageId(15, 1)) is None
+
+
+def test_a_file_that_is_not_an_object_means_no_formation(tmp_path: Path) -> None:
+    (tmp_path / "15").mkdir()
+    (tmp_path / "15" / "15-1.json").write_text("[1, 2, 3]", encoding="utf-8")
+    assert load_formation(tmp_path, StageId(15, 1)) is None

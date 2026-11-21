@@ -1,5 +1,7 @@
 """Tests for recognizing tray cards from a real preparation-screen capture."""
 
+import json
+import shutil
 from pathlib import Path
 
 import cv2
@@ -246,3 +248,60 @@ def test_glitter_card_of_a_sprite_without_alpha_is_recognized(tmp_path: Path) ->
     result = _fresh_recognizer(tmp_path).recognize(_data_card("card_water_13.png"))
     assert result is not None
     assert split_evolution_id(result)[0] == "water-13"
+
+
+# --- damaged data (review #4) ---------------------------------------------------
+
+
+def _db_with_broken_sprites(tmp_path: Path) -> TatariDb:
+    """A tiny db: a real sprite, one whose file is missing and a grayscale one."""
+    root = tmp_path / "db"
+    (root / "images").mkdir(parents=True)
+    shutil.copy(DB_ROOT / "images/water-3-3.png", root / "images/water-3-3.png")
+    gray = np.full((60, 60), 128, np.uint8)
+    cv2.imwrite(str(root / "images" / "water-9-1.png"), gray)
+
+    def entry(evo: str, stage: int) -> dict:
+        return {
+            "stage": stage,
+            "name": evo,
+            "normal": {"id": evo, "image": f"images/{evo}.png"},
+            "glitter": None,
+        }
+
+    data = {
+        "source": "test",
+        "tataris": [
+            {
+                "tatari_id": f"water-{n}",
+                "type": "Water",
+                "has_glitter": False,
+                "evolutions": [entry(f"water-{n}-{s}", s)],
+            }
+            for n, s in ((3, 3), (9, 1), (1, 1))
+        ],
+    }
+    (root / "tatari_db.json").write_text(json.dumps(data), encoding="utf-8")
+    return TatariDb.load(root)
+
+
+def test_a_missing_or_grayscale_sprite_does_not_stop_recognition(
+    tmp_path: Path,
+) -> None:
+    recognizer = CardRecognizer(
+        _db_with_broken_sprites(tmp_path), CardTemplateStore(tmp_path / "t")
+    )
+    card = _data_card("card_water_7.png")  # water-1-1's file is missing
+    result = recognizer.recognize(card)
+    assert result is None or result.startswith("water-")
+
+
+def test_a_template_of_an_unknown_evolution_is_ignored(
+    screen: np.ndarray, tmp_path: Path
+) -> None:
+    store = CardTemplateStore(tmp_path)
+    store.save("water-99-9", _card(screen, 2))  # not in tatari_db
+    recognizer = _Spy(TatariDb.load(DB_ROOT), store)
+    recognizer.result = "water-3-3"
+    assert recognizer.recognize(_card(screen, 2)) == "water-3-3"
+    assert recognizer.calls == ["water"]  # image recognition ran

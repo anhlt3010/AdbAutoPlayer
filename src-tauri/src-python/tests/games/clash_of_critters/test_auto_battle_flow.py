@@ -69,6 +69,18 @@ def bot() -> MagicMock:
     return game
 
 
+class _Clock:
+    now = 1000.0
+
+
+@pytest.fixture(autouse=True)
+def clock():
+    """A clock the tests move by hand."""
+    fake = _Clock()
+    with patch.object(auto_battle, "monotonic", side_effect=lambda: fake.now):
+        yield fake
+
+
 @pytest.fixture(autouse=True)
 def no_sleep():
     """Never really sleep; expose the patched sleep to tests."""
@@ -202,7 +214,10 @@ def test_nothing_placed_means_no_fight_and_stop(bot: MagicMock) -> None:
 def _boss_visit(bot: MagicMock) -> bool:
     bot._read_stage.return_value = BOSS
     _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
-    return bot._auto_battle_step()
+    result = bot._auto_battle_step()
+    _show(bot)  # the fight itself: no known screen
+    bot._auto_battle_step()
+    return result
 
 
 def test_formation_attempts_are_capped(bot: MagicMock) -> None:
@@ -237,20 +252,108 @@ def test_quick_deploy_is_pressed_again_on_the_next_visit(bot: MagicMock) -> None
 # --- unknown screens (for example a won fight) ---------------------------------------
 
 
-def test_stops_after_the_idle_limit_on_an_unknown_screen(bot: MagicMock) -> None:
-    clock = iter([1000.0, 1000.0 + IDLE_LIMIT - 1, 1000.0 + IDLE_LIMIT])
-    with patch.object(auto_battle, "monotonic", side_effect=lambda: next(clock)):
-        assert bot._auto_battle_step() is True  # starts the idle timer
-        assert bot._auto_battle_step() is True  # still within the limit
-        assert bot._auto_battle_step() is False  # limit reached
+def test_stops_after_the_idle_limit_on_an_unknown_screen(
+    bot: MagicMock, clock: _Clock
+) -> None:
+    assert bot._auto_battle_step() is True  # starts the idle timer
+    clock.now += IDLE_LIMIT - 1
+    assert bot._auto_battle_step() is True  # still within the limit
+    clock.now += 1
+    assert bot._auto_battle_step() is False  # limit reached
 
 
-def test_a_known_screen_restarts_the_idle_timer(bot: MagicMock) -> None:
-    clock = iter([1000.0, 5000.0, 5000.0 + IDLE_LIMIT - 1])
-    with patch.object(auto_battle, "monotonic", side_effect=lambda: next(clock)):
-        bot._auto_battle_step()  # unknown, timer starts at 1000
+def test_a_known_screen_restarts_the_idle_timer(bot: MagicMock, clock: _Clock) -> None:
+    bot._auto_battle_step()  # unknown: the idle timer starts
+    clock.now += IDLE_LIMIT - 1
+    _show(bot, HUB_BATTLE_BUTTON)
+    bot._auto_battle_step()  # a known screen
+    _show(bot)
+    clock.now += IDLE_LIMIT - 1
+    assert bot._auto_battle_step() is True  # the timer started again just now
+    clock.now += IDLE_LIMIT - 1
+    assert bot._auto_battle_step() is True
+
+
+# --- a stage that keeps losing must not be played forever (review #1) ---------------
+
+
+def _lost_visit(bot: MagicMock, stage: StageId | None) -> bool:
+    """A preparation screen after a loss, handled up to the fight, then the fight."""
+    bot._read_stage.return_value = stage
+    _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON, PREP_REPORT_ICON)
+    result = bot._auto_battle_step()
+    if result:
+        bot._auto_battle_step()  # the fight button
+    _show(bot)
+    bot._auto_battle_step()  # the fight itself
+    return result
+
+
+def test_a_lost_stage_without_a_formation_stops_after_the_limit(
+    bot: MagicMock, a_formation: MagicMock
+) -> None:
+    a_formation.return_value = None
+    results = [_lost_visit(bot, NORMAL) for _ in range(MAX_ATTEMPTS + 1)]
+    assert results == [True] * MAX_ATTEMPTS + [False]
+
+
+def test_an_unreadable_stage_that_keeps_losing_stops_too(bot: MagicMock) -> None:
+    results = [_lost_visit(bot, None) for _ in range(MAX_ATTEMPTS + 1)]
+    assert results == [True] * MAX_ATTEMPTS + [False]
+
+
+def test_lost_visits_start_again_on_a_new_stage(
+    bot: MagicMock, a_formation: MagicMock
+) -> None:
+    a_formation.return_value = None
+    for _ in range(MAX_ATTEMPTS):
+        _lost_visit(bot, NORMAL)
+    assert _lost_visit(bot, StageId(15, 48)) is True
+
+
+# --- a known screen that never changes (review #2) ----------------------------------
+
+POLLS_BEFORE_STUCK = IDLE_LIMIT // 2  # the default poll interval is 2 seconds
+
+
+def _steps_until_stop(bot: MagicMock) -> int:
+    """How many steps until the auto battle stops (a few more than the limit)."""
+    for count in range(1, POLLS_BEFORE_STUCK * 3):
+        if not bot._auto_battle_step():
+            return count
+    return -1
+
+
+def test_stops_when_the_defeat_screen_cannot_be_left(bot: MagicMock) -> None:
+    _show(bot, DEFEAT_TITLE)  # the retry button is not found
+    assert POLLS_BEFORE_STUCK <= _steps_until_stop(bot) <= POLLS_BEFORE_STUCK + 1
+
+
+def test_stops_when_the_stage_map_tap_does_nothing(bot: MagicMock) -> None:
+    _show(bot, STAGE_MAP_MARKER)
+    assert POLLS_BEFORE_STUCK <= _steps_until_stop(bot) <= POLLS_BEFORE_STUCK + 1
+
+
+def test_stops_when_the_fight_button_is_never_found(bot: MagicMock) -> None:
+    _show(bot, QUICK_DEPLOY_BUTTON)
+    assert POLLS_BEFORE_STUCK <= _steps_until_stop(bot) <= POLLS_BEFORE_STUCK + 1
+
+
+def test_changing_screens_do_not_count_as_stuck(bot: MagicMock) -> None:
+    for _ in range(POLLS_BEFORE_STUCK * 2):
         _show(bot, HUB_BATTLE_BUTTON)
-        bot._auto_battle_step()  # known screen: no clock needed
-        _show(bot)
-        assert bot._auto_battle_step() is True  # unknown again, timer restarts
         assert bot._auto_battle_step() is True
+        _show(bot, STAGE_MAP_MARKER)
+        assert bot._auto_battle_step() is True
+
+
+# --- one preparation visit is handled once (review #11) -----------------------------
+
+
+def test_the_formation_is_not_deployed_twice_in_one_visit(bot: MagicMock) -> None:
+    bot._read_stage.return_value = BOSS
+    _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
+    bot._auto_battle_step()
+    bot._auto_battle_step()  # the preparation screen is still there (slow start)
+    bot._deploy_formation.assert_called_once()
+    assert _tapped(bot) == [FIGHT_BUTTON, FIGHT_BUTTON]

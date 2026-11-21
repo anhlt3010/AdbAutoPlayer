@@ -12,7 +12,7 @@ def test_defaults() -> None:
     settings = AutoBattleSettings()
     assert settings.poll_interval_seconds == 2
     assert settings.startup_wait_seconds == 30
-    assert settings.idle_limit_seconds == 120
+    assert settings.idle_limit_seconds == 300
     assert settings.max_formation_attempts == 3
 
 
