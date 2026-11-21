@@ -2,6 +2,7 @@
 
 import logging
 import re
+from dataclasses import dataclass
 from time import sleep
 
 import numpy as np
@@ -60,6 +61,27 @@ _SCROLL_FROM_X, _SCROLL_TO_X = 900, 400
 # Mean absolute pixel difference of the tray that counts as "the tray moved".
 _TRAY_MOVED_MIN_DIFF = 3.0
 _COUNTER_PATTERN = re.compile(r"(\d+)\s*/\s*\d+")
+# Rounds that try again the units that could not be placed (the field is not cleared).
+_FILL_ATTEMPTS = 5
+
+
+@dataclass(frozen=True)
+class DeployResult:
+    """What a deployment left on the field.
+
+    Attributes:
+        count: Tatari on the field (the counter, or the number placed if the
+            counter cannot be read).
+        needed: Cells of the formation that have an owned tatari to put on them.
+    """
+
+    count: int
+    needed: int
+
+    @property
+    def complete(self) -> bool:
+        """Whether every cell that could be filled has a tatari."""
+        return self.count >= self.needed
 
 
 class DeployMixin(Game):
@@ -170,7 +192,7 @@ class DeployMixin(Game):
             )
             if not self._scroll_tray(True):
                 break
-        logging.info(f"Recognized {len(owned)} owned tatari in the tray.")
+        logging.debug(f"Recognized {len(owned)} owned tatari in the tray.")
         return owned
 
     def _drag_card(self, card: Point, cell: Point) -> None:
@@ -273,17 +295,20 @@ class DeployMixin(Game):
                 card = self._find_card(evolution_id) or card
         return False
 
-    def _place_wanted(self, wanted: dict[str, FormationUnit]) -> int:
+    def _place_wanted(
+        self, wanted: dict[str, FormationUnit]
+    ) -> dict[str, FormationUnit]:
         """Walk back through the tray and drag the wanted cards to their cells.
 
         Args:
             wanted: Evolution id of each card to place, with its formation unit.
 
         Returns:
-            How many cards were placed.
+            The cards that could not be placed (not found in the tray, or the
+            drag did not work); empty when everything was placed.
         """
         wanted = dict(wanted)
-        placed = 0
+        failed: dict[str, FormationUnit] = {}
         while True:
             for card, evolution_id in self._visible_cards():
                 unit = wanted.get(evolution_id or "")
@@ -293,35 +318,43 @@ class DeployMixin(Game):
                 logging.debug(
                     f"Placing {evolution_id} at row {unit.row}, col {unit.col}."
                 )
-                if self._place_card(card, unit.row, unit.col, evolution_id or ""):
-                    placed += 1
-                else:
+                if not self._place_card(card, unit.row, unit.col, evolution_id or ""):
                     logging.warning(f"Could not place {evolution_id}.")
+                    failed[evolution_id or ""] = unit
             if not wanted or not self._scroll_tray(False):
                 break
         for evolution_id in wanted:
             logging.warning(f"{evolution_id} was not found in the tray.")
-        return placed
+        return {**failed, **wanted}
 
-    def _deploy_formation(self, formation: Formation) -> int:
+    def _units_on_field(self, needed: int, missing: dict[str, dict]) -> int:
+        """Count the tatari on the field (the placed ones if the counter fails)."""
+        count = self._read_deployed_count()
+        if count is not None:
+            return count
+        return needed - sum(len(units) for units in missing.values())
+
+    def _deploy_formation(self, formation: Formation) -> DeployResult:
         """Clear the field and deploy a formation one element at a time.
 
         For each element of the formation the tray is filtered to that element
         (a short tray), scanned to its end to see what the player owns, and then
         walked back to its start while the wanted cards are dragged to their cells.
+        Units that could not be placed are tried again for up to _FILL_ATTEMPTS
+        rounds, without clearing the field.
 
         Args:
             formation: The formation to deploy.
 
         Returns:
-            The number of tatari on the field afterwards (0 if none could be
-            placed).
+            The tatari on the field and how many the formation can have (0 and 0
+            if the tatari data cannot be read).
         """
         try:  # before the field is touched: unreadable data must not cost a clear
             self._get_recognizer()
         except (OSError, KeyError, ValueError, TypeError) as error:
             logging.error(f"Cannot read the tatari data ({error!r}); not deploying.")
-            return 0
+            return DeployResult(0, 0)
 
         self.tap(CLEAR_FIELD_POINT, log=False)
         sleep(_CLEAR_SETTLE_SECONDS)
@@ -340,21 +373,48 @@ class DeployMixin(Game):
         for unit in formation.units[:MAX_DEPLOYED]:
             by_element.setdefault(unit.tatari_id.split("-")[0], []).append(unit)
 
-        placed = 0
+        needed = 0
+        missing: dict[str, dict[str, FormationUnit]] = {}
         for element, units in by_element.items():
             self._select_element(element)
+            owned = self._scan_owned()
             plan = plan_deployment(
-                Formation(formation.stage, tuple(units)),
-                self._scan_owned(),
-                MAX_DEPLOYED,
+                Formation(formation.stage, tuple(units)), owned, MAX_DEPLOYED
             )
             wanted = {p.evolution_id: p.unit for p in plan if p.evolution_id}
-            placed += self._place_wanted(wanted)
-        self._select_element(None)
+            absent = [p.unit.evolution_id for p in plan if not p.evolution_id]
+            summary = (
+                f"Hệ {element}: nhận diện {len(owned)} tatari trong tray, "
+                f"có {len(wanted)}/{len(plan)} tatari cần"
+            )
+            if absent:
+                logging.warning(f"{summary}, thiếu {', '.join(absent)}")
+            else:
+                logging.info(f"{summary}, đủ {len(plan)}/{len(plan)}")
+            needed += len(wanted)
+            missing[element] = self._place_wanted(wanted)
+            logging.info(
+                f"Hệ {element}: đã xếp {len(wanted) - len(missing[element])}"
+                f"/{len(wanted)}"
+            )
 
-        count = self._read_deployed_count()
-        logging.info(
-            f"Deployed {count if count is not None else placed} of "
-            f"{len(formation.units)} formation units."
-        )
-        return count if count is not None else placed
+        count = self._units_on_field(needed, missing)
+        for fill_round in range(1, _FILL_ATTEMPTS + 1):
+            if count >= needed or not any(missing.values()):
+                break
+            logging.warning(
+                f"Bù quân lần {fill_round}/{_FILL_ATTEMPTS}: còn thiếu "
+                f"{needed - count} quân."
+            )
+            for element, wanted in list(missing.items()):
+                if not wanted:
+                    continue
+                self._select_element(element)
+                self._scan_owned()  # leaves the tray at its end
+                missing[element] = self._place_wanted(wanted)
+            count = self._units_on_field(needed, missing)
+        self._select_element(None)
+        self._deployed_count = count
+
+        logging.info(f"Đã xếp {count}/{needed} quân của đội hình.")
+        return DeployResult(count, needed)
