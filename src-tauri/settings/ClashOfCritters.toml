@@ -1,8 +1,9 @@
 [auto_battle]
 poll_interval_seconds = 2
 startup_wait_seconds = 30
-idle_limit_seconds = 120
+idle_limit_seconds = 300
 max_formation_attempts = 3
+keep_formation_after_win = false
 
 [artifact_adventure]
 min_win_rate_percent = 40

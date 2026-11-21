@@ -42,6 +42,14 @@ class AutoBattleSettings(BaseModel):
             "stopping."
         ),
     )
+    keep_formation_after_win: bool = Field(
+        default=False,
+        title="Keep Formation After A Win",
+        description=(
+            "After a win with a prepared formation (a boss), leave the field as it "
+            "is for the next normal stages instead of pressing Quick Deploy."
+        ),
+    )
 
 
 class ArtifactAdventureSettings(BaseModel):

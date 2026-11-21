@@ -14,6 +14,7 @@ def test_defaults() -> None:
     assert settings.startup_wait_seconds == 30
     assert settings.idle_limit_seconds == 300
     assert settings.max_formation_attempts == 3
+    assert settings.keep_formation_after_win is False
 
 
 def test_bounds_rejected() -> None:

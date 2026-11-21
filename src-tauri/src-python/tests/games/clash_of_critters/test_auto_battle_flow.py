@@ -299,6 +299,21 @@ def _boss_fight_and_win(bot: MagicMock) -> None:
     bot._auto_battle_step()
 
 
+def _enable_keeping(bot: MagicMock) -> None:
+    """The option is off by default; the tests of keeping the field turn it on."""
+    bot.settings.auto_battle.keep_formation_after_win = True
+
+
+def test_by_default_a_normal_stage_after_a_boss_win_uses_quick_deploy(
+    bot: MagicMock,
+) -> None:
+    _boss_fight_and_win(bot)
+    bot.tap.reset_mock()
+    _next_stage(bot)
+    assert _tapped(bot) == [QUICK_DEPLOY_BUTTON]
+    assert bot._deploy_formation.call_count == 1
+
+
 def _next_stage(bot: MagicMock, stage: StageId = NORMAL) -> None:
     bot._read_stage.return_value = stage
     _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
@@ -308,6 +323,7 @@ def _next_stage(bot: MagicMock, stage: StageId = NORMAL) -> None:
 def test_after_a_win_with_the_formation_the_next_stage_keeps_it(
     bot: MagicMock,
 ) -> None:
+    _enable_keeping(bot)
     _boss_fight_and_win(bot)
     bot.tap.reset_mock()
     _next_stage(bot)
@@ -316,6 +332,7 @@ def test_after_a_win_with_the_formation_the_next_stage_keeps_it(
 
 
 def test_the_formation_is_kept_for_every_following_stage(bot: MagicMock) -> None:
+    _enable_keeping(bot)
     _boss_fight_and_win(bot)
     bot.tap.reset_mock()
     for number in (51, 52, 53):
@@ -345,12 +362,14 @@ def test_after_a_win_with_quick_deploy_the_next_stage_uses_it_again(
 
 
 def test_a_new_boss_deploys_its_own_formation(bot: MagicMock) -> None:
+    _enable_keeping(bot)
     _boss_fight_and_win(bot)
     _next_stage(bot, StageId(15, 60))
     assert bot._deploy_formation.call_count == 2
 
 
 def test_a_loss_ends_keeping_the_formation(bot: MagicMock) -> None:
+    _enable_keeping(bot)
     _boss_fight_and_win(bot)
     _next_stage(bot)  # kept formation, the fight ...
     _show(bot, DEFEAT_TITLE, RETRY_BUTTON)
@@ -364,6 +383,7 @@ def test_a_loss_ends_keeping_the_formation(bot: MagicMock) -> None:
 
 
 def test_an_empty_field_is_not_kept(bot: MagicMock) -> None:
+    _enable_keeping(bot)
     _boss_fight_and_win(bot)
     bot._read_deployed_count.return_value = 0
     bot.tap.reset_mock()

@@ -267,6 +267,8 @@ class AutoBattleMixin(DeployMixin):
             False if there is nothing to keep (no win with a formation before, or
             the field is empty).
         """
+        if not self.settings.auto_battle.keep_formation_after_win:
+            return False
         if not self._keep_field or not self._field_has_units():
             return False
         logging.info("Keeping the formation of the last win.")
