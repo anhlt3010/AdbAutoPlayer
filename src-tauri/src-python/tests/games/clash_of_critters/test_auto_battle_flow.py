@@ -1,5 +1,6 @@
 """Tests for the Clash of Critters auto battle state machine."""
 
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -11,6 +12,8 @@ from adb_auto_player.games.clash_of_critters.auto_battle import (
     DEFEAT_TITLE,
     FIGHT_BUTTON,
     HUB_BATTLE_BUTTON,
+    PINBALL_REWARD_CLOSE,
+    PINBALL_REWARD_GEM,
     PREP_REPORT_ICON,
     QUICK_DEPLOY_BUTTON,
     RETRY_BUTTON,
@@ -640,3 +643,38 @@ def test_the_formation_is_not_deployed_twice_in_one_visit(bot: MagicMock) -> Non
     bot._auto_battle_step()  # the preparation screen is still there (slow start)
     bot._deploy_formation.assert_called_once()
     assert _tapped(bot) == [FIGHT_BUTTON, FIGHT_BUTTON]
+
+
+# --- the pinball reward upgrade screen (it can open after a boss stage) ---------------
+
+
+def test_the_pinball_reward_templates_exist() -> None:
+    templates = Path(auto_battle.__file__).parent / "templates"
+    assert (templates / PINBALL_REWARD_GEM).is_file()
+    assert (templates / PINBALL_REWARD_CLOSE).is_file()
+
+
+def test_the_pinball_reward_screen_is_closed_with_the_x(bot: MagicMock) -> None:
+    _show(bot, PINBALL_REWARD_GEM, PINBALL_REWARD_CLOSE)
+    assert bot._auto_battle_step() is True
+    assert _tapped(bot) == [PINBALL_REWARD_CLOSE]
+
+
+def test_the_x_alone_is_not_tapped(bot: MagicMock) -> None:
+    # The bottom bar with the X also shows on the defeat and stage map screens.
+    _show(bot, DEFEAT_TITLE, RETRY_BUTTON, PINBALL_REWARD_CLOSE)
+    bot._auto_battle_step()
+    assert _tapped(bot) == [RETRY_BUTTON]
+
+
+def test_the_reward_screen_without_the_x_taps_nothing(bot: MagicMock) -> None:
+    _show(bot, PINBALL_REWARD_GEM)
+    bot._auto_battle_step()
+    bot.tap.assert_not_called()
+
+
+def test_a_common_button_comes_before_the_reward_screen(bot: MagicMock) -> None:
+    bot._tap_common_button.return_value = True
+    _show(bot, PINBALL_REWARD_GEM, PINBALL_REWARD_CLOSE)
+    assert bot._auto_battle_step() is True
+    bot.tap.assert_not_called()

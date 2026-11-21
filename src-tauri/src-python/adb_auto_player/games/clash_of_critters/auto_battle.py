@@ -37,6 +37,12 @@ DEFEAT_TITLE = "defeat_title.png"  # "Thất Bại"
 RETRY_BUTTON = "retry_button.png"  # "Thử Lại"
 VICTORY_TITLE = "victory_title.png"  # "CHIẾN THẮNG!"
 CONTINUE_BUTTON = "continue_button.png"  # "Tiếp Tục", back to the stage map
+# Pinball reward upgrade screen, which can open after a boss stage. It is recognised
+# by the gem icon in the header of its reward cards (the number next to it changes);
+# the "X" of the bottom bar closes it. That bar shows on other screens too (defeat,
+# stage map, ...), so the X alone is never tapped.
+PINBALL_REWARD_GEM = "pinball_reward_gem.png"
+PINBALL_REWARD_CLOSE = "pinball_reward_close.png"
 
 _SCREENS = [
     DEFEAT_TITLE,
@@ -118,7 +124,7 @@ class AutoBattleMixin(DeployMixin):
             sleep(self.settings.auto_battle.startup_wait_seconds)
             return True
 
-        if self._tap_common_button():
+        if self._tap_common_button() or self._close_pinball_reward_screen():
             self._idle_since = None
             self._same_screen = None
             return True
@@ -155,6 +161,21 @@ class AutoBattleMixin(DeployMixin):
         else:
             logging.info("On the camp screen, opening the stage map.")
             self.tap(screen, log=False)
+        return True
+
+    def _close_pinball_reward_screen(self) -> bool:
+        """Close the pinball reward upgrade screen with the X of the bottom bar.
+
+        Returns:
+            True if the screen was open and the X was tapped.
+        """
+        if self.find_any_template([PINBALL_REWARD_GEM]) is None:
+            return False
+        close = self.find_any_template([PINBALL_REWARD_CLOSE])
+        if close is None:
+            return False
+        logging.info("Pinball reward upgrade screen shown, closing it.")
+        self.tap(close, log=False)
         return True
 
     def _is_stuck(self, template: str) -> bool:
