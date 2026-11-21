@@ -56,10 +56,6 @@ from adb_auto_player.device.adb.adb_scanner import (
     scan_emulator_ports as scan_emulator_ports_impl,
 )
 from adb_auto_player.file_loader import SettingsLoader
-from adb_auto_player.games.clash_of_critters.formation_view import (
-    FormationViewResponse,
-    load_formation_view,
-)
 from adb_auto_player.ipc import GameGUIOptions, LogMessage
 from adb_auto_player.log import LogPreset
 from adb_auto_player.models.decorators import CacheGroup
@@ -545,28 +541,6 @@ async def scan_emulator_ports(
         lambda: ctx.run(scan_emulator_ports_impl),
     )
     return ports
-
-
-class FormationViewBody(ProfileContext):
-    stage: str | None = None
-
-
-@tauri_profile_aware_command
-async def get_formation_view(
-    app_handle: AppHandle,
-    body: FormationViewBody,
-) -> FormationViewResponse:
-    """Clash of Critters formation viewer: the formations of the typed stage.
-
-    Without a stage it reads the stage from one screenshot of the device. Never
-    sends input to the device.
-    """
-    ctx = copy_context()
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(
-        _executor,
-        lambda: ctx.run(load_formation_view, body.stage),
-    )
 
 
 @tauri_profile_aware_command
