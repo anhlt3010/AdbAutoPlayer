@@ -1,14 +1,16 @@
-"""Recognize which tatari a tray card shows, by matching the wiki sprites.
+"""Recognize which tatari a tray card shows.
 
-The card art is the same drawing as the wiki sprite, but cropped by the card and
-partly covered by the level text, the skill icon and the stars on a coloured
-background. Matching therefore compares the dark outlines (independent of the
-background colour) of the card against the sprites of the card's element, and
-only then uses colour to tell a normal sprite from its glitter twin.
+A card is first looked up among the player's own templates (crops of cards that
+were recognized before, one per evolution), which is fast. Only an unknown card
+is recognized from the wiki sprites: the card art is the same drawing as the
+sprite but cropped by the card and partly covered by the level text, the skill
+icon and the stars on a coloured background. That matching compares the dark
+outlines (independent of the background colour) of the card against the sprites
+of the card's element, and only then uses colour to tell a normal sprite from its
+glitter twin. The result is saved as a template for next time.
 """
 
 import hashlib
-import json
 import logging
 from pathlib import Path
 
@@ -47,15 +49,33 @@ _SKILL_ICON_ROWS = (6, 60)
 _SKILL_ICON_COLS = (0, 56)
 _DARK_VALUE = 100
 _SEARCH_SCALE = 0.5
+# Colours only need a coarse picture; this is much faster than the outline search.
+_COLOUR_SCALE = 0.25
 # Long side of the sprite on a card, in full-resolution pixels. The art on a card
 # is often larger than the card itself.
 _SPRITE_SIZES = (110, 130, 150, 170, 190, 210, 240)
 _ALPHA_MIN = 128
-_HASH_SIZE = 8
 _FLAT_STD = 1e-3
 _BGR_CHANNELS = 3
+# Background removal for sprites without an alpha channel: how much neighbouring
+# pixels may differ (per channel) while still counting as background.
+_BACKGROUND_TOLERANCE = 14
+_BACKGROUND_SEED_STEP = 4
 
-_DEFAULT_THRESHOLD = 0.35
+# Player templates: the card art inset by _TEMPLATE_MARGIN pixels, searched inside
+# the full art box so a card a few pixels off still matches.
+_TEMPLATE_MARGIN = 5
+_TEMPLATE_MIN_SCORE = 0.8
+# A deployed card is dimmed and shows a big green check mark in its middle.
+_CHECK_ROWS = (60, 150)
+_CHECK_COLS = (30, 130)
+_CHECK_HUE = (45, 75)
+_CHECK_MIN_SATURATION = 120
+_CHECK_MIN_VALUE = 150
+_CHECK_MIN_FRACTION = 0.05
+_DIMMED_MAX_ART_MEAN = 100
+
+_DEFAULT_THRESHOLD = 0.4
 _DEFAULT_MARGIN = 0.05
 
 
@@ -83,52 +103,141 @@ def classify_element(icon_bgr: np.ndarray) -> str | None:
     return best_name if best_distance <= _MAX_ICON_DISTANCE else None
 
 
-def card_art_key(card_bgr: np.ndarray) -> str:
-    """Return a short stable key (average hash) of a card's art.
+def is_deployed(card_bgr: np.ndarray) -> bool:
+    """Tell whether a tray card is already on the field (dimmed, with a check).
+
+    A green creature alone also shows green pixels, so the card must be dimmed too.
 
     Args:
         card_bgr: One tray card (BGR).
 
     Returns:
-        A hex string that is equal for identical crops of the same card.
+        True if the card is dimmed and shows the green check mark.
     """
     left, top, right, bottom = CARD_ART_BOX
-    gray = cv2.cvtColor(card_bgr[top:bottom, left:right], cv2.COLOR_BGR2GRAY)
-    small = cv2.resize(gray, (_HASH_SIZE, _HASH_SIZE), interpolation=cv2.INTER_AREA)
-    bits = (small > small.mean()).astype(np.uint8).tobytes()
-    return hashlib.sha1(bits).hexdigest()[:16]
+    if float(card_bgr[top:bottom, left:right].mean()) >= _DIMMED_MAX_ART_MEAN:
+        return False
+    middle = card_bgr[_CHECK_ROWS[0] : _CHECK_ROWS[1], _CHECK_COLS[0] : _CHECK_COLS[1]]
+    hsv = cv2.cvtColor(middle, cv2.COLOR_BGR2HSV)
+    green = (
+        (hsv[:, :, 0] > _CHECK_HUE[0])
+        & (hsv[:, :, 0] < _CHECK_HUE[1])
+        & (hsv[:, :, 1] > _CHECK_MIN_SATURATION)
+        & (hsv[:, :, 2] > _CHECK_MIN_VALUE)
+    )
+    return float(green.mean()) >= _CHECK_MIN_FRACTION
 
 
-class RecognitionCache:
-    """JSON file mapping card art keys to evolution ids."""
+class CardTemplateStore:
+    """The player's own card templates, one PNG per evolution.
 
-    def __init__(self, path: Path) -> None:
-        """Load the cache; a missing or corrupt file gives an empty cache.
+    Files are ``<directory>/<element>/<evolution_id>.png``; each holds the art
+    of a card that was recognized from the wiki sprites.
+    """
+
+    def __init__(self, directory: Path) -> None:
+        """Create the store; templates are read from disk when first needed.
 
         Args:
-            path: The JSON file.
+            directory: Folder that holds one sub-folder per element.
         """
-        self._path = path
-        self._data: dict[str, str] = {}
-        try:
-            loaded = json.loads(path.read_text(encoding="utf-8"))
-            if isinstance(loaded, dict):
-                self._data = {str(k): str(v) for k, v in loaded.items()}
-        except (OSError, ValueError):
-            pass
+        self._directory = directory
+        self._templates: dict[str, dict[str, np.ndarray]] = {}
 
-    def get(self, key: str) -> str | None:
-        """Return the evolution id stored for a key, or None."""
-        return self._data.get(key)
+    @staticmethod
+    def _template_of(card_bgr: np.ndarray) -> np.ndarray:
+        left, top, right, bottom = CARD_ART_BOX
+        margin = _TEMPLATE_MARGIN
+        return card_bgr[top + margin : bottom - margin, left + margin : right - margin]
 
-    def put(self, key: str, evolution_id: str) -> None:
-        """Store an evolution id for a key."""
-        self._data[key] = evolution_id
+    def _of_element(self, element: str) -> dict[str, np.ndarray]:
+        loaded = self._templates.get(element)
+        if loaded is not None:
+            return loaded
+        loaded = {}
+        folder = self._directory / element
+        if folder.is_dir():
+            for path in sorted(folder.glob("*.png")):
+                image = cv2.imdecode(
+                    np.frombuffer(path.read_bytes(), np.uint8), cv2.IMREAD_COLOR
+                )
+                if image is None:
+                    logging.warning(f"Skipping unreadable card template {path}.")
+                    continue
+                loaded[path.stem] = image
+        self._templates[element] = loaded
+        return loaded
 
-    def save(self) -> None:
-        """Write the cache to its file."""
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._path.write_text(json.dumps(self._data, indent=1), encoding="utf-8")
+    def match(self, card_bgr: np.ndarray, element: str) -> str | None:
+        """Find the stored template that a card matches.
+
+        Args:
+            card_bgr: One tray card (BGR).
+            element: The element of the card; only its templates are compared.
+
+        Returns:
+            The evolution id of the best template scoring at least
+            ``_TEMPLATE_MIN_SCORE``, or None.
+        """
+        left, top, right, bottom = CARD_ART_BOX
+        search = card_bgr[top:bottom, left:right]
+        best_id, best_score = None, _TEMPLATE_MIN_SCORE
+        for evolution_id, template in self._of_element(element).items():
+            scores = cv2.matchTemplate(search, template, cv2.TM_CCOEFF_NORMED)
+            score = float(np.nan_to_num(scores, nan=-1.0, posinf=-1.0).max())
+            if score >= best_score:
+                best_id, best_score = evolution_id, score
+        return best_id
+
+    def save(self, evolution_id: str, card_bgr: np.ndarray) -> None:
+        """Store (or replace) the template of an evolution.
+
+        Args:
+            evolution_id: The recognized evolution id, such as "water-3-3".
+            card_bgr: The card it was recognized from (BGR).
+        """
+        element = evolution_id.split("-", maxsplit=1)[0]
+        templates = self._of_element(element)
+        template = self._template_of(card_bgr).copy()
+        templates[evolution_id] = template
+        folder = self._directory / element
+        folder.mkdir(parents=True, exist_ok=True)
+        ok, encoded = cv2.imencode(".png", template)
+        if ok:
+            (folder / f"{evolution_id}.png").write_bytes(encoded.tobytes())
+
+
+def _alpha_from_background(bgr: np.ndarray) -> np.ndarray:
+    """Make an alpha mask for a sprite drawn on a plain-coloured background.
+
+    The background is found by flooding inwards from the image border; the dark
+    outline of the creature stops the flood.
+
+    Args:
+        bgr: The sprite (BGR) with its background.
+
+    Returns:
+        A uint8 mask, 0 for background and 255 for the creature.
+    """
+    height, width = bgr.shape[:2]
+    mask = np.zeros((height + 2, width + 2), np.uint8)
+    work = bgr.copy()
+    flags = 4 | cv2.FLOODFILL_MASK_ONLY | (255 << 8)
+    step = _BACKGROUND_SEED_STEP
+    seeds = [(x, 0) for x in range(0, width, step)]
+    seeds += [(x, height - 1) for x in range(0, width, step)]
+    seeds += [(0, y) for y in range(0, height, step)]
+    seeds += [(width - 1, y) for y in range(0, height, step)]
+    tolerance = (_BACKGROUND_TOLERANCE,) * _BGR_CHANNELS
+    for x, y in seeds:
+        if mask[y + 1, x + 1] == 0:
+            cv2.floodFill(work, mask, (x, y), (0, 0, 0), tolerance, tolerance, flags)
+    return np.where(mask[1:-1, 1:-1] > 0, 0, 255).astype(np.uint8)
+
+
+def _best(scores: np.ndarray) -> float:
+    """Highest finite score of a template matching result."""
+    return float(np.nan_to_num(scores, nan=-1.0, posinf=-1.0, neginf=-1.0).max())
 
 
 def _dark_map(bgr: np.ndarray) -> np.ndarray:
@@ -136,14 +245,17 @@ def _dark_map(bgr: np.ndarray) -> np.ndarray:
 
 
 class _Candidate:
-    """Best alignment of one sprite on the card."""
+    """Scores of one sprite on a card (best over the sprite sizes)."""
 
     def __init__(self, sprite: Sprite) -> None:
         self.sprite = sprite
-        self.score = -1.0
-        self.sprite_bgr: np.ndarray | None = None
-        self.sprite_alpha: np.ndarray | None = None
-        self.offset = (0, 0)  # sprite (0, 0) in template coordinates
+        self.outline = -1.0
+        self.colour = -1.0
+
+    @property
+    def score(self) -> float:
+        """Mean of the outline score and the colour score."""
+        return (self.outline + self.colour) / 2
 
 
 class CardRecognizer:
@@ -152,7 +264,7 @@ class CardRecognizer:
     def __init__(
         self,
         db: TatariDb,
-        cache: RecognitionCache,
+        templates: CardTemplateStore,
         threshold: float = _DEFAULT_THRESHOLD,
         margin: float = _DEFAULT_MARGIN,
         debug_dir: Path | None = None,
@@ -161,13 +273,13 @@ class CardRecognizer:
 
         Args:
             db: The tatari database.
-            cache: Cache of earlier results (the caller saves it).
+            templates: The player's card templates; new ones are saved here.
             threshold: Minimum outline score of the best sprite.
             margin: Minimum lead of the best tatari over every other tatari.
             debug_dir: Where the crops of unrecognized cards are saved, if set.
         """
         self._db = db
-        self._cache = cache
+        self._templates = templates
         self._threshold = threshold
         self._margin = margin
         self._debug_dir = debug_dir
@@ -181,34 +293,33 @@ class CardRecognizer:
 
         Returns:
             The evolution id (glitter ids end in "g"), or None when the card is
-            not recognized with enough confidence.
+            deployed or not recognized with enough confidence.
         """
-        key = card_art_key(card_bgr)
-        cached = self._cache.get(key)
-        if cached is not None:
-            return cached
-
         left, top, right, bottom = ELEMENT_ICON_BOX
         element = classify_element(card_bgr[top:bottom, left:right])
-        result = self._match(card_bgr, element) if element in ELEMENTS else None
+        if element not in ELEMENTS or is_deployed(card_bgr):
+            return None
+
+        known = self._templates.match(card_bgr, element)
+        if known is not None:
+            return known
+        result = self._match(card_bgr, element)
         if result is None:
-            logging.debug(f"Card {key} not recognized (element {element}).")
+            logging.debug(f"A {element} card was not recognized.")
             if self._debug_dir is not None:
                 self._debug_dir.mkdir(parents=True, exist_ok=True)
-                cv2.imwrite(str(self._debug_dir / f"{key}.png"), card_bgr)
+                name = hashlib.sha1(card_bgr.tobytes()).hexdigest()[:12]
+                cv2.imwrite(str(self._debug_dir / f"{name}.png"), card_bgr)
             return None
-        self._cache.put(key, result)
+        self._templates.save(result, card_bgr)
         return result
 
     def _load(self, sprite: Sprite) -> np.ndarray:
         image = self._images.get(sprite.evolution_id)
         if image is None:
             image = cv2.imread(str(sprite.image_path), cv2.IMREAD_UNCHANGED)
-            if (
-                image.shape[2] == _BGR_CHANNELS
-            ):  # no alpha channel: use the whole rectangle
-                alpha = np.full(image.shape[:2], 255, np.uint8)
-                image = np.dstack([image, alpha])
+            if image.shape[2] == _BGR_CHANNELS:  # no alpha channel
+                image = np.dstack([image, _alpha_from_background(image)])
             self._images[sprite.evolution_id] = image
         return image
 
@@ -227,15 +338,21 @@ class CardRecognizer:
         template = cv2.resize(template, size, interpolation=cv2.INTER_AREA)
         if template.std() < _FLAT_STD:
             return None
-        region_small = cv2.resize(region, size, interpolation=cv2.INTER_AREA)
+        colour_size = (
+            int(region.shape[1] * _COLOUR_SCALE),
+            int(region.shape[0] * _COLOUR_SCALE),
+        )
+        region_colour = cv2.resize(region, colour_size, interpolation=cv2.INTER_AREA)
 
         candidates = [
-            self._align(sprite, template, region_small)
+            self._score(sprite, template, region_colour)
             for sprite in self._db.sprites_for_element(element or "")
         ]
         if not candidates:
             return None
 
+        # Compare tatari (a normal sprite and its glitter twin count as one); the twin
+        # has the same outline, so within the best tatari colour alone decides.
         families: dict[tuple[str, int], list[_Candidate]] = {}
         for candidate in candidates:
             sprite = candidate.sprite
@@ -247,17 +364,12 @@ class CardRecognizer:
         runner_up = max(c.score for c in ranked[1]) if len(ranked) > 1 else -1.0
         if best < self._threshold or best - runner_up < self._margin:
             return None
-        twins = ranked[0]
-        if len(twins) == 1:
-            return twins[0].sprite.evolution_id
-        return min(
-            twins, key=lambda c: self._color_error(c, region_small)
-        ).sprite.evolution_id
+        return max(ranked[0], key=lambda c: c.colour).sprite.evolution_id
 
-    def _align(
-        self, sprite: Sprite, template: np.ndarray, region_small: np.ndarray
+    def _score(
+        self, sprite: Sprite, template: np.ndarray, region_colour: np.ndarray
     ) -> _Candidate:
-        """Find the best size and position of a sprite on the card."""
+        """Score a sprite on the card by outline and by colour."""
         candidate = _Candidate(sprite)
         image = self._load(sprite)
         height, width = image.shape[:2]
@@ -270,6 +382,7 @@ class CardRecognizer:
                 interpolation=cv2.INTER_AREA,
             )
             alpha = resized[:, :, 3] >= _ALPHA_MIN
+
             outline = _dark_map(resized[:, :, :3]) * alpha
             padded = cv2.copyMakeBorder(
                 outline,
@@ -281,32 +394,25 @@ class CardRecognizer:
                 value=0,
             )
             scores = cv2.matchTemplate(padded, template, cv2.TM_CCOEFF_NORMED)
-            scores[~np.isfinite(scores)] = -1.0
-            y, x = np.unravel_index(int(scores.argmax()), scores.shape)
-            score = float(scores[y, x])
-            if score > candidate.score:
-                candidate.score = score
-                candidate.sprite_bgr = resized[:, :, :3]
-                candidate.sprite_alpha = alpha
-                candidate.offset = (tw // 2 - int(x), th // 2 - int(y))
-        return candidate
+            candidate.outline = max(candidate.outline, _best(scores))
 
-    @staticmethod
-    def _color_error(candidate: _Candidate, region_small: np.ndarray) -> float:
-        """Mean colour difference between a sprite and the card at its alignment."""
-        if candidate.sprite_bgr is None or candidate.sprite_alpha is None:
-            return float("inf")
-        ox, oy = candidate.offset
-        sh, sw = candidate.sprite_alpha.shape
-        rh, rw = region_small.shape[:2]
-        x0, y0 = max(ox, 0), max(oy, 0)
-        x1, y1 = min(ox + sw, rw), min(oy + sh, rh)
-        if x1 <= x0 or y1 <= y0:
-            return float("inf")
-        sprite_part = candidate.sprite_bgr[y0 - oy : y1 - oy, x0 - ox : x1 - ox]
-        card_part = region_small[y0:y1, x0:x1]
-        valid = candidate.sprite_alpha[y0 - oy : y1 - oy, x0 - ox : x1 - ox]
-        if not valid.any():
-            return float("inf")
-        diff = np.abs(sprite_part.astype(np.int16) - card_part.astype(np.int16))
-        return float(diff[valid].mean())
+            # Colour: the sprite's own pixels against the card (the card background
+            # is outside the sprite's mask), at a coarse scale. The art is often larger
+            # than the card, so the card is padded by repeating its border.
+            colour_scale = long_side * _COLOUR_SCALE / max(height, width)
+            coarse = cv2.resize(
+                image,
+                (max(4, int(width * colour_scale)), max(4, int(height * colour_scale))),
+                interpolation=cv2.INTER_AREA,
+            )
+            coarse_alpha = coarse[:, :, 3] >= _ALPHA_MIN
+            sh, sw = coarse_alpha.shape
+            card_padded = cv2.copyMakeBorder(
+                region_colour, sh // 2, sh // 2, sw // 2, sw // 2, cv2.BORDER_REPLICATE
+            )
+            mask = cv2.merge([coarse_alpha.astype(np.uint8) * 255] * _BGR_CHANNELS)
+            scores = cv2.matchTemplate(
+                card_padded, coarse[:, :, :3], cv2.TM_CCOEFF_NORMED, mask=mask
+            )
+            candidate.colour = max(candidate.colour, _best(scores))
+        return candidate

@@ -22,7 +22,7 @@ from adb_auto_player.games.clash_of_critters.battle_layout import (
 )
 from adb_auto_player.games.clash_of_critters.card_recognition import (
     CardRecognizer,
-    RecognitionCache,
+    CardTemplateStore,
 )
 from adb_auto_player.games.clash_of_critters.deployment_plan import plan_deployment
 from adb_auto_player.games.clash_of_critters.formation import (
@@ -33,7 +33,7 @@ from adb_auto_player.games.clash_of_critters.tatari_db import TatariDb
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.ocr import RapidOCRBackend
 
-_CACHE_FILE_NAME = "clash_of_critters_cards.json"
+_TEMPLATE_DIR_NAME = "clash_of_critters_cards"
 _DRAG_SECONDS = 0.6
 # Measured on the emulator: a dropped card is settled well within a second.
 _DRAG_SETTLE_SECONDS = 1.0
@@ -59,17 +59,15 @@ class DeployMixin(Game):
     """Reads the tray of owned tatari and deploys formations by drag and drop."""
 
     _recognizer: CardRecognizer | None = None
-    _recognition_cache: RecognitionCache | None = None
 
     def _get_recognizer(self) -> CardRecognizer:
         if self._recognizer is None:
             data_root = self.template_dir.parent / "tatari_db"
-            cache_path = SettingsLoader.get_app_config_dir() / _CACHE_FILE_NAME
-            self._recognition_cache = RecognitionCache(cache_path)
+            config_dir = SettingsLoader.get_app_config_dir()
             self._recognizer = CardRecognizer(
                 TatariDb.load(data_root),
-                self._recognition_cache,
-                debug_dir=cache_path.parent / "clash_of_critters_unrecognized",
+                CardTemplateStore(config_dir / _TEMPLATE_DIR_NAME),
+                debug_dir=config_dir / "clash_of_critters_unrecognized",
             )
         return self._recognizer
 
@@ -91,8 +89,6 @@ class DeployMixin(Game):
                 cards.append(
                     (center, recognizer.recognize(screenshot[top:bottom, left:right]))
                 )
-        if self._recognition_cache is not None:
-            self._recognition_cache.save()
         return cards
 
     def _wait_tray_stable(self) -> np.ndarray:

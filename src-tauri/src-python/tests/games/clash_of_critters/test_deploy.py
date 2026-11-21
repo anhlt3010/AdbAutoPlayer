@@ -302,7 +302,6 @@ def test_visible_cards_follow_the_scrolled_tray(bot: MagicMock) -> None:
     recognizer = MagicMock()
     recognizer.recognize.return_value = "grass-4-2"
     bot._get_recognizer = MagicMock(return_value=recognizer)
-    bot._recognition_cache = None
     cards = DeployMixin._visible_cards(bot)
     # 4 whole cards per row, 2 rows; slots follow the card positions, not a fixed grid.
     assert len(cards) == 8
