@@ -1,0 +1,143 @@
+{
+  "chapter": 31,
+  "stage": "31-13",
+  "level": 596,
+  "shared_with": "31-13 – 31-14",
+  "units": [
+    {
+      "row": 2,
+      "col": 1,
+      "tatari_id": "lightning-5",
+      "evolution_id": "lightning-5-2",
+      "name": "Voltling",
+      "tier": 2,
+      "glitter": false
+    },
+    {
+      "row": 2,
+      "col": 2,
+      "tatari_id": "grass-4",
+      "evolution_id": "grass-4-3",
+      "name": "Serrabloom",
+      "tier": 3,
+      "glitter": false
+    },
+    {
+      "row": 2,
+      "col": 3,
+      "tatari_id": "lightning-11",
+      "evolution_id": "lightning-11-2",
+      "name": "Synthhog",
+      "tier": 2,
+      "glitter": false
+    },
+    {
+      "row": 2,
+      "col": 5,
+      "tatari_id": "lightning-3",
+      "evolution_id": "lightning-3-3",
+      "name": "Blitzmane",
+      "tier": 3,
+      "glitter": false
+    },
+    {
+      "row": 3,
+      "col": 1,
+      "tatari_id": "water-12",
+      "evolution_id": "water-12-2",
+      "name": "Ospisces",
+      "tier": 2,
+      "glitter": false
+    },
+    {
+      "row": 3,
+      "col": 2,
+      "tatari_id": "lightning-8",
+      "evolution_id": "lightning-8-3",
+      "name": "Cheerspring",
+      "tier": 3,
+      "glitter": false
+    },
+    {
+      "row": 3,
+      "col": 3,
+      "tatari_id": "grass-10",
+      "evolution_id": "grass-10-3",
+      "name": "Hyphoria",
+      "tier": 3,
+      "glitter": false
+    },
+    {
+      "row": 3,
+      "col": 4,
+      "tatari_id": "fire-6",
+      "evolution_id": "fire-6-3",
+      "name": "Charflutter",
+      "tier": 3,
+      "glitter": false
+    },
+    {
+      "row": 3,
+      "col": 5,
+      "tatari_id": "lightning-4",
+      "evolution_id": "lightning-4-3",
+      "name": "Zapantler",
+      "tier": 3,
+      "glitter": false
+    },
+    {
+      "row": 4,
+      "col": 1,
+      "tatari_id": "lightning-1",
+      "evolution_id": "lightning-1-2",
+      "name": "Zapooch",
+      "tier": 2,
+      "glitter": false
+    },
+    {
+      "row": 4,
+      "col": 2,
+      "tatari_id": "fire-4",
+      "evolution_id": "fire-4-3",
+      "name": "Azurion",
+      "tier": 3,
+      "glitter": false
+    },
+    {
+      "row": 4,
+      "col": 3,
+      "tatari_id": "water-10",
+      "evolution_id": "water-10-3",
+      "name": "Waveflutter",
+      "tier": 3,
+      "glitter": false
+    },
+    {
+      "row": 4,
+      "col": 4,
+      "tatari_id": "water-5",
+      "evolution_id": "water-5-3",
+      "name": "Tideon",
+      "tier": 3,
+      "glitter": false
+    },
+    {
+      "row": 4,
+      "col": 5,
+      "tatari_id": "grass-7",
+      "evolution_id": "grass-7-3",
+      "name": "Solaflora",
+      "tier": 3,
+      "glitter": false
+    },
+    {
+      "row": 5,
+      "col": 3,
+      "tatari_id": "rock-10",
+      "evolution_id": "rock-10-3",
+      "name": "Clangnaga",
+      "tier": 3,
+      "glitter": false
+    }
+  ]
+}

@@ -1,0 +1,3795 @@
+{
+  "source": "https://clashofcritters.wiki.gg/wiki/Tatari",
+  "tataris": [
+    {
+      "tatari_id": "lightning-1",
+      "type": "Lightning",
+      "has_glitter": false,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Zapup",
+          "normal": {
+            "id": "lightning-1-1",
+            "image": "images/lightning-1-1.png"
+          },
+          "glitter": null
+        },
+        {
+          "stage": 2,
+          "name": "Zapooch",
+          "normal": {
+            "id": "lightning-1-2",
+            "image": "images/lightning-1-2.png"
+          },
+          "glitter": null
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-1",
+      "type": "Grass",
+      "has_glitter": false,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Clucky",
+          "normal": {
+            "id": "grass-1-1",
+            "image": "images/grass-1-1.png"
+          },
+          "glitter": null
+        },
+        {
+          "stage": 2,
+          "name": "Cluckeroo",
+          "normal": {
+            "id": "grass-1-2",
+            "image": "images/grass-1-2.png"
+          },
+          "glitter": null
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-1",
+      "type": "Fire",
+      "has_glitter": false,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Cindermunk",
+          "normal": {
+            "id": "fire-1-1",
+            "image": "images/fire-1-1.png"
+          },
+          "glitter": null
+        },
+        {
+          "stage": 2,
+          "name": "Embertail",
+          "normal": {
+            "id": "fire-1-2",
+            "image": "images/fire-1-2.png"
+          },
+          "glitter": null
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-1",
+      "type": "Water",
+      "has_glitter": false,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Shellshy",
+          "normal": {
+            "id": "water-1-1",
+            "image": "images/water-1-1.png"
+          },
+          "glitter": null
+        },
+        {
+          "stage": 2,
+          "name": "Boldclaw",
+          "normal": {
+            "id": "water-1-2",
+            "image": "images/water-1-2.png"
+          },
+          "glitter": null
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-2",
+      "type": "Water",
+      "has_glitter": false,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Capywata",
+          "normal": {
+            "id": "water-2-1",
+            "image": "images/water-2-1.png"
+          },
+          "glitter": null
+        },
+        {
+          "stage": 2,
+          "name": "Capypapa",
+          "normal": {
+            "id": "water-2-2",
+            "image": "images/water-2-2.png"
+          },
+          "glitter": null
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-2",
+      "type": "Fire",
+      "has_glitter": false,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Sparkrow",
+          "normal": {
+            "id": "fire-2-1",
+            "image": "images/fire-2-1.png"
+          },
+          "glitter": null
+        },
+        {
+          "stage": 2,
+          "name": "Scorchwing",
+          "normal": {
+            "id": "fire-2-2",
+            "image": "images/fire-2-2.png"
+          },
+          "glitter": null
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-2",
+      "type": "Grass",
+      "has_glitter": false,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Solpear",
+          "normal": {
+            "id": "grass-2-1",
+            "image": "images/grass-2-1.png"
+          },
+          "glitter": null
+        },
+        {
+          "stage": 2,
+          "name": "Pearpair",
+          "normal": {
+            "id": "grass-2-2",
+            "image": "images/grass-2-2.png"
+          },
+          "glitter": null
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-1",
+      "type": "Rock",
+      "has_glitter": false,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Mudrump",
+          "normal": {
+            "id": "rock-1-1",
+            "image": "images/rock-1-1.png"
+          },
+          "glitter": null
+        },
+        {
+          "stage": 2,
+          "name": "Rockhog",
+          "normal": {
+            "id": "rock-1-2",
+            "image": "images/rock-1-2.png"
+          },
+          "glitter": null
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-2",
+      "type": "Lightning",
+      "has_glitter": false,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Wobbler",
+          "normal": {
+            "id": "lightning-2-1",
+            "image": "images/lightning-2-1.png"
+          },
+          "glitter": null
+        },
+        {
+          "stage": 2,
+          "name": "Boltskipper",
+          "normal": {
+            "id": "lightning-2-2",
+            "image": "images/lightning-2-2.png"
+          },
+          "glitter": null
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-2",
+      "type": "Rock",
+      "has_glitter": false,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Dozy",
+          "normal": {
+            "id": "rock-2-1",
+            "image": "images/rock-2-1.png"
+          },
+          "glitter": null
+        },
+        {
+          "stage": 2,
+          "name": "Snoozebo",
+          "normal": {
+            "id": "rock-2-2",
+            "image": "images/rock-2-2.png"
+          },
+          "glitter": null
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-3",
+      "type": "Water",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Frostnip",
+          "normal": {
+            "id": "water-3-1",
+            "image": "images/water-3-1.png"
+          },
+          "glitter": {
+            "id": "water-3-1g",
+            "name": "Glitter Frostnip",
+            "image": "images/water-3-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Frostpaw",
+          "normal": {
+            "id": "water-3-2",
+            "image": "images/water-3-2.png"
+          },
+          "glitter": {
+            "id": "water-3-2g",
+            "name": "Glitter Frostpaw",
+            "image": "images/water-3-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Frostique",
+          "normal": {
+            "id": "water-3-3",
+            "image": "images/water-3-3.png"
+          },
+          "glitter": {
+            "id": "water-3-3g",
+            "name": "Glitter Frostique",
+            "image": "images/water-3-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Frostluna",
+          "normal": {
+            "id": "water-3-4",
+            "image": "images/water-3-4.png"
+          },
+          "glitter": {
+            "id": "water-3-4g",
+            "name": "Glitter Frostluna",
+            "image": "images/water-3-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-3",
+      "type": "Fire",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Pyropup",
+          "normal": {
+            "id": "fire-3-1",
+            "image": "images/fire-3-1.png"
+          },
+          "glitter": {
+            "id": "fire-3-1g",
+            "name": "Glitter Pyropup",
+            "image": "images/fire-3-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Pyrohound",
+          "normal": {
+            "id": "fire-3-2",
+            "image": "images/fire-3-2.png"
+          },
+          "glitter": {
+            "id": "fire-3-2g",
+            "name": "Glitter Pyrohound",
+            "image": "images/fire-3-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Hellhound",
+          "normal": {
+            "id": "fire-3-3",
+            "image": "images/fire-3-3.png"
+          },
+          "glitter": {
+            "id": "fire-3-3g",
+            "name": "Glitter Hellhound",
+            "image": "images/fire-3-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Pyrodaemon",
+          "normal": {
+            "id": "fire-3-4",
+            "image": "images/fire-3-4.png"
+          },
+          "glitter": {
+            "id": "fire-3-4g",
+            "name": "Glitter Pyrodaemon",
+            "image": "images/fire-3-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-3",
+      "type": "Grass",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Frugling",
+          "normal": {
+            "id": "grass-3-1",
+            "image": "images/grass-3-1.png"
+          },
+          "glitter": {
+            "id": "grass-3-1g",
+            "name": "Glitter Frugling",
+            "image": "images/grass-3-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Frugatoad",
+          "normal": {
+            "id": "grass-3-2",
+            "image": "images/grass-3-2.png"
+          },
+          "glitter": {
+            "id": "grass-3-2g",
+            "name": "Glitter Frugatoad",
+            "image": "images/grass-3-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Frugagon",
+          "normal": {
+            "id": "grass-3-3",
+            "image": "images/grass-3-3.png"
+          },
+          "glitter": {
+            "id": "grass-3-3g",
+            "name": "Glitter Frugagon",
+            "image": "images/grass-3-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Frugantuan",
+          "normal": {
+            "id": "grass-3-4",
+            "image": "images/grass-3-4.png"
+          },
+          "glitter": {
+            "id": "grass-3-4g",
+            "name": "Glitter Frugantuan",
+            "image": "images/grass-3-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-3",
+      "type": "Rock",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Rubblet",
+          "normal": {
+            "id": "rock-3-1",
+            "image": "images/rock-3-1.png"
+          },
+          "glitter": {
+            "id": "rock-3-1g",
+            "name": "Glitter Rubblet",
+            "image": "images/rock-3-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Cobbledon",
+          "normal": {
+            "id": "rock-3-2",
+            "image": "images/rock-3-2.png"
+          },
+          "glitter": {
+            "id": "rock-3-2g",
+            "name": "Glitter Cobbledon",
+            "image": "images/rock-3-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Rockzilla",
+          "normal": {
+            "id": "rock-3-3",
+            "image": "images/rock-3-3.png"
+          },
+          "glitter": {
+            "id": "rock-3-3g",
+            "name": "Glitter Rockzilla",
+            "image": "images/rock-3-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Meteorax",
+          "normal": {
+            "id": "rock-3-4",
+            "image": "images/rock-3-4.png"
+          },
+          "glitter": {
+            "id": "rock-3-4g",
+            "name": "Glitter Meteorax",
+            "image": "images/rock-3-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-3",
+      "type": "Lightning",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Zappur",
+          "normal": {
+            "id": "lightning-3-1",
+            "image": "images/lightning-3-1.png"
+          },
+          "glitter": {
+            "id": "lightning-3-1g",
+            "name": "Glitter Zappur",
+            "image": "images/lightning-3-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Electroar",
+          "normal": {
+            "id": "lightning-3-2",
+            "image": "images/lightning-3-2.png"
+          },
+          "glitter": {
+            "id": "lightning-3-2g",
+            "name": "Glitter Electroar",
+            "image": "images/lightning-3-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Blitzmane",
+          "normal": {
+            "id": "lightning-3-3",
+            "image": "images/lightning-3-3.png"
+          },
+          "glitter": {
+            "id": "lightning-3-3g",
+            "name": "Glitter Blitzmane",
+            "image": "images/lightning-3-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Stormlion",
+          "normal": {
+            "id": "lightning-3-4",
+            "image": "images/lightning-3-4.png"
+          },
+          "glitter": {
+            "id": "lightning-3-4g",
+            "name": "Glitter Stormlion",
+            "image": "images/lightning-3-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-4",
+      "type": "Water",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Sealing",
+          "normal": {
+            "id": "water-4-1",
+            "image": "images/water-4-1.png"
+          },
+          "glitter": {
+            "id": "water-4-1g",
+            "name": "Glitter Sealing",
+            "image": "images/water-4-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Sealoon",
+          "normal": {
+            "id": "water-4-2",
+            "image": "images/water-4-2.png"
+          },
+          "glitter": {
+            "id": "water-4-2g",
+            "name": "Glitter Sealoon",
+            "image": "images/water-4-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Seaswirl",
+          "normal": {
+            "id": "water-4-3",
+            "image": "images/water-4-3.png"
+          },
+          "glitter": {
+            "id": "water-4-3g",
+            "name": "Glitter Seaswirl",
+            "image": "images/water-4-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Sealord",
+          "normal": {
+            "id": "water-4-4",
+            "image": "images/water-4-4.png"
+          },
+          "glitter": {
+            "id": "water-4-4g",
+            "name": "Sealord Glitter",
+            "image": "images/water-4-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-4",
+      "type": "Fire",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Blueflick",
+          "normal": {
+            "id": "fire-4-1",
+            "image": "images/fire-4-1.png"
+          },
+          "glitter": {
+            "id": "fire-4-1g",
+            "name": "Glitter Blueflick",
+            "image": "images/fire-4-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Ignisnap",
+          "normal": {
+            "id": "fire-4-2",
+            "image": "images/fire-4-2.png"
+          },
+          "glitter": {
+            "id": "fire-4-2g",
+            "name": "Glitter Ignisnap",
+            "image": "images/fire-4-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Azurion",
+          "normal": {
+            "id": "fire-4-3",
+            "image": "images/fire-4-3.png"
+          },
+          "glitter": {
+            "id": "fire-4-3g",
+            "name": "Glitter Azurion",
+            "image": "images/fire-4-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Newflamander",
+          "normal": {
+            "id": "fire-4-4",
+            "image": "images/fire-4-4.png"
+          },
+          "glitter": {
+            "id": "fire-4-4g",
+            "name": "Glitter Newflamander",
+            "image": "images/fire-4-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-4",
+      "type": "Grass",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Manteeny",
+          "normal": {
+            "id": "grass-4-1",
+            "image": "images/grass-4-1.png"
+          },
+          "glitter": {
+            "id": "grass-4-1g",
+            "name": "Glitter Manteeny",
+            "image": "images/grass-4-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Stalkerix",
+          "normal": {
+            "id": "grass-4-2",
+            "image": "images/grass-4-2.png"
+          },
+          "glitter": {
+            "id": "grass-4-2g",
+            "name": "Glitter Stalkerix",
+            "image": "images/grass-4-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Serrabloom",
+          "normal": {
+            "id": "grass-4-3",
+            "image": "images/grass-4-3.png"
+          },
+          "glitter": {
+            "id": "grass-4-3g",
+            "name": "Glitter Serrabloom",
+            "image": "images/grass-4-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Orchitoria",
+          "normal": {
+            "id": "grass-4-4",
+            "image": "images/grass-4-4.png"
+          },
+          "glitter": {
+            "id": "grass-4-4g",
+            "name": "Glitter Orchitoria",
+            "image": "images/grass-4-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-4",
+      "type": "Rock",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Gibber",
+          "normal": {
+            "id": "rock-4-1",
+            "image": "images/rock-4-1.png"
+          },
+          "glitter": {
+            "id": "rock-4-1g",
+            "name": "Glitter Gibber",
+            "image": "images/rock-4-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Turtuff",
+          "normal": {
+            "id": "rock-4-2",
+            "image": "images/rock-4-2.png"
+          },
+          "glitter": {
+            "id": "rock-4-2g",
+            "name": "Glitter Turtuff",
+            "image": "images/rock-4-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Rockshell",
+          "normal": {
+            "id": "rock-4-3",
+            "image": "images/rock-4-3.png"
+          },
+          "glitter": {
+            "id": "rock-4-3g",
+            "name": "Glitter Rockshell",
+            "image": "images/rock-4-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Terraton",
+          "normal": {
+            "id": "rock-4-4",
+            "image": "images/rock-4-4.png"
+          },
+          "glitter": {
+            "id": "rock-4-4g",
+            "name": "Glitter Terraton",
+            "image": "images/rock-4-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-4",
+      "type": "Lightning",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Voltfawn",
+          "normal": {
+            "id": "lightning-4-1",
+            "image": "images/lightning-4-1.png"
+          },
+          "glitter": {
+            "id": "lightning-4-1g",
+            "name": "Glitter Voltfawn",
+            "image": "images/lightning-4-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Sparkdoe",
+          "normal": {
+            "id": "lightning-4-2",
+            "image": "images/lightning-4-2.png"
+          },
+          "glitter": {
+            "id": "lightning-4-2g",
+            "name": "Glitter Sparkdoe",
+            "image": "images/lightning-4-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Zapantler",
+          "normal": {
+            "id": "lightning-4-3",
+            "image": "images/lightning-4-3.png"
+          },
+          "glitter": {
+            "id": "lightning-4-3g",
+            "name": "Glitter Zapantler",
+            "image": "images/lightning-4-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Magnedart",
+          "normal": {
+            "id": "lightning-4-4",
+            "image": "images/lightning-4-4.png"
+          },
+          "glitter": {
+            "id": "lightning-4-4g",
+            "name": "Glitter Magnedart",
+            "image": "images/lightning-4-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-5",
+      "type": "Water",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Droppit",
+          "normal": {
+            "id": "water-5-1",
+            "image": "images/water-5-1.png"
+          },
+          "glitter": {
+            "id": "water-5-1g",
+            "name": "Glitter Droppit",
+            "image": "images/water-5-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Bubbit",
+          "normal": {
+            "id": "water-5-2",
+            "image": "images/water-5-2.png"
+          },
+          "glitter": {
+            "id": "water-5-2g",
+            "name": "Glitter Bubbit",
+            "image": "images/water-5-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Tideon",
+          "normal": {
+            "id": "water-5-3",
+            "image": "images/water-5-3.png"
+          },
+          "glitter": {
+            "id": "water-5-3g",
+            "name": "Glitter Tideon",
+            "image": "images/water-5-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Haplysia",
+          "normal": {
+            "id": "water-5-4",
+            "image": "images/water-5-4.png"
+          },
+          "glitter": {
+            "id": "water-5-4g",
+            "name": "Glitter Haplysia",
+            "image": "images/water-5-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-5",
+      "type": "Fire",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Sparkit",
+          "normal": {
+            "id": "fire-5-1",
+            "image": "images/fire-5-1.png"
+          },
+          "glitter": {
+            "id": "fire-5-1g",
+            "name": "Glitter Sparkit",
+            "image": "images/fire-5-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Flametail",
+          "normal": {
+            "id": "fire-5-2",
+            "image": "images/fire-5-2.png"
+          },
+          "glitter": {
+            "id": "fire-5-2g",
+            "name": "Glitter Firefox",
+            "image": "images/fire-5-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Flarevix",
+          "normal": {
+            "id": "fire-5-3",
+            "image": "images/fire-5-3.png"
+          },
+          "glitter": {
+            "id": "fire-5-3g",
+            "name": "Glitter Flarevix",
+            "image": "images/fire-5-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Phantifox",
+          "normal": {
+            "id": "fire-5-4",
+            "image": "images/fire-5-4.png"
+          },
+          "glitter": {
+            "id": "fire-5-4g",
+            "name": "Glitter Phantifox",
+            "image": "images/fire-5-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-5",
+      "type": "Grass",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Goonbug",
+          "normal": {
+            "id": "grass-5-1",
+            "image": "images/grass-5-1.png"
+          },
+          "glitter": {
+            "id": "grass-5-1g",
+            "name": "Glitter Goonbug",
+            "image": "images/grass-5-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Capobeetle",
+          "normal": {
+            "id": "grass-5-2",
+            "image": "images/grass-5-2.png"
+          },
+          "glitter": {
+            "id": "grass-5-2g",
+            "name": "Glitter Capobeetle",
+            "image": "images/grass-5-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Donscarab",
+          "normal": {
+            "id": "grass-5-3",
+            "image": "images/grass-5-3.png"
+          },
+          "glitter": {
+            "id": "grass-5-3g",
+            "name": "Glitter Donscarab",
+            "image": "images/grass-5-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Beetleknight",
+          "normal": {
+            "id": "grass-5-4",
+            "image": "images/grass-5-4.png"
+          },
+          "glitter": {
+            "id": "grass-5-4g",
+            "name": "Glitter Beetleknight",
+            "image": "images/grass-5-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-5",
+      "type": "Rock",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Punchimp",
+          "normal": {
+            "id": "rock-5-1",
+            "image": "images/rock-5-1.png"
+          },
+          "glitter": {
+            "id": "rock-5-1g",
+            "name": "Glitter Punchimp",
+            "image": "images/rock-5-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Rockfu",
+          "normal": {
+            "id": "rock-5-2",
+            "image": "images/rock-5-2.png"
+          },
+          "glitter": {
+            "id": "rock-5-2g",
+            "name": "Glitter Rockfu",
+            "image": "images/rock-5-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Rockwu",
+          "normal": {
+            "id": "rock-5-3",
+            "image": "images/rock-5-3.png"
+          },
+          "glitter": {
+            "id": "rock-5-3g",
+            "name": "Glitter Rockong",
+            "image": "images/rock-5-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Rockong",
+          "normal": {
+            "id": "rock-5-4",
+            "image": "images/rock-5-4.png"
+          },
+          "glitter": {
+            "id": "rock-5-4g",
+            "name": "Glitter Rockwu",
+            "image": "images/rock-5-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-5",
+      "type": "Lightning",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Voltkit",
+          "normal": {
+            "id": "lightning-5-1",
+            "image": "images/lightning-5-1.png"
+          },
+          "glitter": {
+            "id": "lightning-5-1g",
+            "name": "Glitter Voltkit",
+            "image": "images/lightning-5-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Voltling",
+          "normal": {
+            "id": "lightning-5-2",
+            "image": "images/lightning-5-2.png"
+          },
+          "glitter": {
+            "id": "lightning-5-2g",
+            "name": "Glitter Voltling",
+            "image": "images/lightning-5-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Voltverine",
+          "normal": {
+            "id": "lightning-5-3",
+            "image": "images/lightning-5-3.png"
+          },
+          "glitter": {
+            "id": "lightning-5-3g",
+            "name": "Glitter Voltverine",
+            "image": "images/lightning-5-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Voltreaver",
+          "normal": {
+            "id": "lightning-5-4",
+            "image": "images/lightning-5-4.png"
+          },
+          "glitter": {
+            "id": "lightning-5-4g",
+            "name": "Glitter Voltreaver",
+            "image": "images/lightning-5-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-6",
+      "type": "Water",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Waddledo",
+          "normal": {
+            "id": "water-6-1",
+            "image": "images/water-6-1.png"
+          },
+          "glitter": {
+            "id": "water-6-1g",
+            "name": "Glitter Waddledo",
+            "image": "images/water-6-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Swaystroll",
+          "normal": {
+            "id": "water-6-2",
+            "image": "images/water-6-2.png"
+          },
+          "glitter": {
+            "id": "water-6-2g",
+            "name": "Glitter Swaystroll",
+            "image": "images/water-6-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Stoodbeak",
+          "normal": {
+            "id": "water-6-3",
+            "image": "images/water-6-3.png"
+          },
+          "glitter": {
+            "id": "water-6-3g",
+            "name": "Glitter Stoodbeak",
+            "image": "images/water-6-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Glideflip",
+          "normal": {
+            "id": "water-6-4",
+            "image": "images/water-6-4.png"
+          },
+          "glitter": {
+            "id": "water-6-4g",
+            "name": "Glitter Glideflip",
+            "image": "images/water-6-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-6",
+      "type": "Lightning",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Zapuni",
+          "normal": {
+            "id": "lightning-6-1",
+            "image": "images/lightning-6-1.png"
+          },
+          "glitter": {
+            "id": "lightning-6-1g",
+            "name": "Glitter Zapuni",
+            "image": "images/lightning-6-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Surgehoof",
+          "normal": {
+            "id": "lightning-6-2",
+            "image": "images/lightning-6-2.png"
+          },
+          "glitter": {
+            "id": "lightning-6-2g",
+            "name": "Glitter Surgehoof",
+            "image": "images/lightning-6-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Voltmare",
+          "normal": {
+            "id": "lightning-6-3",
+            "image": "images/lightning-6-3.png"
+          },
+          "glitter": {
+            "id": "lightning-6-3g",
+            "name": "Glitter Voltmare",
+            "image": "images/lightning-6-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Boltallion",
+          "normal": {
+            "id": "lightning-6-4",
+            "image": "images/lightning-6-4.png"
+          },
+          "glitter": {
+            "id": "lightning-6-4g",
+            "name": "Glitter Boltallion",
+            "image": "images/lightning-6-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-6",
+      "type": "Rock",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Gopher",
+          "normal": {
+            "id": "rock-6-1",
+            "image": "images/rock-6-1.png"
+          },
+          "glitter": {
+            "id": "rock-6-1g",
+            "name": "Glitter Gopher",
+            "image": "images/rock-6-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Watchroo",
+          "normal": {
+            "id": "rock-6-2",
+            "image": "images/rock-6-2.png"
+          },
+          "glitter": {
+            "id": "rock-6-2g",
+            "name": "Glitter Watchroo",
+            "image": "images/rock-6-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Bastogard",
+          "normal": {
+            "id": "rock-6-3",
+            "image": "images/rock-6-3.png"
+          },
+          "glitter": {
+            "id": "rock-6-3g",
+            "name": "Glitter Bastogard",
+            "image": "images/rock-6-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Cratzar",
+          "normal": {
+            "id": "rock-6-4",
+            "image": "images/rock-6-4.png"
+          },
+          "glitter": {
+            "id": "rock-6-4g",
+            "name": "Glitter Cratzar",
+            "image": "images/rock-6-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-6",
+      "type": "Fire",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Ashlarva",
+          "normal": {
+            "id": "fire-6-1",
+            "image": "images/fire-6-1.png"
+          },
+          "glitter": {
+            "id": "fire-6-1g",
+            "name": "Glitter Ashlarva",
+            "image": "images/fire-6-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Firecoil",
+          "normal": {
+            "id": "fire-6-2",
+            "image": "images/fire-6-2.png"
+          },
+          "glitter": {
+            "id": "fire-6-2g",
+            "name": "Glitter Firecoil",
+            "image": "images/fire-6-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Charflutter",
+          "normal": {
+            "id": "fire-6-3",
+            "image": "images/fire-6-3.png"
+          },
+          "glitter": {
+            "id": "fire-6-3g",
+            "name": "Glitter Charflutter",
+            "image": "images/fire-6-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Chrysolaria",
+          "normal": {
+            "id": "fire-6-4",
+            "image": "images/fire-6-4.png"
+          },
+          "glitter": {
+            "id": "fire-6-4g",
+            "name": "Glitter Chrysolaria",
+            "image": "images/fire-6-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-6",
+      "type": "Grass",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Pandaroo",
+          "normal": {
+            "id": "grass-6-1",
+            "image": "images/grass-6-1.png"
+          },
+          "glitter": {
+            "id": "grass-6-1g",
+            "name": "Glitter Pandaroo",
+            "image": "images/grass-6-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Pandaroot",
+          "normal": {
+            "id": "grass-6-2",
+            "image": "images/grass-6-2.png"
+          },
+          "glitter": {
+            "id": "grass-6-2g",
+            "name": "Glitter Pandaroot",
+            "image": "images/grass-6-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Pandarrior",
+          "normal": {
+            "id": "grass-6-3",
+            "image": "images/grass-6-3.png"
+          },
+          "glitter": {
+            "id": "grass-6-3g",
+            "name": "Glitter Pandarrior",
+            "image": "images/grass-6-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Pandagrand",
+          "normal": {
+            "id": "grass-6-4",
+            "image": "images/grass-6-4.png"
+          },
+          "glitter": {
+            "id": "grass-6-4g",
+            "name": "Pandagrand Glitter",
+            "image": "images/grass-6-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-7",
+      "type": "Water",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Cribbler",
+          "normal": {
+            "id": "water-7-1",
+            "image": "images/water-7-1.png"
+          },
+          "glitter": {
+            "id": "water-7-1g",
+            "name": "Glitter Cribbler",
+            "image": "images/water-7-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Clawzor",
+          "normal": {
+            "id": "water-7-2",
+            "image": "images/water-7-2.png"
+          },
+          "glitter": {
+            "id": "water-7-2g",
+            "name": "Glitter Clawzor",
+            "image": "images/water-7-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Dreadclaw",
+          "normal": {
+            "id": "water-7-3",
+            "image": "images/water-7-3.png"
+          },
+          "glitter": {
+            "id": "water-7-3g",
+            "name": "Glitter Dreadclaw",
+            "image": "images/water-7-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Cribking",
+          "normal": {
+            "id": "water-7-4",
+            "image": "images/water-7-4.png"
+          },
+          "glitter": {
+            "id": "water-7-4g",
+            "name": "Glitter Cribking",
+            "image": "images/water-7-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-7",
+      "type": "Fire",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Shrimpyro",
+          "normal": {
+            "id": "fire-7-1",
+            "image": "images/fire-7-1.png"
+          },
+          "glitter": {
+            "id": "fire-7-1g",
+            "name": "Glitter Shrimpyro",
+            "image": "images/fire-7-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Pyroprawn",
+          "normal": {
+            "id": "fire-7-2",
+            "image": "images/fire-7-2.png"
+          },
+          "glitter": {
+            "id": "fire-7-2g",
+            "name": "Glitter Pyroprawn",
+            "image": "images/fire-7-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Pyroclobster",
+          "normal": {
+            "id": "fire-7-3",
+            "image": "images/fire-7-3.png"
+          },
+          "glitter": {
+            "id": "fire-7-3g",
+            "name": "Glitter Pyroclobster",
+            "image": "images/fire-7-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Pyroviathan",
+          "normal": {
+            "id": "fire-7-4",
+            "image": "images/fire-7-4.png"
+          },
+          "glitter": {
+            "id": "fire-7-4g",
+            "name": "Pyroviathan Glitter",
+            "image": "images/fire-7-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-7",
+      "type": "Grass",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Buddi",
+          "normal": {
+            "id": "grass-7-1",
+            "image": "images/grass-7-1.png"
+          },
+          "glitter": {
+            "id": "grass-7-1g",
+            "name": "Glitter Buddi",
+            "image": "images/grass-7-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Sunfleur",
+          "normal": {
+            "id": "grass-7-2",
+            "image": "images/grass-7-2.png"
+          },
+          "glitter": {
+            "id": "grass-7-2g",
+            "name": "Glitter Sunfleur",
+            "image": "images/grass-7-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Solaflora",
+          "normal": {
+            "id": "grass-7-3",
+            "image": "images/grass-7-3.png"
+          },
+          "glitter": {
+            "id": "grass-7-3g",
+            "name": "Glitter Solaflora",
+            "image": "images/grass-7-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Heliabloom",
+          "normal": {
+            "id": "grass-7-4",
+            "image": "images/grass-7-4.png"
+          },
+          "glitter": {
+            "id": "grass-7-4g",
+            "name": "Heliabloom-glitch-4",
+            "image": "images/grass-7-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-7",
+      "type": "Rock",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Joeyo",
+          "normal": {
+            "id": "rock-7-1",
+            "image": "images/rock-7-1.png"
+          },
+          "glitter": {
+            "id": "rock-7-1g",
+            "name": "Glitter Joeyo",
+            "image": "images/rock-7-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Puncharoo",
+          "normal": {
+            "id": "rock-7-2",
+            "image": "images/rock-7-2.png"
+          },
+          "glitter": {
+            "id": "rock-7-2g",
+            "name": "Glitter Puncharoo",
+            "image": "images/rock-7-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Kangachamp",
+          "normal": {
+            "id": "rock-7-3",
+            "image": "images/rock-7-3.png"
+          },
+          "glitter": {
+            "id": "rock-7-3g",
+            "name": "Glitter Kangachamp",
+            "image": "images/rock-7-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Kaiseroo",
+          "normal": {
+            "id": "rock-7-4",
+            "image": "images/rock-7-4.png"
+          },
+          "glitter": {
+            "id": "rock-7-4g",
+            "name": "Kaiseroo Glitter",
+            "image": "images/rock-7-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-7",
+      "type": "Lightning",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Sparkeet",
+          "normal": {
+            "id": "lightning-7-1",
+            "image": "images/lightning-7-1.png"
+          },
+          "glitter": {
+            "id": "lightning-7-1g",
+            "name": "Glitter Sparkeet",
+            "image": "images/lightning-7-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Buzzbeak",
+          "normal": {
+            "id": "lightning-7-2",
+            "image": "images/lightning-7-2.png"
+          },
+          "glitter": {
+            "id": "lightning-7-2g",
+            "name": "Glitter Buzzbeak",
+            "image": "images/lightning-7-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Toucanzam",
+          "normal": {
+            "id": "lightning-7-3",
+            "image": "images/lightning-7-3.png"
+          },
+          "glitter": {
+            "id": "lightning-7-3g",
+            "name": "Glitter Toucanzam",
+            "image": "images/lightning-7-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Technocan",
+          "normal": {
+            "id": "lightning-7-4",
+            "image": "images/lightning-7-4.png"
+          },
+          "glitter": {
+            "id": "lightning-7-4g",
+            "name": "Technocan Glitter",
+            "image": "images/lightning-7-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-8",
+      "type": "Grass",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Sackling",
+          "normal": {
+            "id": "grass-8-1",
+            "image": "images/grass-8-1.png"
+          },
+          "glitter": {
+            "id": "grass-8-1g",
+            "name": "Glitter Sackling",
+            "image": "images/grass-8-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Jarachnid",
+          "normal": {
+            "id": "grass-8-2",
+            "image": "images/grass-8-2.png"
+          },
+          "glitter": {
+            "id": "grass-8-2g",
+            "name": "Glitter Jarachnid",
+            "image": "images/grass-8-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Terracrawler",
+          "normal": {
+            "id": "grass-8-3",
+            "image": "images/grass-8-3.png"
+          },
+          "glitter": {
+            "id": "grass-8-3g",
+            "name": "Glitter Terracrawler",
+            "image": "images/grass-8-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Weaverfang",
+          "normal": {
+            "id": "grass-8-4",
+            "image": "images/grass-8-4.png"
+          },
+          "glitter": {
+            "id": "grass-8-4g",
+            "name": "Glitter Weaverfang",
+            "image": "images/grass-8-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-8",
+      "type": "Water",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Skinklet",
+          "normal": {
+            "id": "water-8-1",
+            "image": "images/water-8-1.png"
+          },
+          "glitter": {
+            "id": "water-8-1g",
+            "name": "Glitter Skinklet",
+            "image": "images/water-8-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Skinkoon",
+          "normal": {
+            "id": "water-8-2",
+            "image": "images/water-8-2.png"
+          },
+          "glitter": {
+            "id": "water-8-2g",
+            "name": "Glitter Skinkoon",
+            "image": "images/water-8-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Ninjaguana",
+          "normal": {
+            "id": "water-8-3",
+            "image": "images/water-8-3.png"
+          },
+          "glitter": {
+            "id": "water-8-3g",
+            "name": "Glitter Ninjaguana",
+            "image": "images/water-8-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Hychroma",
+          "normal": {
+            "id": "water-8-4",
+            "image": "images/water-8-4.png"
+          },
+          "glitter": {
+            "id": "water-8-4g",
+            "name": "Hychroma Glitter",
+            "image": "images/water-8-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-8",
+      "type": "Fire",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Souphog",
+          "normal": {
+            "id": "fire-8-1",
+            "image": "images/fire-8-1.png"
+          },
+          "glitter": {
+            "id": "fire-8-1g",
+            "name": "Glitter Souphog",
+            "image": "images/fire-8-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Grillhog",
+          "normal": {
+            "id": "fire-8-2",
+            "image": "images/fire-8-2.png"
+          },
+          "glitter": {
+            "id": "fire-8-2g",
+            "name": "Glitter Grillhog",
+            "image": "images/fire-8-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Hothog",
+          "normal": {
+            "id": "fire-8-3",
+            "image": "images/fire-8-3.png"
+          },
+          "glitter": {
+            "id": "fire-8-3g",
+            "name": "Glitter Hothog",
+            "image": "images/fire-8-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Searhog",
+          "normal": {
+            "id": "fire-8-4",
+            "image": "images/fire-8-4.png"
+          },
+          "glitter": {
+            "id": "fire-8-4g",
+            "name": "Searhog Glitter",
+            "image": "images/fire-8-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-8",
+      "type": "Rock",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Shardsnail",
+          "normal": {
+            "id": "rock-8-1",
+            "image": "images/rock-8-1.png"
+          },
+          "glitter": {
+            "id": "rock-8-1g",
+            "name": "Glitter Shardsnail",
+            "image": "images/rock-8-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Gemsnail",
+          "normal": {
+            "id": "rock-8-2",
+            "image": "images/rock-8-2.png"
+          },
+          "glitter": {
+            "id": "rock-8-2g",
+            "name": "Glitter Gemsnail",
+            "image": "images/rock-8-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Jewelsnail",
+          "normal": {
+            "id": "rock-8-3",
+            "image": "images/rock-8-3.png"
+          },
+          "glitter": {
+            "id": "rock-8-3g",
+            "name": "Glitter Jewelsnail",
+            "image": "images/rock-8-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Crystalsnail",
+          "normal": {
+            "id": "rock-8-4",
+            "image": "images/rock-8-4.png"
+          },
+          "glitter": {
+            "id": "rock-8-4g",
+            "name": "Crystalsnail Glitter",
+            "image": "images/rock-8-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-8",
+      "type": "Lightning",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Cheerling",
+          "normal": {
+            "id": "lightning-8-1",
+            "image": "images/lightning-8-1.png"
+          },
+          "glitter": {
+            "id": "lightning-8-1g",
+            "name": "Glitter Cheerling",
+            "image": "images/lightning-8-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Cheerlet",
+          "normal": {
+            "id": "lightning-8-2",
+            "image": "images/lightning-8-2.png"
+          },
+          "glitter": {
+            "id": "lightning-8-2g",
+            "name": "Glitter Cheerlet",
+            "image": "images/lightning-8-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Cheerspring",
+          "normal": {
+            "id": "lightning-8-3",
+            "image": "images/lightning-8-3.png"
+          },
+          "glitter": {
+            "id": "lightning-8-3g",
+            "name": "Glitter Cheerspring",
+            "image": "images/lightning-8-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Cheerstella",
+          "normal": {
+            "id": "lightning-8-4",
+            "image": "images/lightning-8-4.png"
+          },
+          "glitter": {
+            "id": "lightning-8-4g",
+            "name": "Glitter Cheerstella",
+            "image": "images/lightning-8-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-9",
+      "type": "Grass",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Cactobud",
+          "normal": {
+            "id": "grass-9-1",
+            "image": "images/grass-9-1.png"
+          },
+          "glitter": {
+            "id": "grass-9-1g",
+            "name": "Glitter Cactobud",
+            "image": "images/grass-9-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Cactobloom",
+          "normal": {
+            "id": "grass-9-2",
+            "image": "images/grass-9-2.png"
+          },
+          "glitter": {
+            "id": "grass-9-2g",
+            "name": "Glitter Cactobloom",
+            "image": "images/grass-9-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Cactoczar",
+          "normal": {
+            "id": "grass-9-3",
+            "image": "images/grass-9-3.png"
+          },
+          "glitter": {
+            "id": "grass-9-3g",
+            "name": "Glitter Cactoczar",
+            "image": "images/grass-9-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Cactobodhi",
+          "normal": {
+            "id": "grass-9-4",
+            "image": "images/grass-9-4.png"
+          },
+          "glitter": {
+            "id": "grass-9-4g",
+            "name": "Cactobodhi Glitter",
+            "image": "images/grass-9-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-9",
+      "type": "Water",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Lullely",
+          "normal": {
+            "id": "water-9-1",
+            "image": "images/water-9-1.png"
+          },
+          "glitter": {
+            "id": "water-9-1g",
+            "name": "Glitter Lullelly",
+            "image": "images/water-9-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Yawnelly",
+          "normal": {
+            "id": "water-9-2",
+            "image": "images/water-9-2.png"
+          },
+          "glitter": {
+            "id": "water-9-2g",
+            "name": "Glitter Yawnelly",
+            "image": "images/water-9-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Souverelle",
+          "normal": {
+            "id": "water-9-3",
+            "image": "images/water-9-3.png"
+          },
+          "glitter": {
+            "id": "water-9-3g",
+            "name": "Glitter Souverelle",
+            "image": "images/water-9-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Somnrayna",
+          "normal": {
+            "id": "water-9-4",
+            "image": "images/water-9-4.png"
+          },
+          "glitter": {
+            "id": "water-9-4g",
+            "name": "Somnrayna-glitch-4",
+            "image": "images/water-9-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-9",
+      "type": "Fire",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Tindercub",
+          "normal": {
+            "id": "fire-9-1",
+            "image": "images/fire-9-1.png"
+          },
+          "glitter": {
+            "id": "fire-9-1g",
+            "name": "Glitter Tindercub",
+            "image": "images/fire-9-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Kitjitsu",
+          "normal": {
+            "id": "fire-9-2",
+            "image": "images/fire-9-2.png"
+          },
+          "glitter": {
+            "id": "fire-9-2g",
+            "name": "Glitter Kitjitsu",
+            "image": "images/fire-9-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Taiglow",
+          "normal": {
+            "id": "fire-9-3",
+            "image": "images/fire-9-3.png"
+          },
+          "glitter": {
+            "id": "fire-9-3g",
+            "name": "Glitter Taiglow",
+            "image": "images/fire-9-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Saberheart",
+          "normal": {
+            "id": "fire-9-4",
+            "image": "images/fire-9-4.png"
+          },
+          "glitter": {
+            "id": "fire-9-4g",
+            "name": "Saberheart Glitter",
+            "image": "images/fire-9-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-9",
+      "type": "Rock",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Humbug",
+          "normal": {
+            "id": "rock-9-1",
+            "image": "images/rock-9-1.png"
+          },
+          "glitter": {
+            "id": "rock-9-1g",
+            "name": "Glitter Humbug",
+            "image": "images/rock-9-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Humbleetle",
+          "normal": {
+            "id": "rock-9-2",
+            "image": "images/rock-9-2.png"
+          },
+          "glitter": {
+            "id": "rock-9-2g",
+            "name": "Glitter Humbeetle",
+            "image": "images/rock-9-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Zenscarab",
+          "normal": {
+            "id": "rock-9-3",
+            "image": "images/rock-9-3.png"
+          },
+          "glitter": {
+            "id": "rock-9-3g",
+            "name": "Glitter Zenscarab",
+            "image": "images/rock-9-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Hierotyrus",
+          "normal": {
+            "id": "rock-9-4",
+            "image": "images/rock-9-4.png"
+          },
+          "glitter": {
+            "id": "rock-9-4g",
+            "name": "Hierotyrus-glitch-4",
+            "image": "images/rock-9-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-9",
+      "type": "Lightning",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Fluffle",
+          "normal": {
+            "id": "lightning-9-1",
+            "image": "images/lightning-9-1.png"
+          },
+          "glitter": {
+            "id": "lightning-9-1g",
+            "name": "Glitter Fluffle",
+            "image": "images/lightning-9-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Nimbuzzy",
+          "normal": {
+            "id": "lightning-9-2",
+            "image": "images/lightning-9-2.png"
+          },
+          "glitter": {
+            "id": "lightning-9-2g",
+            "name": "Glitter Nimbuzzy",
+            "image": "images/lightning-9-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Galewether",
+          "normal": {
+            "id": "lightning-9-3",
+            "image": "images/lightning-9-3.png"
+          },
+          "glitter": {
+            "id": "lightning-9-3g",
+            "name": "Glitter Galewether",
+            "image": "images/lightning-9-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Cosmoram",
+          "normal": {
+            "id": "lightning-9-4",
+            "image": "images/lightning-9-4.png"
+          },
+          "glitter": {
+            "id": "lightning-9-4g",
+            "name": "Cosmoram-glitch-4",
+            "image": "images/lightning-9-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-10",
+      "type": "Grass",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Funglet",
+          "normal": {
+            "id": "grass-10-1",
+            "image": "images/grass-10-1.png"
+          },
+          "glitter": {
+            "id": "grass-10-1g",
+            "name": "Glitter Funglet",
+            "image": "images/grass-10-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Trippet",
+          "normal": {
+            "id": "grass-10-2",
+            "image": "images/grass-10-2.png"
+          },
+          "glitter": {
+            "id": "grass-10-2g",
+            "name": "Glitter Trippet",
+            "image": "images/grass-10-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Hyphoria",
+          "normal": {
+            "id": "grass-10-3",
+            "image": "images/grass-10-3.png"
+          },
+          "glitter": {
+            "id": "grass-10-3g",
+            "name": "Glitter Hyphoria",
+            "image": "images/grass-10-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Ecstamira",
+          "normal": {
+            "id": "grass-10-4",
+            "image": "images/grass-10-4.png"
+          },
+          "glitter": {
+            "id": "grass-10-4g",
+            "name": "Ecstamira Glitter",
+            "image": "images/grass-10-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-10",
+      "type": "Water",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Dewgrub",
+          "normal": {
+            "id": "water-10-1",
+            "image": "images/water-10-1.png"
+          },
+          "glitter": {
+            "id": "water-10-1g",
+            "name": "Glitter Dewgrub",
+            "image": "images/water-10-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Ripplewing",
+          "normal": {
+            "id": "water-10-2",
+            "image": "images/water-10-2.png"
+          },
+          "glitter": {
+            "id": "water-10-2g",
+            "name": "Glitter Ripplewing",
+            "image": "images/water-10-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Waveflutter",
+          "normal": {
+            "id": "water-10-3",
+            "image": "images/water-10-3.png"
+          },
+          "glitter": {
+            "id": "water-10-3g",
+            "name": "Glitter Waveflutter",
+            "image": "images/water-10-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Morphanessa",
+          "normal": {
+            "id": "water-10-4",
+            "image": "images/water-10-4.png"
+          },
+          "glitter": {
+            "id": "water-10-4g",
+            "name": "Morphanessa Glitter",
+            "image": "images/water-10-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-10",
+      "type": "Fire",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Fumekit",
+          "normal": {
+            "id": "fire-10-1",
+            "image": "images/fire-10-1.png"
+          },
+          "glitter": {
+            "id": "fire-10-1g",
+            "name": "Glitter Fumekit",
+            "image": "images/fire-10-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Sulfunk",
+          "normal": {
+            "id": "fire-10-2",
+            "image": "images/fire-10-2.png"
+          },
+          "glitter": {
+            "id": "fire-10-2g",
+            "name": "Glitter Sulfunk",
+            "image": "images/fire-10-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Magmusk",
+          "normal": {
+            "id": "fire-10-3",
+            "image": "images/fire-10-3.png"
+          },
+          "glitter": {
+            "id": "fire-10-3g",
+            "name": "Glitter Magmusk",
+            "image": "images/fire-10-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Blastniff",
+          "normal": {
+            "id": "fire-10-4",
+            "image": "images/fire-10-4.png"
+          },
+          "glitter": {
+            "id": "fire-10-4g",
+            "name": "Blastniff Glitter",
+            "image": "images/fire-10-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-10",
+      "type": "Rock",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Taptail",
+          "normal": {
+            "id": "rock-10-1",
+            "image": "images/rock-10-1.png"
+          },
+          "glitter": {
+            "id": "rock-10-1g",
+            "name": "Glitter Taptail",
+            "image": "images/rock-10-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Rattlecoil",
+          "normal": {
+            "id": "rock-10-2",
+            "image": "images/rock-10-2.png"
+          },
+          "glitter": {
+            "id": "rock-10-2g",
+            "name": "Glitter Rattlecoil",
+            "image": "images/rock-10-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Clangnaga",
+          "normal": {
+            "id": "rock-10-3",
+            "image": "images/rock-10-3.png"
+          },
+          "glitter": {
+            "id": "rock-10-3g",
+            "name": "Glitter Clangnaga",
+            "image": "images/rock-10-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Dharmadder",
+          "normal": {
+            "id": "rock-10-4",
+            "image": "images/rock-10-4.png"
+          },
+          "glitter": {
+            "id": "rock-10-4g",
+            "name": "Dharmadder Glitter",
+            "image": "images/rock-10-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-10",
+      "type": "Lightning",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Kittazap",
+          "normal": {
+            "id": "lightning-10-1",
+            "image": "images/lightning-10-1.png"
+          },
+          "glitter": {
+            "id": "lightning-10-1g",
+            "name": "Glitter Kittazap",
+            "image": "images/lightning-10-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Nekowatt",
+          "normal": {
+            "id": "lightning-10-2",
+            "image": "images/lightning-10-2.png"
+          },
+          "glitter": {
+            "id": "lightning-10-2g",
+            "name": "Glitter Nekowatt",
+            "image": "images/lightning-10-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Voltazar",
+          "normal": {
+            "id": "lightning-10-3",
+            "image": "images/lightning-10-3.png"
+          },
+          "glitter": {
+            "id": "lightning-10-3g",
+            "name": "Glitter Voltazar",
+            "image": "images/lightning-10-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Thunderpaw",
+          "normal": {
+            "id": "lightning-10-4",
+            "image": "images/lightning-10-4.png"
+          },
+          "glitter": {
+            "id": "lightning-10-4g",
+            "name": "Thunderpaw Glitter",
+            "image": "images/lightning-10-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-11",
+      "type": "Grass",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Lollama",
+          "normal": {
+            "id": "grass-11-1",
+            "image": "images/grass-11-1.png"
+          },
+          "glitter": {
+            "id": "grass-11-1g",
+            "name": "Glitter Lollama",
+            "image": "images/grass-11-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Slobberlama",
+          "normal": {
+            "id": "grass-11-2",
+            "image": "images/grass-11-2.png"
+          },
+          "glitter": {
+            "id": "grass-11-2g",
+            "name": "Glitter Slobberlama",
+            "image": "images/grass-11-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Ptooielama",
+          "normal": {
+            "id": "grass-11-3",
+            "image": "images/grass-11-3.png"
+          },
+          "glitter": {
+            "id": "grass-11-3g",
+            "name": "Glitter Ptooielama",
+            "image": "images/grass-11-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Blechlama",
+          "normal": {
+            "id": "grass-11-4",
+            "image": "images/grass-11-4.png"
+          },
+          "glitter": {
+            "id": "grass-11-4g",
+            "name": "Blechlama Glitter",
+            "image": "images/grass-11-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-11",
+      "type": "Water",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Dumbopus",
+          "normal": {
+            "id": "water-11-1",
+            "image": "images/water-11-1.png"
+          },
+          "glitter": {
+            "id": "water-11-1g",
+            "name": "Glitter Dumbopus",
+            "image": "images/water-11-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Dazopus",
+          "normal": {
+            "id": "water-11-2",
+            "image": "images/water-11-2.png"
+          },
+          "glitter": {
+            "id": "water-11-2g",
+            "name": "Glitter Dazopus",
+            "image": "images/water-11-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Fishopus",
+          "normal": {
+            "id": "water-11-3",
+            "image": "images/water-11-3.png"
+          },
+          "glitter": {
+            "id": "water-11-3g",
+            "name": "Glitter Fishopus",
+            "image": "images/water-11-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Lordopus",
+          "normal": {
+            "id": "water-11-4",
+            "image": "images/water-11-4.png"
+          },
+          "glitter": {
+            "id": "water-11-4g",
+            "name": "Lordopus Glitter",
+            "image": "images/water-11-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-11",
+      "type": "Fire",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Flameow",
+          "normal": {
+            "id": "fire-11-1",
+            "image": "images/fire-11-1.png"
+          },
+          "glitter": {
+            "id": "fire-11-1g",
+            "name": "Glitter Flameow",
+            "image": "images/fire-11-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Nekoflare",
+          "normal": {
+            "id": "fire-11-2",
+            "image": "images/fire-11-2.png"
+          },
+          "glitter": {
+            "id": "fire-11-2g",
+            "name": "Glitter Nekoflare",
+            "image": "images/fire-11-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Silversear",
+          "normal": {
+            "id": "fire-11-3",
+            "image": "images/fire-11-3.png"
+          },
+          "glitter": {
+            "id": "fire-11-3g",
+            "name": "Glitter Silversear",
+            "image": "images/fire-11-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Cinderclaw",
+          "normal": {
+            "id": "fire-11-4",
+            "image": "images/fire-11-4.png"
+          },
+          "glitter": {
+            "id": "fire-11-4g",
+            "name": "Cinderclaw Glitter",
+            "image": "images/fire-11-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-11",
+      "type": "Rock",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Drilleroo",
+          "normal": {
+            "id": "rock-11-1",
+            "image": "images/rock-11-1.png"
+          },
+          "glitter": {
+            "id": "rock-11-1g",
+            "name": "Glitter Drilleroo",
+            "image": "images/rock-11-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Cragolin",
+          "normal": {
+            "id": "rock-11-2",
+            "image": "images/rock-11-2.png"
+          },
+          "glitter": {
+            "id": "rock-11-2g",
+            "name": "Glitter Cragolin",
+            "image": "images/rock-11-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Borelord",
+          "normal": {
+            "id": "rock-11-3",
+            "image": "images/rock-11-3.png"
+          },
+          "glitter": {
+            "id": "rock-11-3g",
+            "name": "Glitter Borelord",
+            "image": "images/rock-11-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Armavolve",
+          "normal": {
+            "id": "rock-11-4",
+            "image": "images/rock-11-4.png"
+          },
+          "glitter": {
+            "id": "rock-11-4g",
+            "name": "Armavolve Glitter",
+            "image": "images/rock-11-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-11",
+      "type": "Lightning",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Zaplet",
+          "normal": {
+            "id": "lightning-11-1",
+            "image": "images/lightning-11-1.png"
+          },
+          "glitter": {
+            "id": "lightning-11-1g",
+            "name": "Glitter Zaplet",
+            "image": "images/lightning-11-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Synthhog",
+          "normal": {
+            "id": "lightning-11-2",
+            "image": "images/lightning-11-2.png"
+          },
+          "glitter": {
+            "id": "lightning-11-2g",
+            "name": "Glitter Synthhog",
+            "image": "images/lightning-11-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Sonarbat",
+          "normal": {
+            "id": "lightning-11-3",
+            "image": "images/lightning-11-3.png"
+          },
+          "glitter": {
+            "id": "lightning-11-3g",
+            "name": "Glitter Sonarbat",
+            "image": "images/lightning-11-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Umbraveil",
+          "normal": {
+            "id": "lightning-11-4",
+            "image": "images/lightning-11-4.png"
+          },
+          "glitter": {
+            "id": "lightning-11-4g",
+            "name": "Umbraveil Glitter",
+            "image": "images/lightning-11-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-12",
+      "type": "Water",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Maskfry",
+          "normal": {
+            "id": "water-12-1",
+            "image": "images/water-12-1.png"
+          },
+          "glitter": {
+            "id": "water-12-1g",
+            "name": "Glitter Maskfry",
+            "image": "images/water-12-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Ospisces",
+          "normal": {
+            "id": "water-12-2",
+            "image": "images/water-12-2.png"
+          },
+          "glitter": {
+            "id": "water-12-2g",
+            "name": "Glitter Ospisces",
+            "image": "images/water-12-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Armorjaw",
+          "normal": {
+            "id": "water-12-3",
+            "image": "images/water-12-3.png"
+          },
+          "glitter": {
+            "id": "water-12-3g",
+            "name": "Armorjaw Glitter",
+            "image": "images/water-12-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Dagondeep",
+          "normal": {
+            "id": "water-12-4",
+            "image": "images/water-12-4.png"
+          },
+          "glitter": {
+            "id": "water-12-4g",
+            "name": "Dagondeep Glitter",
+            "image": "images/water-12-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-12",
+      "type": "Grass",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Hootlet",
+          "normal": {
+            "id": "grass-12-1",
+            "image": "images/grass-12-1.png"
+          },
+          "glitter": {
+            "id": "grass-12-1g",
+            "name": "Hootlet Glitter",
+            "image": "images/grass-12-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Tikowl",
+          "normal": {
+            "id": "grass-12-2",
+            "image": "images/grass-12-2.png"
+          },
+          "glitter": {
+            "id": "grass-12-2g",
+            "name": "Tikowl Glitter",
+            "image": "images/grass-12-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Chronerva",
+          "normal": {
+            "id": "grass-12-3",
+            "image": "images/grass-12-3.png"
+          },
+          "glitter": {
+            "id": "grass-12-3g",
+            "name": "Chronerva Glitter",
+            "image": "images/grass-12-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Hypnostrix",
+          "normal": {
+            "id": "grass-12-4",
+            "image": "images/grass-12-4.png"
+          },
+          "glitter": {
+            "id": "grass-12-4g",
+            "name": "Hypnostrix Glitter",
+            "image": "images/grass-12-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-12",
+      "type": "Rock",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Momopo",
+          "normal": {
+            "id": "rock-12-1",
+            "image": "images/rock-12-1.png"
+          },
+          "glitter": {
+            "id": "rock-12-1g",
+            "name": "Momopo Glitter",
+            "image": "images/rock-12-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Lulupo",
+          "normal": {
+            "id": "rock-12-2",
+            "image": "images/rock-12-2.png"
+          },
+          "glitter": {
+            "id": "rock-12-2g",
+            "name": "Lulupo Glitter",
+            "image": "images/rock-12-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Lilypo",
+          "normal": {
+            "id": "rock-12-3",
+            "image": "images/rock-12-3.png"
+          },
+          "glitter": {
+            "id": "rock-12-3g",
+            "name": "Lilypo Glitter",
+            "image": "images/rock-12-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Gemmapo",
+          "normal": {
+            "id": "rock-12-4",
+            "image": "images/rock-12-4.png"
+          },
+          "glitter": {
+            "id": "rock-12-4g",
+            "name": "Gemmapo Glitter",
+            "image": "images/rock-12-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-12",
+      "type": "Fire",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Blowfin",
+          "normal": {
+            "id": "fire-12-1",
+            "image": "images/fire-12-1.png"
+          },
+          "glitter": {
+            "id": "fire-12-1g",
+            "name": "Blowfin Glitter",
+            "image": "images/fire-12-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Puffbelly",
+          "normal": {
+            "id": "fire-12-2",
+            "image": "images/fire-12-2.png"
+          },
+          "glitter": {
+            "id": "fire-12-2g",
+            "name": "Puffbelly-glitch-2",
+            "image": "images/fire-12-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Chefugu",
+          "normal": {
+            "id": "fire-12-3",
+            "image": "images/fire-12-3.png"
+          },
+          "glitter": {
+            "id": "fire-12-3g",
+            "name": "Chefugu-glitch-3",
+            "image": "images/fire-12-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Pyromaki",
+          "normal": {
+            "id": "fire-12-4",
+            "image": "images/fire-12-4.png"
+          },
+          "glitter": {
+            "id": "fire-12-4g",
+            "name": "Pyromaki Glitter",
+            "image": "images/fire-12-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-12",
+      "type": "Lightning",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Glowfly",
+          "normal": {
+            "id": "lightning-12-1",
+            "image": "images/lightning-12-1.png"
+          },
+          "glitter": {
+            "id": "lightning-12-1g",
+            "name": "Glowfly Glitter",
+            "image": "images/lightning-12-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Phosflare",
+          "normal": {
+            "id": "lightning-12-2",
+            "image": "images/lightning-12-2.png"
+          },
+          "glitter": {
+            "id": "lightning-12-2g",
+            "name": "Phosflare Glitter",
+            "image": "images/lightning-12-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Glimmerwing",
+          "normal": {
+            "id": "lightning-12-3",
+            "image": "images/lightning-12-3.png"
+          },
+          "glitter": {
+            "id": "lightning-12-3g",
+            "name": "Glimmerwing Glitter",
+            "image": "images/lightning-12-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Luminastra",
+          "normal": {
+            "id": "lightning-12-4",
+            "image": "images/lightning-12-4.png"
+          },
+          "glitter": {
+            "id": "lightning-12-4g",
+            "name": "Luminastra-glitch-4",
+            "image": "images/lightning-12-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-13",
+      "type": "Fire",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Poakie",
+          "normal": {
+            "id": "fire-13-1",
+            "image": "images/fire-13-1.png"
+          },
+          "glitter": {
+            "id": "fire-13-1g",
+            "name": "Poakie Glitter",
+            "image": "images/fire-13-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Sizzribb",
+          "normal": {
+            "id": "fire-13-2",
+            "image": "images/fire-13-2.png"
+          },
+          "glitter": {
+            "id": "fire-13-2g",
+            "name": "Sizzribb Glitter",
+            "image": "images/fire-13-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Lickflicker",
+          "normal": {
+            "id": "fire-13-3",
+            "image": "images/fire-13-3.png"
+          },
+          "glitter": {
+            "id": "fire-13-3g",
+            "name": "Lickflicker Glitter",
+            "image": "images/fire-13-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Ignitoad",
+          "normal": {
+            "id": "fire-13-4",
+            "image": "images/fire-13-4.png"
+          },
+          "glitter": {
+            "id": "fire-13-4g",
+            "name": "Ignitoad Glitter",
+            "image": "images/fire-13-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-13",
+      "type": "Grass",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Budboo",
+          "normal": {
+            "id": "grass-13-1",
+            "image": "images/grass-13-1.png"
+          },
+          "glitter": {
+            "id": "grass-13-1g",
+            "name": "Budboo Glitter",
+            "image": "images/grass-13-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Snapshade",
+          "normal": {
+            "id": "grass-13-2",
+            "image": "images/grass-13-2.png"
+          },
+          "glitter": {
+            "id": "grass-13-2g",
+            "name": "Snapshade Glitter",
+            "image": "images/grass-13-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Thornwisp",
+          "normal": {
+            "id": "grass-13-3",
+            "image": "images/grass-13-3.png"
+          },
+          "glitter": {
+            "id": "grass-13-3g",
+            "name": "Thornwisp Glitter",
+            "image": "images/grass-13-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Chomperwraith",
+          "normal": {
+            "id": "grass-13-4",
+            "image": "images/grass-13-4.png"
+          },
+          "glitter": {
+            "id": "grass-13-4g",
+            "name": "Chomperwraith Glitter",
+            "image": "images/grass-13-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-13",
+      "type": "Lightning",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Cavyzap",
+          "normal": {
+            "id": "lightning-13-1",
+            "image": "images/lightning-13-1.png"
+          },
+          "glitter": {
+            "id": "lightning-13-1g",
+            "name": "Cavyzap Glitter",
+            "image": "images/lightning-13-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Hippiehog",
+          "normal": {
+            "id": "lightning-13-2",
+            "image": "images/lightning-13-2.png"
+          },
+          "glitter": {
+            "id": "lightning-13-2g",
+            "name": "Hippiehog Glitter",
+            "image": "images/lightning-13-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Wheekroller",
+          "normal": {
+            "id": "lightning-13-3",
+            "image": "images/lightning-13-3.png"
+          },
+          "glitter": {
+            "id": "lightning-13-3g",
+            "name": "Wheekroller Glitter",
+            "image": "images/lightning-13-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Gigagnash",
+          "normal": {
+            "id": "lightning-13-4",
+            "image": "images/lightning-13-4.png"
+          },
+          "glitter": {
+            "id": "lightning-13-4g",
+            "name": "Giganash Glitter",
+            "image": "images/lightning-13-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-13",
+      "type": "Water",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Snowcub",
+          "normal": {
+            "id": "water-13-1",
+            "image": "images/water-13-1.png"
+          },
+          "glitter": {
+            "id": "water-13-1g",
+            "name": "Snowcub Glitter",
+            "image": "images/water-13-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Polarpaw",
+          "normal": {
+            "id": "water-13-2",
+            "image": "images/water-13-2.png"
+          },
+          "glitter": {
+            "id": "water-13-2g",
+            "name": "Polarpaw Glitter",
+            "image": "images/water-13-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Blizzgrizz",
+          "normal": {
+            "id": "water-13-3",
+            "image": "images/water-13-3.png"
+          },
+          "glitter": {
+            "id": "water-13-3g",
+            "name": "Blizzgrizz Glitter",
+            "image": "images/water-13-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Anglerbear",
+          "normal": {
+            "id": "water-13-4",
+            "image": "images/water-13-4.png"
+          },
+          "glitter": {
+            "id": "water-13-4g",
+            "name": "Anglerbear Glitter",
+            "image": "images/water-13-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-13",
+      "type": "Rock",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Ringtail",
+          "normal": {
+            "id": "rock-13-1",
+            "image": "images/rock-13-1.png"
+          },
+          "glitter": {
+            "id": "rock-13-1g",
+            "name": "Ringtail Glitter",
+            "image": "images/rock-13-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Rizzler",
+          "normal": {
+            "id": "rock-13-2",
+            "image": "images/rock-13-2.png"
+          },
+          "glitter": {
+            "id": "rock-13-2g",
+            "name": "Rizzler Glitter",
+            "image": "images/rock-13-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Zorrock",
+          "normal": {
+            "id": "rock-13-3",
+            "image": "images/rock-13-3.png"
+          },
+          "glitter": {
+            "id": "rock-13-3g",
+            "name": "Zorrock Glitter",
+            "image": "images/rock-13-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Phantothief",
+          "normal": {
+            "id": "rock-13-4",
+            "image": "images/rock-13-4.png"
+          },
+          "glitter": {
+            "id": "rock-13-4g",
+            "name": "Phantothief Glitter",
+            "image": "images/rock-13-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "water-14",
+      "type": "Water",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Dolphie",
+          "normal": {
+            "id": "water-14-1",
+            "image": "images/water-14-1.png"
+          },
+          "glitter": {
+            "id": "water-14-1g",
+            "name": "Image 2026-09-16 045339580",
+            "image": "images/water-14-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Blubbles",
+          "normal": {
+            "id": "water-14-2",
+            "image": "images/water-14-2.png"
+          },
+          "glitter": {
+            "id": "water-14-2g",
+            "name": "Blubbles Glitter",
+            "image": "images/water-14-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Aquariel",
+          "normal": {
+            "id": "water-14-3",
+            "image": "images/water-14-3.png"
+          },
+          "glitter": {
+            "id": "water-14-3g",
+            "name": "Aquariel Glitter",
+            "image": "images/water-14-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Irisia",
+          "normal": {
+            "id": "water-14-4",
+            "image": "images/water-14-4.png"
+          },
+          "glitter": {
+            "id": "water-14-4g",
+            "name": "Irisia Glitter",
+            "image": "images/water-14-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "rock-14",
+      "type": "Rock",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Popa",
+          "normal": {
+            "id": "rock-14-1",
+            "image": "images/rock-14-1.png"
+          },
+          "glitter": {
+            "id": "rock-14-1g",
+            "name": "Popa Glitter",
+            "image": "images/rock-14-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Popapouch",
+          "normal": {
+            "id": "rock-14-2",
+            "image": "images/rock-14-2.png"
+          },
+          "glitter": {
+            "id": "rock-14-2g",
+            "name": "Popapouch Glitter",
+            "image": "images/rock-14-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Popagrind",
+          "normal": {
+            "id": "rock-14-3",
+            "image": "images/rock-14-3.png"
+          },
+          "glitter": {
+            "id": "rock-14-3g",
+            "name": "Popagrind Glitter",
+            "image": "images/rock-14-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Popafam",
+          "normal": {
+            "id": "rock-14-4",
+            "image": "images/rock-14-4.png"
+          },
+          "glitter": {
+            "id": "rock-14-4g",
+            "name": "Popafam Glitter",
+            "image": "images/rock-14-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "grass-14",
+      "type": "Grass",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Bonobean",
+          "normal": {
+            "id": "grass-14-1",
+            "image": "images/grass-14-1.png"
+          },
+          "glitter": {
+            "id": "grass-14-1g",
+            "name": "Bonobean Glitter",
+            "image": "images/grass-14-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Titanape",
+          "normal": {
+            "id": "grass-14-2",
+            "image": "images/grass-14-2.png"
+          },
+          "glitter": {
+            "id": "grass-14-2g",
+            "name": "Titanape Glitter",
+            "image": "images/grass-14-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Grangutan",
+          "normal": {
+            "id": "grass-14-3",
+            "image": "images/grass-14-3.png"
+          },
+          "glitter": {
+            "id": "grass-14-3g",
+            "name": "Grangutan Glitter",
+            "image": "images/grass-14-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Primakong",
+          "normal": {
+            "id": "grass-14-4",
+            "image": "images/grass-14-4.png"
+          },
+          "glitter": {
+            "id": "grass-14-4g",
+            "name": "Primakong Glitter",
+            "image": "images/grass-14-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "lightning-14",
+      "type": "Lightning",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Wattail",
+          "normal": {
+            "id": "lightning-14-1",
+            "image": "images/lightning-14-1.png"
+          },
+          "glitter": {
+            "id": "lightning-14-1g",
+            "name": "Wattail Glitter",
+            "image": "images/lightning-14-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Dampere",
+          "normal": {
+            "id": "lightning-14-2",
+            "image": "images/lightning-14-2.png"
+          },
+          "glitter": {
+            "id": "lightning-14-2g",
+            "name": "Dampere Glitter",
+            "image": "images/lightning-14-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Beavervolt",
+          "normal": {
+            "id": "lightning-14-3",
+            "image": "images/lightning-14-3.png"
+          },
+          "glitter": {
+            "id": "lightning-14-3g",
+            "name": "Beavervolt Glitter",
+            "image": "images/lightning-14-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Paddlezap",
+          "normal": {
+            "id": "lightning-14-4",
+            "image": "images/lightning-14-4.png"
+          },
+          "glitter": {
+            "id": "lightning-14-4g",
+            "name": "Paddlezap Glitter",
+            "image": "images/lightning-14-4g.png"
+          }
+        }
+      ]
+    },
+    {
+      "tatari_id": "fire-14",
+      "type": "Fire",
+      "has_glitter": true,
+      "evolutions": [
+        {
+          "stage": 1,
+          "name": "Roost",
+          "normal": {
+            "id": "fire-14-1",
+            "image": "images/fire-14-1.png"
+          },
+          "glitter": {
+            "id": "fire-14-1g",
+            "name": "Roost Glitter",
+            "image": "images/fire-14-1g.png"
+          }
+        },
+        {
+          "stage": 2,
+          "name": "Rocker",
+          "normal": {
+            "id": "fire-14-2",
+            "image": "images/fire-14-2.png"
+          },
+          "glitter": {
+            "id": "fire-14-2g",
+            "name": "Rocker Glitter",
+            "image": "images/fire-14-2g.png"
+          }
+        },
+        {
+          "stage": 3,
+          "name": "Deluroo",
+          "normal": {
+            "id": "fire-14-3",
+            "image": "images/fire-14-3.png"
+          },
+          "glitter": {
+            "id": "fire-14-3g",
+            "name": "Deluroo Glitter",
+            "image": "images/fire-14-3g.png"
+          }
+        },
+        {
+          "stage": 4,
+          "name": "Wacuckoo",
+          "normal": {
+            "id": "fire-14-4",
+            "image": "images/fire-14-4.png"
+          },
+          "glitter": {
+            "id": "fire-14-4g",
+            "name": "Wacuckoo Glitter",
+            "image": "images/fire-14-4g.png"
+          }
+        }
+      ]
+    }
+  ]
+}
