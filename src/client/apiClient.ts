@@ -59,38 +59,11 @@ export async function scanEmulatorPorts(
     return await pyInvoke("scan_emulator_ports", body, options);
 }
 
-/**
- * Clash of Critters formation viewer: the formations of the typed stage.
- *
- * Without a stage it reads the stage from one screenshot of the device. Never
- * sends input to the device.
- */
-export async function getFormationView(
-    body: Commands["get_formation_view"]["input"],
-    options?: InvokeOptions
-): Promise<Commands["get_formation_view"]["output"]> {
-    return await pyInvoke("get_formation_view", body, options);
-}
-
 export async function cacheClear(
     body: Commands["cache_clear"]["input"],
     options?: InvokeOptions
 ): Promise<Commands["cache_clear"]["output"]> {
     return await pyInvoke("cache_clear", body, options);
-}
-
-export async function saveLogFile(
-    body: Commands["save_log_file"]["input"],
-    options?: InvokeOptions
-): Promise<Commands["save_log_file"]["output"]> {
-    return await pyInvoke("save_log_file", body, options);
-}
-
-export async function getDebugScreenshotsDir(
-    body: Commands["get_debug_screenshots_dir"]["input"],
-    options?: InvokeOptions
-): Promise<Commands["get_debug_screenshots_dir"]["output"]> {
-    return await pyInvoke("get_debug_screenshots_dir", body, options);
 }
 
 export async function _generateAppSettingsModel(
@@ -105,4 +78,18 @@ export async function _generateProfileStateUpdateModel(
     options?: InvokeOptions
 ): Promise<Commands["_generate_profile_state_update_model"]["output"]> {
     return await pyInvoke("_generate_profile_state_update_model", body, options);
+}
+
+export async function saveLogFile(
+    body: Commands["save_log_file"]["input"],
+    options?: InvokeOptions
+): Promise<Commands["save_log_file"]["output"]> {
+    return await pyInvoke("save_log_file", body, options);
+}
+
+export async function getDebugScreenshotsDir(
+    body: Commands["get_debug_screenshots_dir"]["input"],
+    options?: InvokeOptions
+): Promise<Commands["get_debug_screenshots_dir"]["output"]> {
+    return await pyInvoke("get_debug_screenshots_dir", body, options);
 }

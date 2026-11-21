@@ -15,26 +15,8 @@ export type ProfileIndex1 = number
  * @maxItems 3
  */
 export type RootModelTupleDictStrAnyDictStrAnyStr = [unknown, unknown, unknown]
-export type RootModelListStr = string[]
 export type ProfileIndex2 = number
-export type Stage = (string | null)
-export type Status = ("ok" | "no_device" | "stage_unreadable" | "stage_invalid" | "no_formation")
-export type Stage1 = (string | null)
-export type Level = (number | null)
-export type Row = number
-export type Col = number
-export type TatariId = string
-export type EvolutionId = string
-export type Name = string
-export type Tier = number
-export type Glitter = boolean
-export type Units = ViewUnit[]
-export type Formations = ViewFormation[]
-export type ProfileIndex3 = number
 export type Trigger = ("adb-settings-updated" | "game-settings-updated")
-export type Content = string
-export type Filename = string
-export type RootModelStr = string
 /**
  * @minItems 1
  */
@@ -57,28 +39,8 @@ export type DesktopNotifications = boolean
 export type DiscordWebhook = string
 export type LoggingLevel = ("DEBUG" | "INFO" | "WARNING" | "ERROR" | "FATAL")
 export type ShutdownAfterTasks = boolean
-export type WatchdogsRestartGameIfTaskIsStuck = boolean
-export type WatchdogsRestartAfterMinutes = number
-/**
- * Wait time after a standard click or action.
- */
-export type ActionDelaySeconds = number
-/**
- * Wait time after a screen transition or navigation action.
- */
-export type NavigationDelaySeconds = number
-/**
- * Max time to wait for an image/template to appear.
- */
-export type TemplateTimeoutSeconds = number
-/**
- * Wait time before restarting the task if the game is closed.
- */
-export type WatchdogRestartDelaySeconds = number
-/**
- * Give up instead of restarting again after this many restarts in a row fail to keep the task running for at least 5 minutes.
- */
-export type WatchdogsMaxConsecutiveRestarts = number
+export type RestartStuckTasks = boolean
+export type RestartGameIfTaskTakesLongerThanMinutes = number
 export type GameTitle = string
 export type Label1 = string
 export type Args1 = string[]
@@ -123,23 +85,11 @@ output: RootModelNoneType
 }
 scan_emulator_ports: {
 input: ProfileContext
-output: RootModelListStr
-}
-get_formation_view: {
-input: FormationViewBody
-output: FormationViewResponse
+output: string[]
 }
 cache_clear: {
 input: CacheClear
 output: RootModelNoneType
-}
-save_log_file: {
-input: SaveLogFileBody
-output: RootModelStr
-}
-get_debug_screenshots_dir: {
-input: ProfileContext
-output: RootModelStr
 }
 _generate_app_settings_model: {
 input: void | undefined
@@ -148,6 +98,14 @@ output: AppSettings
 _generate_profile_state_update_model: {
 input: void | undefined
 output: ProfileStateUpdate
+}
+save_log_file: {
+input: SaveLogFileBody
+output: string
+}
+get_debug_screenshots_dir: {
+input: ProfileContext
+output: string
 }
 }
 export interface StartTaskBody {
@@ -160,53 +118,14 @@ export interface ProfileContext {
 profile_index: ProfileIndex1
 [k: string]: unknown
 }
-export interface FormationViewBody {
-profile_index: ProfileIndex2
-stage?: Stage
-[k: string]: unknown
-}
-/**
- * Answer of the formation viewer command.
- */
-export interface FormationViewResponse {
-status: Status
-stage: Stage1
-formations: Formations
-sprites: Sprites
-[k: string]: unknown
-}
-/**
- * One prepared formation of a stage.
- */
-export interface ViewFormation {
-level: Level
-units: Units
-[k: string]: unknown
-}
-/**
- * One tatari of a formation as the viewer shows it.
- */
-export interface ViewUnit {
-row: Row
-col: Col
-tatari_id: TatariId
-evolution_id: EvolutionId
-name: Name
-tier: Tier
-glitter: Glitter
-[k: string]: unknown
-}
-export interface Sprites {
-[k: string]: string
-}
 export interface CacheClear {
-profile_index: ProfileIndex3
+profile_index: ProfileIndex2
 trigger: Trigger
 [k: string]: unknown
 }
 export interface SaveLogFileBody {
-content: Content
-filename: Filename
+content: string
+filename: string
 [k: string]: unknown
 }
 /**
@@ -258,13 +177,8 @@ level?: LoggingLevel
  */
 export interface Advanced {
 shutdown_after_tasks?: ShutdownAfterTasks
-restart_stuck_task?: WatchdogsRestartGameIfTaskIsStuck
-restart_stuck_task_after_mins?: WatchdogsRestartAfterMinutes
-action_delay?: ActionDelaySeconds
-navigation_delay?: NavigationDelaySeconds
-template_timeout?: TemplateTimeoutSeconds
-watchdog_restart_delay?: WatchdogRestartDelaySeconds
-max_consecutive_restarts?: WatchdogsMaxConsecutiveRestarts
+restart_stuck_task?: RestartStuckTasks
+restart_stuck_task_after_mins?: RestartGameIfTaskTakesLongerThanMinutes
 [k: string]: unknown
 }
 export interface ProfileStateUpdate {
