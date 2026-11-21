@@ -1,143 +1,148 @@
 {
   "chapter": 67,
   "stage": "67-10",
-  "level": 1341,
   "shared_with": "67-10 – 67-14",
-  "units": [
+  "formations": [
     {
-      "row": 1,
-      "col": 1,
-      "tatari_id": "water-12",
-      "evolution_id": "water-12-3",
-      "name": "Armorjaw",
-      "tier": 3,
-      "glitter": false
-    },
-    {
-      "row": 1,
-      "col": 2,
-      "tatari_id": "lightning-3",
-      "evolution_id": "lightning-3-3",
-      "name": "Blitzmane",
-      "tier": 3,
-      "glitter": false
-    },
-    {
-      "row": 1,
-      "col": 3,
-      "tatari_id": "water-7",
-      "evolution_id": "water-7-3",
-      "name": "Dreadclaw",
-      "tier": 3,
-      "glitter": false
-    },
-    {
-      "row": 1,
-      "col": 4,
-      "tatari_id": "rock-5",
-      "evolution_id": "rock-5-4",
-      "name": "Rockong",
-      "tier": 4,
-      "glitter": false
-    },
-    {
-      "row": 2,
-      "col": 2,
-      "tatari_id": "grass-10",
-      "evolution_id": "grass-10-3",
-      "name": "Hyphoria",
-      "tier": 3,
-      "glitter": false
-    },
-    {
-      "row": 2,
-      "col": 3,
-      "tatari_id": "lightning-8",
-      "evolution_id": "lightning-8-3",
-      "name": "Cheerspring",
-      "tier": 3,
-      "glitter": false
-    },
-    {
-      "row": 2,
-      "col": 4,
-      "tatari_id": "fire-6",
-      "evolution_id": "fire-6-3",
-      "name": "Charflutter",
-      "tier": 3,
-      "glitter": false
-    },
-    {
-      "row": 3,
-      "col": 1,
-      "tatari_id": "water-4",
-      "evolution_id": "water-4-3",
-      "name": "Seaswirl",
-      "tier": 3,
-      "glitter": false
-    },
-    {
-      "row": 3,
-      "col": 2,
-      "tatari_id": "lightning-11",
-      "evolution_id": "lightning-11-4g",
-      "name": "Umbraveil",
-      "tier": 4,
-      "glitter": true
-    },
-    {
-      "row": 3,
-      "col": 3,
-      "tatari_id": "water-14",
-      "evolution_id": "water-14-3",
-      "name": "Aquariel",
-      "tier": 3,
-      "glitter": false
-    },
-    {
-      "row": 3,
-      "col": 4,
-      "tatari_id": "fire-11",
-      "evolution_id": "fire-11-3",
-      "name": "Silversear",
-      "tier": 3,
-      "glitter": false
-    },
-    {
-      "row": 4,
-      "col": 2,
-      "tatari_id": "grass-7",
-      "evolution_id": "grass-7-3",
-      "name": "Solaflora",
-      "tier": 3,
-      "glitter": false
-    },
-    {
-      "row": 4,
-      "col": 3,
-      "tatari_id": "water-5",
-      "evolution_id": "water-5-3",
-      "name": "Tideon",
-      "tier": 3,
-      "glitter": false
-    },
-    {
-      "row": 4,
-      "col": 4,
-      "tatari_id": "water-10",
-      "evolution_id": "water-10-4",
-      "name": "Morphanessa",
-      "tier": 4,
-      "glitter": false
-    },
-    {
-      "row": 4,
-      "col": 5,
-      "tatari_id": "fire-4",
-      "evolution_id": "fire-4-3",
-      "name": "Azurion",
-      "tier": 3,
-      "glitter": false
+      "source": "critterformations",
+      "level": 1341,
+      "units": [
+        {
+          "row": 1,
+          "col": 1,
+          "tatari_id": "water-12",
+          "evolution_id": "water-12-3",
+          "name": "Armorjaw",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 2,
+          "tatari_id": "lightning-3",
+          "evolution_id": "lightning-3-3",
+          "name": "Blitzmane",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "tatari_id": "water-7",
+          "evolution_id": "water-7-3",
+          "name": "Dreadclaw",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 4,
+          "tatari_id": "rock-5",
+          "evolution_id": "rock-5-4",
+          "name": "Rockong",
+          "tier": 4,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "tatari_id": "grass-10",
+          "evolution_id": "grass-10-3",
+          "name": "Hyphoria",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "tatari_id": "lightning-8",
+          "evolution_id": "lightning-8-3",
+          "name": "Cheerspring",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 4,
+          "tatari_id": "fire-6",
+          "evolution_id": "fire-6-3",
+          "name": "Charflutter",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 1,
+          "tatari_id": "water-4",
+          "evolution_id": "water-4-3",
+          "name": "Seaswirl",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 2,
+          "tatari_id": "lightning-11",
+          "evolution_id": "lightning-11-4g",
+          "name": "Umbraveil",
+          "tier": 4,
+          "glitter": true
+        },
+        {
+          "row": 3,
+          "col": 3,
+          "tatari_id": "water-14",
+          "evolution_id": "water-14-3",
+          "name": "Aquariel",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 4,
+          "tatari_id": "fire-11",
+          "evolution_id": "fire-11-3",
+          "name": "Silversear",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 2,
+          "tatari_id": "grass-7",
+          "evolution_id": "grass-7-3",
+          "name": "Solaflora",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 3,
+          "tatari_id": "water-5",
+          "evolution_id": "water-5-3",
+          "name": "Tideon",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 4,
+          "tatari_id": "water-10",
+          "evolution_id": "water-10-4",
+          "name": "Morphanessa",
+          "tier": 4,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 5,
+          "tatari_id": "fire-4",
+          "evolution_id": "fire-4-3",
+          "name": "Azurion",
+          "tier": 3,
+          "glitter": false
+        }
+      ]
     }
   ]
 }

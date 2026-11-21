@@ -1,143 +1,148 @@
 {
   "chapter": 5,
   "stage": "5-14",
-  "level": 95,
   "shared_with": "5-13 – 5-14",
-  "units": [
+  "formations": [
     {
-      "row": 1,
-      "col": 1,
-      "tatari_id": "water-6",
-      "evolution_id": "water-6-1",
-      "name": "Waddledo",
-      "tier": 1,
-      "glitter": false
-    },
-    {
-      "row": 1,
-      "col": 2,
-      "tatari_id": "fire-12",
-      "evolution_id": "fire-12-1",
-      "name": "Blowfin",
-      "tier": 1,
-      "glitter": false
-    },
-    {
-      "row": 1,
-      "col": 3,
-      "tatari_id": "grass-8",
-      "evolution_id": "grass-8-1",
-      "name": "Sackling",
-      "tier": 1,
-      "glitter": false
-    },
-    {
-      "row": 1,
-      "col": 5,
-      "tatari_id": "rock-12",
-      "evolution_id": "rock-12-1",
-      "name": "Momopo",
-      "tier": 1,
-      "glitter": false
-    },
-    {
-      "row": 2,
-      "col": 2,
-      "tatari_id": "grass-2",
-      "evolution_id": "grass-2-2",
-      "name": "Pearpair",
-      "tier": 2,
-      "glitter": false
-    },
-    {
-      "row": 2,
-      "col": 3,
-      "tatari_id": "grass-9",
-      "evolution_id": "grass-9-1",
-      "name": "Cactobud",
-      "tier": 1,
-      "glitter": false
-    },
-    {
-      "row": 3,
-      "col": 2,
-      "tatari_id": "fire-1",
-      "evolution_id": "fire-1-2",
-      "name": "Embertail",
-      "tier": 2,
-      "glitter": false
-    },
-    {
-      "row": 3,
-      "col": 4,
-      "tatari_id": "rock-2",
-      "evolution_id": "rock-2-2",
-      "name": "Snoozebo",
-      "tier": 2,
-      "glitter": false
-    },
-    {
-      "row": 3,
-      "col": 5,
-      "tatari_id": "rock-3",
-      "evolution_id": "rock-3-1",
-      "name": "Rubblet",
-      "tier": 1,
-      "glitter": false
-    },
-    {
-      "row": 4,
-      "col": 1,
-      "tatari_id": "water-5",
-      "evolution_id": "water-5-1",
-      "name": "Droppit",
-      "tier": 1,
-      "glitter": false
-    },
-    {
-      "row": 4,
-      "col": 4,
-      "tatari_id": "lightning-1",
-      "evolution_id": "lightning-1-2",
-      "name": "Zapooch",
-      "tier": 2,
-      "glitter": false
-    },
-    {
-      "row": 4,
-      "col": 5,
-      "tatari_id": "fire-9",
-      "evolution_id": "fire-9-1",
-      "name": "Tindercub",
-      "tier": 1,
-      "glitter": false
-    },
-    {
-      "row": 5,
-      "col": 1,
-      "tatari_id": "fire-4",
-      "evolution_id": "fire-4-2",
-      "name": "Ignisnap",
-      "tier": 2,
-      "glitter": false
-    },
-    {
-      "row": 5,
-      "col": 3,
-      "tatari_id": "grass-3",
-      "evolution_id": "grass-3-2",
-      "name": "Frugatoad",
-      "tier": 2,
-      "glitter": false
-    },
-    {
-      "row": 5,
-      "col": 4,
-      "tatari_id": "lightning-2",
-      "evolution_id": "lightning-2-2",
-      "name": "Boltskipper",
-      "tier": 2,
-      "glitter": false
+      "source": "critterformations",
+      "level": 95,
+      "units": [
+        {
+          "row": 1,
+          "col": 1,
+          "tatari_id": "water-6",
+          "evolution_id": "water-6-1",
+          "name": "Waddledo",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 2,
+          "tatari_id": "fire-12",
+          "evolution_id": "fire-12-1",
+          "name": "Blowfin",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "tatari_id": "grass-8",
+          "evolution_id": "grass-8-1",
+          "name": "Sackling",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 5,
+          "tatari_id": "rock-12",
+          "evolution_id": "rock-12-1",
+          "name": "Momopo",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "tatari_id": "grass-2",
+          "evolution_id": "grass-2-2",
+          "name": "Pearpair",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "tatari_id": "grass-9",
+          "evolution_id": "grass-9-1",
+          "name": "Cactobud",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 2,
+          "tatari_id": "fire-1",
+          "evolution_id": "fire-1-2",
+          "name": "Embertail",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 4,
+          "tatari_id": "rock-2",
+          "evolution_id": "rock-2-2",
+          "name": "Snoozebo",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 5,
+          "tatari_id": "rock-3",
+          "evolution_id": "rock-3-1",
+          "name": "Rubblet",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 1,
+          "tatari_id": "water-5",
+          "evolution_id": "water-5-1",
+          "name": "Droppit",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 4,
+          "tatari_id": "lightning-1",
+          "evolution_id": "lightning-1-2",
+          "name": "Zapooch",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 5,
+          "tatari_id": "fire-9",
+          "evolution_id": "fire-9-1",
+          "name": "Tindercub",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 5,
+          "col": 1,
+          "tatari_id": "fire-4",
+          "evolution_id": "fire-4-2",
+          "name": "Ignisnap",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 5,
+          "col": 3,
+          "tatari_id": "grass-3",
+          "evolution_id": "grass-3-2",
+          "name": "Frugatoad",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 5,
+          "col": 4,
+          "tatari_id": "lightning-2",
+          "evolution_id": "lightning-2-2",
+          "name": "Boltskipper",
+          "tier": 2,
+          "glitter": false
+        }
+      ]
     }
   ]
 }
