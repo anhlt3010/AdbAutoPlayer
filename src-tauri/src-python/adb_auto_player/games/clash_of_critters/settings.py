@@ -11,6 +11,7 @@ IdleLimitSeconds = Annotated[int, Field(ge=30, le=900)]
 FormationAttempts = Annotated[int, Field(ge=1, le=20)]
 WinRatePercent = Annotated[int, Field(ge=0, le=100)]
 AdvanceCount = Annotated[int, Field(ge=1, le=1000)]
+TrayPollSeconds = Annotated[float, Field(ge=0.1, le=5)]
 
 
 class AutoBattleSettings(BaseModel):
@@ -49,6 +50,14 @@ class AutoBattleSettings(BaseModel):
         description=(
             "After a win with a prepared formation (a boss), leave the field as it "
             "is for the next normal stages instead of pressing Quick Deploy."
+        ),
+    )
+    tray_settle_poll_seconds: TrayPollSeconds = Field(
+        default=0.5,
+        title="Tray Settle Check Interval (seconds)",
+        description=(
+            "After swiping the tray, how often it is checked for having stopped "
+            "moving. A slow emulator may need a longer interval."
         ),
     )
 

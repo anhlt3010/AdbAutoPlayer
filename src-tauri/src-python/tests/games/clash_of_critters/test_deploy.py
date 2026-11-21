@@ -1,6 +1,7 @@
 """Tests for the Clash of Critters tray scan and formation deployment."""
 
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, call, patch
 
 import cv2
@@ -43,10 +44,7 @@ class _DeployBot(DeployMixin):
     """Concrete DeployMixin (Game leaves `settings` abstract, `device` a property)."""
 
     device = None
-
-    @property
-    def settings(self):  # type: ignore[override]
-        raise NotImplementedError
+    settings = None  # replaced per instance
 
 
 def _unit(evolution_id: str, row: int, col: int) -> FormationUnit:
@@ -67,6 +65,9 @@ def bot() -> MagicMock:
     def drag(card: Point, cell: Point) -> None:
         field["count"] += 1
 
+    game.settings = SimpleNamespace(
+        auto_battle=SimpleNamespace(tray_settle_poll_seconds=0.5)
+    )
     game.tap = MagicMock()
     game.device = MagicMock()
     game.get_screenshot = MagicMock()
@@ -446,9 +447,10 @@ def test_wait_tray_stable_returns_once_two_frames_match(bot: MagicMock) -> None:
 def test_wait_tray_stable_sleeps_between_frames(
     bot: MagicMock, no_sleep: MagicMock
 ) -> None:
+    bot.settings.auto_battle.tray_settle_poll_seconds = 0.2
     bot.get_screenshot.side_effect = [_frame(10), _frame(10)]
     DeployMixin._wait_tray_stable(bot)
-    no_sleep.assert_called_once_with(deploy._STABLE_POLL_SECONDS)
+    no_sleep.assert_called_once_with(0.2)
 
 
 def test_wait_tray_stable_gives_up_when_the_tray_never_stops(

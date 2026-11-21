@@ -15,6 +15,7 @@ def test_defaults() -> None:
     assert settings.idle_limit_seconds == 300
     assert settings.max_formation_attempts == 3
     assert settings.keep_formation_after_win is False
+    assert settings.tray_settle_poll_seconds == 0.5
 
 
 def test_bounds_rejected() -> None:
@@ -22,6 +23,10 @@ def test_bounds_rejected() -> None:
         AutoBattleSettings(max_formation_attempts=0)
     with pytest.raises(ValidationError):
         AutoBattleSettings(idle_limit_seconds=10)
+    with pytest.raises(ValidationError):
+        AutoBattleSettings(tray_settle_poll_seconds=0.05)
+    with pytest.raises(ValidationError):
+        AutoBattleSettings(tray_settle_poll_seconds=6)
 
 
 def test_old_keep_alive_removed() -> None:

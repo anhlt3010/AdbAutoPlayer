@@ -47,9 +47,9 @@ _DRAG_SETTLE_SECONDS = 1.0
 _SCROLL_SECONDS = 1.5
 _CLEAR_SETTLE_SECONDS = 1.0
 # After a swipe the tray keeps gliding for about 1.5 s. Cards are only read once two
-# frames, _STABLE_POLL_SECONDS apart, differ by no more than _STABLE_MAX_DIFF (mean
-# pixel difference of the tray), for at most _STABLE_MAX_POLLS polls.
-_STABLE_POLL_SECONDS = 0.5
+# frames, auto_battle.tray_settle_poll_seconds apart, differ by no more than
+# _STABLE_MAX_DIFF (mean pixel difference of the tray), for at most _STABLE_MAX_POLLS
+# polls.
 _STABLE_MAX_POLLS = 8
 _STABLE_MAX_DIFF = 0.3
 # Swipe along the gap between the two tray rows; forward reveals cards on the right.
@@ -111,8 +111,9 @@ class DeployMixin(Game):
         """
         left, top, right, bottom = TRAY_BOX
         previous = self.get_screenshot()
+        poll_seconds = self.settings.auto_battle.tray_settle_poll_seconds
         for _ in range(_STABLE_MAX_POLLS):
-            sleep(_STABLE_POLL_SECONDS)
+            sleep(poll_seconds)
             current = self.get_screenshot()
             diff = np.abs(
                 current[top:bottom, left:right].astype(np.int16)

@@ -4,6 +4,7 @@ startup_wait_seconds = 30
 idle_limit_seconds = 300
 max_formation_attempts = 3
 keep_formation_after_win = false
+tray_settle_poll_seconds = 0.5
 
 [artifact_adventure]
 min_win_rate_percent = 40
