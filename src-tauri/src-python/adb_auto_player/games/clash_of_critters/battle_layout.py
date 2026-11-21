@@ -4,6 +4,8 @@ Measured on real captures (``docs/superpowers/specs/assets/prep_screen_*.png``).
 Boxes are ``(left, top, right, bottom)``.
 """
 
+from collections.abc import Collection
+
 import numpy as np
 from adb_auto_player.models.geometry import Point
 
@@ -11,6 +13,9 @@ from adb_auto_player.models.geometry import Point
 FIELD_COLUMNS_X = (300, 420, 540, 660, 780)
 FIELD_ROWS_Y = (490, 610, 730, 850, 970)
 MAX_DEPLOYED = 15
+# A drag from the tray is taken for a scroll of the tray when it is too sideways;
+# it only works reliably when |dx| <= DRAG_MAX_RATIO * |dy|.
+DRAG_MAX_RATIO = 0.5
 
 # Tray of owned tatari cards (2 rows, 6 visible columns, scrolls horizontally).
 TRAY_COLUMNS_X = (110, 288, 466, 644, 822, 1000)
@@ -104,3 +109,52 @@ def find_card_lefts(screenshot_bgr: np.ndarray) -> list[int]:
         if _CARD_WIDTH_RANGE[0] <= x - start <= _CARD_WIDTH_RANGE[1]:
             lefts.append(start)
     return lefts
+
+
+def cell_at(point: Point) -> tuple[int, int] | None:
+    """Return the (row, col) of the cell whose centre is exactly ``point``."""
+    if point.x in FIELD_COLUMNS_X and point.y in FIELD_ROWS_Y:
+        return FIELD_ROWS_Y.index(point.y) + 1, FIELD_COLUMNS_X.index(point.x) + 1
+    return None
+
+
+def _is_steep(start: Point, end: Point) -> bool:
+    return abs(end.x - start.x) <= DRAG_MAX_RATIO * abs(end.y - start.y)
+
+
+def plan_drag(
+    card: Point, row: int, col: int, occupied: Collection[tuple[int, int]]
+) -> list[Point]:
+    """Plan the path of a unit from its tray card to a field cell.
+
+    A drag that is mostly sideways scrolls the tray instead of lifting the card.
+    In that case the card is first dropped on a free cell that is steep enough
+    from the card (the one closest to the target), and the unit is then moved to
+    its cell inside the field, where there is no such limit.
+
+    Args:
+        card: The centre of the card in the tray.
+        row: Target row 1-5.
+        col: Target column 1-5.
+        occupied: Cells that already hold a unit.
+
+    Returns:
+        ``[card, target]``, or ``[card, intermediate_cell, target]``.
+    """
+    target = cell_center(row, col)
+    if _is_steep(card, target):
+        return [card, target]
+    best: tuple[tuple[int, int], Point] | None = None
+    for r in range(1, len(FIELD_ROWS_Y) + 1):
+        for c in range(1, len(FIELD_COLUMNS_X) + 1):
+            if (r, c) == (row, col) or (r, c) in occupied:
+                continue
+            middle = cell_center(r, c)
+            if not _is_steep(card, middle):
+                continue
+            distance = (abs(middle.x - target.x), abs(middle.y - target.y))
+            if best is None or distance < best[0]:
+                best = (distance, middle)
+    if best is None:
+        return [card, target]
+    return [card, best[1], target]

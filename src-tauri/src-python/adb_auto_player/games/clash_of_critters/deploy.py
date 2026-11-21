@@ -17,8 +17,9 @@ from adb_auto_player.games.clash_of_critters.battle_layout import (
     TRAY_BOX,
     TRAY_ROWS_Y,
     card_box,
-    cell_center,
+    cell_at,
     find_card_lefts,
+    plan_drag,
 )
 from adb_auto_player.games.clash_of_critters.card_recognition import (
     CardRecognizer,
@@ -35,6 +36,12 @@ from adb_auto_player.ocr import RapidOCRBackend
 
 _TEMPLATE_DIR_NAME = "clash_of_critters_cards"
 _DRAG_SECONDS = 0.6
+# A drag is checked against the deployed counter and repeated once if it failed.
+_DRAG_ATTEMPTS = 2
+# A unit moved inside the field is seen by the target cell changing on screen
+# (mean pixel difference of a square of 2 * _CELL_HALF_SIZE around its centre).
+_CELL_HALF_SIZE = 40
+_CELL_CHANGE_MIN_DIFF = 10.0
 # Measured on the emulator: a dropped card is settled well within a second.
 _DRAG_SETTLE_SECONDS = 1.0
 _SCROLL_SECONDS = 1.5
@@ -59,6 +66,10 @@ class DeployMixin(Game):
     """Reads the tray of owned tatari and deploys formations by drag and drop."""
 
     _recognizer: CardRecognizer | None = None
+    # Last value read from the deployed counter (None if unknown or unreadable).
+    _deployed_count: int | None = None
+    # Cells of the field that hold a unit (set while a formation is deployed).
+    _occupied: set[tuple[int, int]] | None = None
 
     def _get_recognizer(self) -> CardRecognizer:
         if self._recognizer is None:
@@ -145,7 +156,8 @@ class DeployMixin(Game):
         """Walk the whole tray and collect the evolution ids of the owned cards.
 
         Returns:
-            The recognized evolution ids. The tray is left at its start.
+            The recognized evolution ids. The tray is left at its end, so the
+            cards can then be picked while walking back to the start.
         """
         self._scroll_tray_to_start()
         owned: set[str] = set()
@@ -157,29 +169,8 @@ class DeployMixin(Game):
             )
             if not self._scroll_tray(True):
                 break
-        self._scroll_tray_to_start()
         logging.info(f"Recognized {len(owned)} owned tatari in the tray.")
         return owned
-
-    def _locate_card(self, evolution_id: str) -> Point | None:
-        """Scroll the tray until the card of an evolution is on screen.
-
-        Args:
-            evolution_id: The wanted evolution id.
-
-        Returns:
-            The centre of the card, or None if it is not in the tray.
-        """
-        for attempt in range(2):
-            if attempt == 1:
-                self._scroll_tray_to_start()
-            while True:
-                for center, found in self._visible_cards():
-                    if found == evolution_id:
-                        return center
-                if not self._scroll_tray(True):
-                    break
-        return None
 
     def _drag_card(self, card: Point, cell: Point) -> None:
         """Drag a tray card onto a field cell."""
@@ -204,12 +195,119 @@ class DeployMixin(Game):
         self.tap(point, log=False)
         self._wait_tray_stable()
 
+    def _find_card(self, evolution_id: str) -> Point | None:
+        """Find a card on the visible part of the tray (None if it is not there)."""
+        for card, found in self._visible_cards():
+            if found == evolution_id:
+                return card
+        return None
+
+    def _field_move(self, source: Point, target: Point) -> bool:
+        """Move a unit inside the field and check that it arrived.
+
+        A move that did not register is repeated once.
+
+        Args:
+            source: The centre of the unit's current cell.
+            target: The centre of the cell to move it to.
+
+        Returns:
+            False if the target cell did not change on screen.
+        """
+        for _ in range(_DRAG_ATTEMPTS):
+            before = self.get_screenshot()
+            self._drag_card(source, target)
+            after = self.get_screenshot()
+            top, bottom = target.y - _CELL_HALF_SIZE, target.y + _CELL_HALF_SIZE
+            left, right = target.x - _CELL_HALF_SIZE, target.x + _CELL_HALF_SIZE
+            diff = np.abs(
+                after[top:bottom, left:right].astype(np.int16)
+                - before[top:bottom, left:right].astype(np.int16)
+            ).mean()
+            if float(diff) > _CELL_CHANGE_MIN_DIFF:
+                return True
+            logging.warning("The unit did not move, trying again.")
+        return False
+
+    def _place_card(self, card: Point, row: int, col: int, evolution_id: str) -> bool:
+        """Put a tray card on a cell and check that the field really got one more.
+
+        A drag that did not register is repeated once, after finding the card on
+        screen again (a failed drag may have scrolled the tray). A drag that would
+        be too sideways for the tray goes through an intermediate cell.
+
+        Args:
+            card: The centre of the card in the tray.
+            row: Target row 1-5.
+            col: Target column 1-5.
+            evolution_id: The card's evolution id, to find it again.
+
+        Returns:
+            False if the unit could not be put on its cell.
+        """
+        occupied = self._occupied if self._occupied is not None else set()
+        for attempt in range(_DRAG_ATTEMPTS):
+            path = plan_drag(card, row, col, occupied)
+            before = self._deployed_count
+            self._drag_card(card, path[1])
+            after = self._read_deployed_count()
+            self._deployed_count = after
+            logging.debug(
+                f"Dragged card at ({card.x}, {card.y}) to ({path[1].x}, {path[1].y}): "
+                f"{before} -> {after} on the field."
+            )
+            if before is None or after is None or after > before:
+                if len(path) == 3:  # noqa: PLR2004
+                    middle = cell_at(path[1])
+                    if not self._field_move(path[1], path[2]):
+                        if middle is not None:
+                            occupied.add(middle)
+                        return False
+                occupied.add((row, col))
+                return True
+            logging.warning(
+                f"The drag from ({card.x}, {card.y}) did not register, trying again."
+            )
+            if attempt + 1 < _DRAG_ATTEMPTS:
+                card = self._find_card(evolution_id) or card
+        return False
+
+    def _place_wanted(self, wanted: dict[str, FormationUnit]) -> int:
+        """Walk back through the tray and drag the wanted cards to their cells.
+
+        Args:
+            wanted: Evolution id of each card to place, with its formation unit.
+
+        Returns:
+            How many cards were placed.
+        """
+        wanted = dict(wanted)
+        placed = 0
+        while True:
+            for card, evolution_id in self._visible_cards():
+                unit = wanted.get(evolution_id or "")
+                if unit is None:
+                    continue
+                del wanted[evolution_id or ""]
+                logging.debug(
+                    f"Placing {evolution_id} at row {unit.row}, col {unit.col}."
+                )
+                if self._place_card(card, unit.row, unit.col, evolution_id or ""):
+                    placed += 1
+                else:
+                    logging.warning(f"Could not place {evolution_id}.")
+            if not wanted or not self._scroll_tray(False):
+                break
+        for evolution_id in wanted:
+            logging.warning(f"{evolution_id} was not found in the tray.")
+        return placed
+
     def _deploy_formation(self, formation: Formation) -> int:
         """Clear the field and deploy a formation one element at a time.
 
         For each element of the formation the tray is filtered to that element
-        (a short tray, so little scrolling and few cards to recognize), its
-        tatari are dragged to their cells, then the next element follows.
+        (a short tray), scanned to its end to see what the player owns, and then
+        walked back to its start while the wanted cards are dragged to their cells.
 
         Args:
             formation: The formation to deploy.
@@ -227,35 +325,29 @@ class DeployMixin(Game):
             )
             self.tap(CLEAR_FIELD_POINT, log=False)
             sleep(_CLEAR_SETTLE_SECONDS)
+            count = self._read_deployed_count()
+        self._deployed_count = count
+        self._occupied = set()
 
         by_element: dict[str, list[FormationUnit]] = {}
         for unit in formation.units[:MAX_DEPLOYED]:
             by_element.setdefault(unit.tatari_id.split("-")[0], []).append(unit)
 
-        dragged = 0
+        placed = 0
         for element, units in by_element.items():
             self._select_element(element)
-            placements = plan_deployment(
+            plan = plan_deployment(
                 Formation(formation.stage, tuple(units)),
                 self._scan_owned(),
                 MAX_DEPLOYED,
             )
-            for placement in placements:
-                if placement.evolution_id is None:
-                    continue
-                card = self._locate_card(placement.evolution_id)
-                if card is None:
-                    logging.warning(f"{placement.evolution_id} not found in the tray.")
-                    continue
-                self._drag_card(
-                    card, cell_center(placement.unit.row, placement.unit.col)
-                )
-                dragged += 1
+            wanted = {p.evolution_id: p.unit for p in plan if p.evolution_id}
+            placed += self._place_wanted(wanted)
         self._select_element(None)
 
         count = self._read_deployed_count()
         logging.info(
-            f"Deployed {count if count is not None else dragged} of "
+            f"Deployed {count if count is not None else placed} of "
             f"{len(formation.units)} formation units."
         )
-        return count if count is not None else dragged
+        return count if count is not None else placed

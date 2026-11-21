@@ -25,6 +25,20 @@ from adb_auto_player.models.geometry import Point
 STAGE = StageId(15, 50)
 
 
+def xy(point: Point) -> tuple[int, int]:
+    """Coordinates of a point.
+
+    ``Point`` has no dataclass fields, so any two points compare equal; tests
+    must compare coordinates instead.
+    """
+    return point.x, point.y
+
+
+def drags(mock: MagicMock) -> list[tuple[tuple[int, int], tuple[int, int]]]:
+    """(start, end) of every call of a drag-like mock."""
+    return [(xy(c.args[0]), xy(c.args[1])) for c in mock.call_args_list]
+
+
 class _DeployBot(DeployMixin):
     """Concrete DeployMixin (Game leaves `settings` abstract, `device` a property)."""
 
@@ -42,8 +56,17 @@ def _unit(evolution_id: str, row: int, col: int) -> FormationUnit:
 
 @pytest.fixture
 def bot() -> MagicMock:
-    """DeployMixin instance with every device-facing method mocked."""
+    """DeployMixin instance with every device-facing method mocked.
+
+    Dragging a card puts one more tatari on the (simulated) field; the counter
+    reads that number back.
+    """
     game = object.__new__(_DeployBot)
+    field = {"count": 0}
+
+    def drag(card: Point, cell: Point) -> None:
+        field["count"] += 1
+
     game.tap = MagicMock()
     game.device = MagicMock()
     game.get_screenshot = MagicMock()
@@ -53,9 +76,9 @@ def bot() -> MagicMock:
     game._scan_owned = MagicMock(return_value=set())
     game._select_element = MagicMock()
     game._wait_tray_stable = MagicMock()
-    game._locate_card = MagicMock(return_value=Point(110, 1285))
-    game._drag_card = MagicMock()
-    game._read_deployed_count = MagicMock(return_value=0)
+    game._drag_card = MagicMock(side_effect=drag)
+    game._field_move = MagicMock(return_value=True)
+    game._read_deployed_count = MagicMock(side_effect=lambda: field["count"])
     return game
 
 
@@ -66,41 +89,53 @@ def no_sleep():
         yield sleep
 
 
+CARD_A = Point(110, 1285)
+CARD_B = Point(288, 1285)
+CARD_C = Point(466, 1285)
+
+
 def test_clear_tapped_before_any_drag(bot: MagicMock) -> None:
     parent = MagicMock()
     parent.attach_mock(bot.tap, "tap")
     parent.attach_mock(bot._drag_card, "drag")
     bot._scan_owned.return_value = {"grass-4-2"}
-    bot._read_deployed_count.side_effect = [0, 1]
-    formation = Formation(STAGE, (_unit("grass-4-2", 1, 1),))
-    bot._deploy_formation(formation)
-    assert parent.mock_calls[0] == call.tap(CLEAR_FIELD_POINT, log=False)
-    assert parent.mock_calls[1].args[1] == cell_center(1, 1)
+    bot._visible_cards.return_value = [(CARD_A, "grass-4-2")]
+    bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),)))
+    tap, drag = parent.mock_calls[0], parent.mock_calls[1]
+    assert (tap[0], xy(tap.args[0]), tap.kwargs) == (
+        "tap",
+        xy(CLEAR_FIELD_POINT),
+        {"log": False},
+    )
+    assert (drag[0], xy(drag.args[0]), xy(drag.args[1])) == (
+        "drag",
+        (110, 1285),
+        (300, 490),
+    )
 
 
 def test_drags_each_owned_unit_to_its_cell(bot: MagicMock) -> None:
     bot._scan_owned.return_value = {"grass-4-2", "fire-3-2"}
-    bot._locate_card.side_effect = [Point(110, 1285), Point(288, 1285)]
+    bot._visible_cards.return_value = [(CARD_A, "grass-4-2"), (CARD_B, "fire-3-2")]
     formation = Formation(STAGE, (_unit("grass-4-2", 1, 1), _unit("fire-3-2", 2, 3)))
-    bot._read_deployed_count.side_effect = [0, 2]
     assert bot._deploy_formation(formation) == 2
-    assert bot._drag_card.call_args_list == [
-        call(Point(110, 1285), cell_center(1, 1)),
-        call(Point(288, 1285), cell_center(2, 3)),
+    assert drags(bot._drag_card) == [
+        ((110, 1285), (300, 490)),
+        ((288, 1285), (540, 610)),
     ]
 
 
 def test_unowned_unit_is_skipped(bot: MagicMock) -> None:
     bot._scan_owned.return_value = {"grass-4-2"}
+    bot._visible_cards.return_value = [(CARD_A, "grass-4-2")]
     formation = Formation(STAGE, (_unit("fire-3-2", 1, 1), _unit("grass-4-2", 2, 2)))
-    bot._read_deployed_count.side_effect = [0, 1]
     bot._deploy_formation(formation)
-    bot._drag_card.assert_called_once_with(Point(110, 1285), cell_center(2, 2))
+    assert drags(bot._drag_card) == [((110, 1285), (420, 610))]
 
 
-def test_card_not_found_in_tray_is_skipped(bot: MagicMock) -> None:
+def test_card_that_cannot_be_found_is_skipped(bot: MagicMock) -> None:
     bot._scan_owned.return_value = {"grass-4-2"}
-    bot._locate_card.return_value = None
+    bot._visible_cards.return_value = [(CARD_A, "fire-3-2")]
     formation = Formation(STAGE, (_unit("grass-4-2", 1, 1),))
     assert bot._deploy_formation(formation) == 0
     bot._drag_card.assert_not_called()
@@ -113,20 +148,35 @@ def test_nothing_deployable_returns_zero_and_no_drag(bot: MagicMock) -> None:
     bot._drag_card.assert_not_called()
 
 
+def test_walks_back_through_the_tray_placing_cards(bot: MagicMock) -> None:
+    bot._scan_owned.return_value = {"grass-4-2", "grass-3-1"}
+    bot._visible_cards.side_effect = [
+        [(CARD_A, "grass-4-2")],  # the end of the tray, where the scan stopped
+        [(CARD_B, "grass-3-1")],  # one page back
+    ]
+    bot._scroll_tray.side_effect = [True, False]
+    formation = Formation(STAGE, (_unit("grass-4-2", 1, 1), _unit("grass-3-1", 2, 2)))
+    assert bot._deploy_formation(formation) == 2
+    assert bot._scroll_tray.call_args_list == [call(False)]
+    assert [start for start, _ in drags(bot._drag_card)] == [(110, 1285), (288, 1285)]
+
+
+def test_stops_scrolling_once_every_card_is_placed(bot: MagicMock) -> None:
+    bot._scan_owned.return_value = {"grass-4-2"}
+    bot._visible_cards.return_value = [(CARD_A, "grass-4-2")]
+    bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),)))
+    bot._scroll_tray.assert_not_called()
+
+
 def test_at_most_fifteen_drags(bot: MagicMock) -> None:
     ids = [f"grass-{i}-2" for i in range(17)]
     bot._scan_owned.return_value = set(ids)
     units = tuple(_unit(evo, 1 + i % 5, 1 + i // 5) for i, evo in enumerate(ids))
-    bot._read_deployed_count.side_effect = [0, MAX_DEPLOYED]
+    bot._visible_cards.return_value = [
+        (Point(cell_center(u.row, u.col).x, 1285), u.evolution_id) for u in units
+    ]
     bot._deploy_formation(Formation(STAGE, units))
     assert bot._drag_card.call_count == MAX_DEPLOYED
-
-
-def test_count_falls_back_to_drags_when_unreadable(bot: MagicMock) -> None:
-    bot._scan_owned.return_value = {"grass-4-2"}
-    bot._read_deployed_count.return_value = None
-    formation = Formation(STAGE, (_unit("grass-4-2", 1, 1),))
-    assert bot._deploy_formation(formation) == 1
 
 
 def test_deploys_one_element_at_a_time(bot: MagicMock) -> None:
@@ -134,37 +184,168 @@ def test_deploys_one_element_at_a_time(bot: MagicMock) -> None:
     parent.attach_mock(bot._select_element, "select")
     parent.attach_mock(bot._drag_card, "drag")
     bot._scan_owned.return_value = {"grass-4-2", "fire-3-2", "grass-3-1"}
+    bot._visible_cards.return_value = [
+        (CARD_A, "grass-4-2"),
+        (CARD_B, "fire-3-2"),
+        (CARD_C, "grass-3-1"),
+    ]
     formation = Formation(
         STAGE,
-        (
-            _unit("grass-4-2", 1, 1),
-            _unit("fire-3-2", 2, 2),
-            _unit("grass-3-1", 3, 3),
-        ),
+        (_unit("grass-4-2", 1, 1), _unit("fire-3-2", 2, 2), _unit("grass-3-1", 3, 3)),
     )
-    bot._read_deployed_count.side_effect = [0, 3]
     bot._deploy_formation(formation)
-    assert parent.mock_calls == [
-        call.select("grass"),
-        call.drag(Point(110, 1285), cell_center(1, 1)),
-        call.drag(Point(110, 1285), cell_center(3, 3)),
-        call.select("fire"),
-        call.drag(Point(110, 1285), cell_center(2, 2)),
-        call.select(None),
+    sequence = [
+        ("select", c.args[0])
+        if c[0] == "select"
+        else ("drag", xy(c.args[0]), xy(c.args[1]))
+        for c in parent.mock_calls
+    ]
+    assert sequence == [
+        ("select", "grass"),
+        ("drag", (110, 1285), (300, 490)),
+        ("drag", (466, 1285), (540, 730)),
+        ("select", "fire"),
+        ("drag", (288, 1285), (420, 610)),
+        ("select", None),
     ]
     assert bot._scan_owned.call_count == 2
 
 
 def test_filter_is_reset_even_when_nothing_is_deployed(bot: MagicMock) -> None:
     bot._scan_owned.return_value = set()
-    formation = Formation(STAGE, (_unit("grass-4-2", 1, 1),))
-    bot._deploy_formation(formation)
+    bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),)))
     assert bot._select_element.call_args_list == [call("grass"), call(None)]
+
+
+# --- dragging across a long way ----------------------------------------------------
+
+
+def test_shallow_drag_is_done_in_two_legs(bot: MagicMock) -> None:
+    card = Point(109, 1285)
+    bot._scan_owned.return_value = {"water-3-3"}
+    bot._visible_cards.return_value = [(card, "water-3-3")]
+    formation = Formation(STAGE, (_unit("water-3-3", 5, 4),))
+    assert bot._deploy_formation(formation) == 1
+    assert drags(bot._drag_card) == [((109, 1285), (420, 610))]
+    assert drags(bot._field_move) == [((420, 610), (660, 970))]
+
+
+def test_a_failed_field_move_is_reported(bot: MagicMock) -> None:
+    bot._field_move.return_value = False
+    bot._scan_owned.return_value = {"water-3-3"}
+    bot._visible_cards.return_value = [(Point(109, 1285), "water-3-3")]
+    formation = Formation(STAGE, (_unit("water-3-3", 5, 4),))
+    bot._deploy_formation(formation)
+    # The unit stays on the intermediate cell, which counts as occupied for the
+    # next unit but not as a placement of this one.
+    assert bot._field_move.call_count == 1
+
+
+def test_cells_taken_by_earlier_units_are_avoided(bot: MagicMock) -> None:
+    bot._scan_owned.return_value = {"grass-4-2", "grass-3-1"}
+    first = Point(cell_center(2, 2).x, 1285)
+    shallow = Point(109, 1285)
+    bot._visible_cards.return_value = [(first, "grass-4-2"), (shallow, "grass-3-1")]
+    formation = Formation(STAGE, (_unit("grass-4-2", 2, 2), _unit("grass-3-1", 5, 4)))
+    bot._deploy_formation(formation)
+    # (2, 2) is taken, so the second unit goes through another cell.
+    assert drags(bot._field_move) == [((420, 490), (660, 970))]
+
+
+def test_field_move_checks_that_the_target_cell_changed(bot: MagicMock) -> None:
+    before = np.zeros((1920, 1080, 3), np.uint8)
+    after = before.copy()
+    target = cell_center(5, 4)
+    after[target.y - 40 : target.y + 40, target.x - 40 : target.x + 40] = 200
+    bot.get_screenshot.side_effect = [before, after]
+    assert DeployMixin._field_move(bot, cell_center(2, 2), target) is True
+    assert drags(bot._drag_card) == [((420, 610), (660, 970))]
+
+
+def test_field_move_is_repeated_once_when_nothing_changed(bot: MagicMock) -> None:
+    still = np.zeros((1920, 1080, 3), np.uint8)
+    bot.get_screenshot.return_value = still
+    assert DeployMixin._field_move(bot, cell_center(2, 2), cell_center(5, 4)) is False
+    assert bot._drag_card.call_count == 2
+
+
+def test_card_is_found_again_before_repeating_a_drag(bot: MagicMock) -> None:
+    # The first drag did nothing (the tray may have moved); the card is looked up
+    # again instead of reusing the old position.
+    field = {"count": 0, "attempts": 0}
+
+    def drag(card: Point, cell: Point) -> None:
+        field["attempts"] += 1
+        if field["attempts"] >= 2:
+            field["count"] += 1
+
+    bot._drag_card.side_effect = drag
+    bot._read_deployed_count.side_effect = lambda: field["count"]
+    bot._scan_owned.return_value = {"grass-4-2"}
+    old = Point(cell_center(1, 1).x, 1285)
+    moved = Point(cell_center(1, 1).x + 3, 1285)
+    bot._visible_cards.side_effect = [[(old, "grass-4-2")], [(moved, "grass-4-2")]]
+    bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),)))
+    assert drags(bot._drag_card) == [
+        ((300, 1285), (300, 490)),
+        ((303, 1285), (300, 490)),
+    ]
+
+
+# --- checking that a drag worked ------------------------------------------------------
+
+
+def _flaky_drags(bot: MagicMock, working_from_attempt: int) -> None:
+    """Make drags put a tatari on the field only from the given attempt on."""
+    field = {"count": 0, "attempts": 0}
+
+    def drag(card: Point, cell: Point) -> None:
+        field["attempts"] += 1
+        if field["attempts"] >= working_from_attempt:
+            field["count"] += 1
+
+    bot._drag_card.side_effect = drag
+    bot._read_deployed_count.side_effect = lambda: field["count"]
+
+
+def test_a_drag_that_did_not_register_is_repeated_once(bot: MagicMock) -> None:
+    _flaky_drags(bot, working_from_attempt=2)
+    bot._scan_owned.return_value = {"grass-4-2"}
+    bot._visible_cards.return_value = [(CARD_A, "grass-4-2")]
+    assert bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),))) == 1
+    assert bot._drag_card.call_count == 2
+
+
+def test_a_drag_is_not_repeated_when_it_worked(bot: MagicMock) -> None:
+    bot._scan_owned.return_value = {"grass-4-2"}
+    bot._visible_cards.return_value = [(CARD_A, "grass-4-2")]
+    bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),)))
+    assert bot._drag_card.call_count == 1
+
+
+def test_gives_up_after_one_repeat(bot: MagicMock) -> None:
+    _flaky_drags(bot, working_from_attempt=99)
+    bot._scan_owned.return_value = {"grass-4-2"}
+    bot._visible_cards.return_value = [(CARD_A, "grass-4-2")]
+    assert bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),))) == 0
+    assert bot._drag_card.call_count == 2
+
+
+def test_unreadable_counter_means_no_checking(bot: MagicMock) -> None:
+    bot._read_deployed_count.side_effect = None
+    bot._read_deployed_count.return_value = None
+    bot._scan_owned.return_value = {"grass-4-2"}
+    bot._visible_cards.return_value = [(CARD_A, "grass-4-2")]
+    assert bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),))) == 1
+    assert bot._drag_card.call_count == 1
 
 
 def test_select_element_taps_the_filter_button(bot: MagicMock) -> None:
     DeployMixin._select_element(bot, "water")
-    bot.tap.assert_called_once_with(ELEMENT_FILTER_POINTS["water"], log=False)
+    bot.tap.assert_called_once()
+    assert xy(bot.tap.call_args.args[0]) == xy(ELEMENT_FILTER_POINTS["water"])
+    assert xy(ELEMENT_FILTER_POINTS["water"]) == (240, 1665)
+    assert bot.tap.call_args.kwargs == {"log": False}
 
 
 def test_select_element_waits_for_the_tray_to_settle(bot: MagicMock) -> None:
@@ -174,7 +355,9 @@ def test_select_element_waits_for_the_tray_to_settle(bot: MagicMock) -> None:
 
 def test_select_all_taps_the_all_button(bot: MagicMock) -> None:
     DeployMixin._select_element(bot, None)
-    bot.tap.assert_called_once_with(ALL_FILTER_POINT, log=False)
+    bot.tap.assert_called_once()
+    assert xy(bot.tap.call_args.args[0]) == xy(ALL_FILTER_POINT) == (90, 1665)
+    assert bot.tap.call_args.kwargs == {"log": False}
 
 
 # --- tray scanning --------------------------------------------------------------
@@ -182,42 +365,25 @@ def test_select_all_taps_the_all_button(bot: MagicMock) -> None:
 
 @pytest.fixture
 def tray_bot() -> MagicMock:
-    """DeployMixin instance for the tray methods (real `_locate_card` etc.)."""
+    """DeployMixin instance for the tray methods (real `_scan_owned`)."""
     game = object.__new__(_DeployBot)
     game._visible_cards = MagicMock(return_value=[])
     game._scroll_tray = MagicMock(return_value=False)
     return game
 
 
-def test_locate_card_scrolls_until_found(tray_bot: MagicMock) -> None:
-    target = Point(466, 1285)
-    tray_bot._visible_cards.side_effect = [
-        [(Point(110, 1285), None)],
-        [(Point(110, 1285), "fire-3-2")],
-        [(target, "grass-4-2")],
-    ]
-    tray_bot._scroll_tray.return_value = True
-    assert tray_bot._locate_card("grass-4-2") == target
-    assert tray_bot._scroll_tray.call_count == 2
-
-
-def test_locate_card_stops_at_tray_end(tray_bot: MagicMock) -> None:
-    tray_bot._visible_cards.return_value = [(Point(110, 1285), "fire-3-2")]
-    tray_bot._scroll_tray.return_value = False
-    assert tray_bot._locate_card("grass-4-2") is None
-
-
-def test_scan_owned_collects_every_page_and_rewinds(tray_bot: MagicMock) -> None:
+def test_scan_owned_collects_every_page_and_stays_at_the_end(
+    tray_bot: MagicMock,
+) -> None:
     pages = [
         [(Point(1, 1), "a-1-1"), (Point(2, 1), "b-1-1")],
         [(Point(1, 1), "b-1-1"), (Point(2, 1), None), (Point(3, 1), "c-1-1")],
     ]
     tray_bot._visible_cards.side_effect = pages
-    # Backward to the start (already there), forward once, then the end,
-    # then back to the start.
-    tray_bot._scroll_tray.side_effect = [False, True, False, True, False]
+    # Back to the start (already there), forward once, then the end is reached.
+    tray_bot._scroll_tray.side_effect = [False, True, False]
     assert tray_bot._scan_owned() == {"a-1-1", "b-1-1", "c-1-1"}
-    assert tray_bot._scroll_tray.call_args_list[-2:] == [call(False), call(False)]
+    assert tray_bot._scroll_tray.call_args_list == [call(False), call(True), call(True)]
 
 
 # --- input and screen reading ---------------------------------------------------
@@ -225,9 +391,10 @@ def test_scan_owned_collects_every_page_and_rewinds(tray_bot: MagicMock) -> None
 
 def test_drag_card_swipes_between_points(bot: MagicMock) -> None:
     DeployMixin._drag_card(bot, Point(110, 1285), Point(300, 490))
-    bot.device.swipe.assert_called_once_with(
-        Point(110, 1285), Point(300, 490), duration=deploy._DRAG_SECONDS
-    )
+    bot.device.swipe.assert_called_once()
+    swipe = bot.device.swipe.call_args
+    assert (xy(swipe.args[0]), xy(swipe.args[1])) == ((110, 1285), (300, 490))
+    assert swipe.kwargs == {"duration": deploy._DRAG_SECONDS}
 
 
 def test_scroll_tray_reports_movement(bot: MagicMock) -> None:
