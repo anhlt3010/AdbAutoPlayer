@@ -5,33 +5,39 @@ from typing import Annotated
 from adb_auto_player.models.pydantic import TomlSettings
 from pydantic import BaseModel, Field
 
-CheckIntervalSeconds = Annotated[int, Field(ge=1, le=600)]
+PollIntervalSeconds = Annotated[int, Field(ge=1, le=60)]
 StartupWaitSeconds = Annotated[int, Field(ge=5, le=300)]
-DislikeIconThreshold = Annotated[int, Field(ge=1, le=30)]
+IdleLimitSeconds = Annotated[int, Field(ge=30, le=900)]
+FormationAttempts = Annotated[int, Field(ge=1, le=20)]
 WinRatePercent = Annotated[int, Field(ge=0, le=100)]
 AdvanceCount = Annotated[int, Field(ge=1, le=1000)]
 
 
-class KeepAliveSettings(BaseModel):
-    """Settings for the Keep Game Running task."""
+class AutoBattleSettings(BaseModel):
+    """Settings for the Tự Động Chiến Đấu task."""
 
-    check_interval_seconds: CheckIntervalSeconds = Field(
-        default=10,
-        title="Check Interval (seconds)",
-        description="How often to check that the game is running and battling.",
-    )
-    dislike_icon_threshold: DislikeIconThreshold = Field(
-        default=3,
-        title="Dislike Icons For Quick Deploy",
-        description=(
-            "On the battle preparation screen, press Quick Deploy once when at "
-            "least this many red Dislike icons are shown (unfavorable formation)."
-        ),
+    poll_interval_seconds: PollIntervalSeconds = Field(
+        default=2,
+        title="Poll Interval (seconds)",
+        description="How often the screen is checked.",
     )
     startup_wait_seconds: StartupWaitSeconds = Field(
         default=30,
         title="Startup Wait (seconds)",
         description="How long to wait for the game to load after restarting it.",
+    )
+    idle_limit_seconds: IdleLimitSeconds = Field(
+        default=120,
+        title="Idle Limit (seconds)",
+        description="Stop when no known screen was seen for this long.",
+    )
+    max_formation_attempts: FormationAttempts = Field(
+        default=3,
+        title="Max Formation Attempts",
+        description=(
+            "How many times to fight a stage with the prepared formation before "
+            "stopping."
+        ),
     )
 
 
@@ -59,8 +65,8 @@ class ArtifactAdventureSettings(BaseModel):
 class Settings(TomlSettings):
     """Clash of Critters Settings model."""
 
-    keep_alive: KeepAliveSettings = Field(
-        default_factory=KeepAliveSettings, title="Tự Chiến Đấu"
+    auto_battle: AutoBattleSettings = Field(
+        default_factory=AutoBattleSettings, title="Tự Động Chiến Đấu"
     )
     artifact_adventure: ArtifactAdventureSettings = Field(
         default_factory=ArtifactAdventureSettings, title="Phiêu Lưu Cổ Vật"

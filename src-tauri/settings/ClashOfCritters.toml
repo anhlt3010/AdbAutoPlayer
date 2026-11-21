@@ -1,7 +1,8 @@
-[keep_alive]
-check_interval_seconds = 10
-dislike_icon_threshold = 3
+[auto_battle]
+poll_interval_seconds = 2
 startup_wait_seconds = 30
+idle_limit_seconds = 120
+max_formation_attempts = 3
 
 [artifact_adventure]
 min_win_rate_percent = 40
