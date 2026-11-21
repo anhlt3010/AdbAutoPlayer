@@ -36,10 +36,11 @@ class AutoBattleSettings(BaseModel):
     )
     max_formation_attempts: FormationAttempts = Field(
         default=3,
-        title="Max Formation Attempts",
+        title="Max Fights Per Formation",
         description=(
-            "How many times to fight a stage with the prepared formation before "
-            "stopping."
+            "How many times a stage is fought with Quick Deploy and with each of "
+            "its prepared formations before moving on to the next one. The auto "
+            "battle stops once the last one was lost this many times."
         ),
     )
     keep_formation_after_win: bool = Field(
