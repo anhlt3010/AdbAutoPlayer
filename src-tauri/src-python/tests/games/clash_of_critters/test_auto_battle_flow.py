@@ -96,8 +96,16 @@ def no_sleep():
 def a_formation():
     """Every stage has a formation file unless a test says otherwise."""
     formation = Formation(BOSS, (FormationUnit(1, 1, "fire-3", "fire-3-2", 2, False),))
-    with patch.object(auto_battle, "load_formation", return_value=formation) as load:
+    with patch.object(
+        auto_battle, "load_formations", return_value=(formation,)
+    ) as load:
         yield load
+
+
+def _formation(index: int) -> Formation:
+    """A formation that differs from the others by its evolution."""
+    unit = FormationUnit(1, 1, "fire-3", f"fire-3-{index + 1}", 2, False)
+    return Formation(BOSS, (unit,), index=index)
 
 
 def _show(bot: MagicMock, *templates: str) -> None:
@@ -220,13 +228,18 @@ def test_quick_deploy_comes_first_even_when_the_report_icon_shows(
     assert _tapped(bot) == [QUICK_DEPLOY_BUTTON]
 
 
-def test_the_formation_is_used_once_quick_deploy_was_pressed_for_the_stage(
+def test_the_formation_is_used_once_quick_deploy_used_up_its_fights(
     bot: MagicMock,
 ) -> None:
     _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
     bot._auto_battle_step()  # Quick Deploy
     bot._auto_battle_step()  # Fight
     _show(bot)  # the fight, lost
+    bot._auto_battle_step()
+    _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON, PREP_REPORT_ICON)
+    bot._auto_battle_step()  # second fight with Quick Deploy
+    bot._deploy_formation.assert_not_called()
+    _show(bot)
     bot._auto_battle_step()
     _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON, PREP_REPORT_ICON)
     bot._auto_battle_step()
@@ -258,7 +271,7 @@ def test_unreadable_stage_falls_back_to_quick_deploy(bot: MagicMock) -> None:
 def test_missing_formation_falls_back_to_quick_deploy(
     bot: MagicMock, a_formation: MagicMock
 ) -> None:
-    a_formation.return_value = None
+    a_formation.return_value = ()
     bot._read_stage.return_value = BOSS
     _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
     bot._auto_battle_step()
@@ -289,7 +302,7 @@ def _boss_visit(bot: MagicMock) -> bool:
 def test_formation_attempts_are_capped(bot: MagicMock) -> None:
     results = [_boss_visit(bot) for _ in range(MAX_ATTEMPTS + 1)]
     assert results == [True] * MAX_ATTEMPTS + [False]
-    assert bot._deploy_formation.call_count == MAX_ATTEMPTS
+    assert bot._deploy_formation.call_count == 1  # the retries do not redeploy
 
 
 def test_attempts_start_again_on_a_new_stage(bot: MagicMock) -> None:
@@ -298,7 +311,100 @@ def test_attempts_start_again_on_a_new_stage(bot: MagicMock) -> None:
     bot._read_stage.return_value = StageId(15, 60)
     _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
     assert bot._auto_battle_step() is True
-    assert bot._deploy_formation.call_count == MAX_ATTEMPTS + 1
+    assert bot._deploy_formation.call_count == 2
+
+
+# --- several formations: one after the other, a retry never redeploys ----------------
+
+
+def _visit(bot: MagicMock, stage: StageId | None, lost: bool = True) -> bool:
+    """One preparation visit (the fight button pressed), then the fight itself."""
+    bot._read_stage.return_value = stage
+    screens = [QUICK_DEPLOY_BUTTON, FIGHT_BUTTON]
+    if lost:
+        screens.append(PREP_REPORT_ICON)
+    _show(bot, *screens)
+    result = bot._auto_battle_step()
+    _show(bot)
+    bot._auto_battle_step()
+    return result
+
+
+def test_a_retry_of_the_same_formation_does_not_deploy_again(bot: MagicMock) -> None:
+    assert _visit(bot, BOSS, lost=False) is True
+    assert _visit(bot, BOSS) is True
+    assert bot._deploy_formation.call_count == 1
+    assert _tapped(bot).count(FIGHT_BUTTON) == MAX_ATTEMPTS
+
+
+def test_the_next_formation_is_deployed_after_the_attempts_are_used(
+    bot: MagicMock, a_formation: MagicMock
+) -> None:
+    a_formation.return_value = (_formation(0), _formation(1))
+    for _ in range(MAX_ATTEMPTS):
+        _visit(bot, BOSS)
+    assert bot._deploy_formation.call_count == 1
+    _visit(bot, BOSS)
+    assert bot._deploy_formation.call_count == 2
+    assert bot._deploy_formation.call_args.args[0] == _formation(1)
+
+
+def test_all_formations_used_up_stops(bot: MagicMock, a_formation: MagicMock) -> None:
+    a_formation.return_value = (_formation(0), _formation(1))
+    results = [_visit(bot, BOSS) for _ in range(MAX_ATTEMPTS * 2 + 1)]
+    assert results == [True] * (MAX_ATTEMPTS * 2) + [False]
+    assert bot._deploy_formation.call_count == 2
+
+
+def test_a_normal_stage_plays_quick_deploy_then_the_formations(
+    bot: MagicMock,
+) -> None:
+    _visit(bot, NORMAL, lost=False)
+    assert _tapped(bot) == [QUICK_DEPLOY_BUTTON]
+    bot.tap.reset_mock()
+    _visit(bot, NORMAL)  # second Quick Deploy fight: only Fight is pressed
+    assert _tapped(bot) == [FIGHT_BUTTON]
+    bot._deploy_formation.assert_not_called()
+    _visit(bot, NORMAL)  # the formation
+    _visit(bot, NORMAL)
+    assert bot._deploy_formation.call_count == 1
+    assert _visit(bot, NORMAL) is False
+
+
+def test_a_retry_with_an_empty_field_deploys_again(bot: MagicMock) -> None:
+    _visit(bot, BOSS, lost=False)
+    bot._read_deployed_count.return_value = 0
+    _visit(bot, BOSS)
+    assert bot._deploy_formation.call_count == 2
+
+
+def test_a_later_formation_that_places_nothing_stops(
+    bot: MagicMock, a_formation: MagicMock
+) -> None:
+    a_formation.return_value = (_formation(0), _formation(1))
+    bot._deploy_formation.side_effect = [15, 0]
+    for _ in range(MAX_ATTEMPTS):
+        _visit(bot, BOSS)
+    bot.tap.reset_mock()
+    assert _visit(bot, BOSS) is False
+    assert _tapped(bot) == []
+
+
+def test_a_win_clears_the_plan_of_the_stage(bot: MagicMock) -> None:
+    _visit(bot, BOSS, lost=False)
+    _show(bot, VICTORY_TITLE, CONTINUE_BUTTON)
+    bot._auto_battle_step()
+    _visit(bot, BOSS, lost=False)  # the same stage again, a new run of it
+    assert bot._deploy_formation.call_count == 2
+
+
+def test_an_unreadable_visit_keeps_the_plan_of_the_stage(bot: MagicMock) -> None:
+    _visit(bot, BOSS, lost=False)
+    _visit(bot, None)  # Quick Deploy, not part of the plan
+    bot.tap.reset_mock()
+    _visit(bot, BOSS)
+    assert bot._deploy_formation.call_count == 1
+    assert _tapped(bot) == [FIGHT_BUTTON]
 
 
 # --- quick deploy is pressed once per visit ------------------------------------------
@@ -469,7 +575,7 @@ def _lost_visit(bot: MagicMock, stage: StageId | None) -> bool:
 def test_a_lost_stage_without_a_formation_stops_after_the_limit(
     bot: MagicMock, a_formation: MagicMock
 ) -> None:
-    a_formation.return_value = None
+    a_formation.return_value = ()
     results = [_lost_visit(bot, NORMAL) for _ in range(MAX_ATTEMPTS + 1)]
     assert results == [True] * MAX_ATTEMPTS + [False]
 
@@ -482,7 +588,7 @@ def test_an_unreadable_stage_that_keeps_losing_stops_too(bot: MagicMock) -> None
 def test_lost_visits_start_again_on_a_new_stage(
     bot: MagicMock, a_formation: MagicMock
 ) -> None:
-    a_formation.return_value = None
+    a_formation.return_value = ()
     for _ in range(MAX_ATTEMPTS):
         _lost_visit(bot, NORMAL)
     assert _lost_visit(bot, StageId(15, 48)) is True

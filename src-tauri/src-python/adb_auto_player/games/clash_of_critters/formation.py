@@ -64,6 +64,8 @@ class Formation:
 
     stage: StageId
     units: tuple[FormationUnit, ...]
+    index: int = 0
+    level: int | None = None
 
 
 def _read_stage_file(root: Path, stage: StageId) -> dict | None:
@@ -90,32 +92,52 @@ def _parse_unit(raw: dict) -> FormationUnit:
     return unit
 
 
-def load_formation(root: Path, stage: StageId) -> Formation | None:
-    """Load the formation of a stage, following "shared_with" links.
+def _parse_formations(
+    raw_formations: list, stage: StageId, current: StageId
+) -> tuple[Formation, ...]:
+    """Build the usable formations; a malformed or empty one is skipped."""
+    result: list[Formation] = []
+    for raw in raw_formations:
+        try:
+            units = tuple(_parse_unit(u) for u in raw["units"])
+            level = raw.get("level")
+        except (KeyError, TypeError, ValueError, AttributeError) as error:
+            logging.warning(f"A formation of stage {current} is malformed: {error!r}")
+            continue
+        if not units:
+            continue
+        result.append(
+            Formation(
+                stage,
+                units,
+                index=len(result),
+                level=level if isinstance(level, int) else None,
+            )
+        )
+    return tuple(result)
+
+
+def load_formations(root: Path, stage: StageId) -> tuple[Formation, ...]:
+    """Load the formations of a stage, following "shared_with" links.
 
     Args:
         root: The tatari_formations folder.
         stage: The stage to load.
 
     Returns:
-        The formation, or None if there is no usable file for the stage.
+        The usable formations in file order (empty if the stage has none).
     """
     current = stage
     for _ in range(_MAX_SHARE_HOPS + 1):
         data = _read_stage_file(root, current)
         if data is None:
             logging.debug(f"No formation file for stage {current}.")
-            return None
-        units = data.get("units") or []
-        if units:
-            try:
-                parsed = tuple(_parse_unit(u) for u in units)
-            except (KeyError, TypeError, ValueError, AttributeError) as error:
-                logging.warning(f"Formation of stage {current} is malformed: {error!r}")
-                return None
-            return Formation(stage, parsed)
+            return ()
+        raw_formations = data.get("formations") or []
+        if raw_formations:
+            return _parse_formations(raw_formations, stage, current)
         target = parse_stage(str(data.get("shared_with", "")))
         if target is None or target == current:
-            return None
+            return ()
         current = target
-    return None
+    return ()

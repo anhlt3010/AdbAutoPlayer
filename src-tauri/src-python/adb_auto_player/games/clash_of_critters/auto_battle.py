@@ -1,8 +1,10 @@
 """Auto battle of Clash of Critters: from the camp to the fight, again and again.
 
-On a normal stage the game's own Quick Deploy is used. After a lost fight (the
-"Báo Cáo" icon shows) and on boss stages the prepared formation is deployed by
-drag and drop instead.
+Every stage gets a plan of steps: a normal stage starts with the game's own Quick
+Deploy, then comes each prepared formation of the stage (deployed by drag and
+drop); a boss stage starts with its first formation. Each step is fought at most
+``max_formation_attempts`` times. Fighting a step again never deploys again; the
+next step does. When every step was lost the auto battle stops.
 """
 
 import logging
@@ -14,7 +16,7 @@ from adb_auto_player.games.clash_of_critters.formation import (
     Formation,
     StageId,
     is_boss_stage,
-    load_formation,
+    load_formations,
     parse_stage,
 )
 from adb_auto_player.models.geometry import Point
@@ -62,15 +64,15 @@ class AutoBattleMixin(DeployMixin):
     # The last fight was won with a formation: the field is left as it is for the
     # next stages (until a boss, which has its own formation, or a loss).
     _keep_field: bool = False
-    # Stages for which Quick Deploy was pressed in this run. A normal stage gets its
-    # Quick Deploy first; its prepared formation is only used once that was not enough.
-    _quick_deploy_stages: set[StageId] | None = None
-    _formation_stage: StageId | None = None
-    _formation_attempts: int = 0
-    # Preparation screens after a loss, counted per stage whatever way they are
-    # played (formation, Quick Deploy or an unreadable stage).
-    _loss_stage: StageId | None = None
-    _lost_visits: int = 0
+    # The plan of the stage being played: its steps (None = Quick Deploy, else a
+    # prepared formation), the step in progress and the fights played with it. Each
+    # preparation screen that starts a fight counts as one fight.
+    _plan_stage: StageId | None = None
+    _plan_steps: list[Formation | None] | None = None
+    _plan_pos: int = 0
+    _plan_fights: int = 0
+    # Preparation screens after a loss whose stage could not be read.
+    _unreadable_losses: int = 0
     _idle_since: float | None = None
     # The same known screen seen again and again means the taps do nothing.
     _same_screen: str | None = None
@@ -86,11 +88,11 @@ class AutoBattleMixin(DeployMixin):
         self._prep_phase = None
         self._formation_in_use = False
         self._keep_field = False
-        self._quick_deploy_stages = set()
-        self._formation_stage = None
-        self._formation_attempts = 0
-        self._loss_stage = None
-        self._lost_visits = 0
+        self._plan_stage = None
+        self._plan_steps = None
+        self._plan_pos = 0
+        self._plan_fights = 0
+        self._unreadable_losses = 0
         self._idle_since = None
         self._same_screen = None
         self._same_screen_polls = 0
@@ -142,6 +144,7 @@ class AutoBattleMixin(DeployMixin):
                 self.tap(retry, log=False)
         elif screen.template == VICTORY_TITLE:
             self._keep_field = self._formation_in_use
+            self._plan_stage = None  # the stage is done: a new run of it starts over
             button = self.find_any_template([CONTINUE_BUTTON])
             if button is not None:
                 logging.info("Victory, continuing to the stage map.")
@@ -183,21 +186,20 @@ class AutoBattleMixin(DeployMixin):
             return False
         return True
 
-    def _count_lost_visit(self, stage: StageId | None, lost_before: bool) -> bool:
-        """Count a preparation screen that follows a loss.
+    def _count_unreadable_loss(self, lost_before: bool) -> bool:
+        """Count a preparation screen after a loss whose stage was not readable.
 
         Returns:
-            False once the stage was lost more often than the limit allows.
+            False once it happened more often than the limit allows.
         """
-        if stage != self._loss_stage:
-            self._loss_stage = stage
-            self._lost_visits = 0
         if not lost_before:
             return True
-        self._lost_visits += 1
+        self._unreadable_losses += 1
         limit = self.settings.auto_battle.max_formation_attempts
-        if self._lost_visits > limit:
-            logging.warning(f"Stage {stage} was lost {self._lost_visits} times.")
+        if self._unreadable_losses > limit:
+            logging.warning(
+                f"Unreadable stage was lost {self._unreadable_losses} times."
+            )
             return False
         return True
 
@@ -218,50 +220,73 @@ class AutoBattleMixin(DeployMixin):
 
         stage = self._read_stage()
         lost_before = self.find_any_template([PREP_REPORT_ICON]) is not None
-        if not self._count_lost_visit(stage, lost_before):
-            return False
+        if stage is None:
+            if not self._count_unreadable_loss(lost_before):
+                return False
+        else:
+            self._unreadable_losses = 0
         is_boss = stage is not None and is_boss_stage(stage)
         if not lost_before and not is_boss and self._keep_formation():
             return True
-        # Boss: its formation. Otherwise the formation only after Quick Deploy was
-        # already pressed for this very stage (the report icon alone is not enough: the
-        # stage may have been lost with something else).
-        wants_formation = is_boss or self._quick_deploy_pressed(stage)
-
-        formation = None
-        if wants_formation and stage is not None:
-            formation = load_formation(
-                self.template_dir.parent / "tatari_formations", stage
-            )
-            if formation is None:
-                logging.warning(f"No formation for stage {stage}, using Quick Deploy.")
-        elif wants_formation:
+        if stage is None:
             logging.warning("Stage unreadable, using Quick Deploy.")
-
-        if formation is None or stage is None:
-            self._quick_deploy(quick_deploy_button, stage)
+            self._quick_deploy(quick_deploy_button)
             return True
-        return self._deploy_and_fight(stage, formation)
+        return self._play_plan_step(stage, is_boss, quick_deploy_button)
 
-    def _deploy_and_fight(self, stage: StageId, formation: Formation) -> bool:
-        """Deploy the formation of a stage and start the fight.
+    def _plan_for(self, stage: StageId, is_boss: bool) -> None:
+        """Make the plan of a stage the current one (built once per stage)."""
+        if stage == self._plan_stage and self._plan_steps is not None:
+            return
+        formations = load_formations(
+            self.template_dir.parent / "tatari_formations", stage
+        )
+        steps: list[Formation | None] = [] if is_boss else [None]
+        steps.extend(formations)
+        if not steps:
+            logging.warning(f"No formation for stage {stage}, using Quick Deploy.")
+            steps = [None]
+        self._plan_stage = stage
+        self._plan_steps = steps
+        self._plan_pos = 0
+        self._plan_fights = 0
+
+    def _play_plan_step(
+        self, stage: StageId, is_boss: bool, quick_deploy_button: object
+    ) -> bool:
+        """Start the next fight of the stage's plan.
 
         Returns:
             False when the auto battle should stop.
         """
-        if stage != self._formation_stage:
-            self._formation_stage = stage
-            self._formation_attempts = 0
-        limit = self.settings.auto_battle.max_formation_attempts
-        if self._formation_attempts >= limit:
-            logging.warning(f"Stage {stage} was lost {limit} times with the formation.")
+        self._plan_for(stage, is_boss)
+        steps = self._plan_steps or []
+        if self._plan_fights >= self.settings.auto_battle.max_formation_attempts:
+            self._plan_pos += 1
+            self._plan_fights = 0
+        if self._plan_pos >= len(steps):
+            logging.warning(f"Stage {stage} was lost with every prepared formation.")
             return False
+        step = steps[self._plan_pos]
+        retry = self._plan_fights > 0
+        self._plan_fights += 1
 
-        logging.info(f"Stage {stage}: deploying the prepared formation.")
-        if self._deploy_formation(formation) == 0:
-            logging.warning("No tatari could be deployed, stopping.")
-            return False
-        self._formation_attempts += 1
+        if step is None:
+            if not retry:
+                self._quick_deploy(quick_deploy_button)
+                return True
+            self._prep_phase = _PHASE_QUICK
+            self._formation_in_use = False
+            self._tap_fight()
+            return True
+
+        if not retry or not self._field_has_units():
+            logging.info(
+                f"Stage {stage}: deploying prepared formation {step.index + 1}."
+            )
+            if self._deploy_formation(step) == 0:
+                logging.warning("No tatari could be deployed, stopping.")
+                return False
         self._prep_phase = _PHASE_FORMATION
         self._formation_in_use = True
         self._tap_fight()
@@ -284,20 +309,8 @@ class AutoBattleMixin(DeployMixin):
         self._tap_fight()
         return True
 
-    def _quick_deploy_pressed(self, stage: StageId | None) -> bool:
-        """Tell whether Quick Deploy was already pressed for a stage in this run."""
-        return (
-            stage is not None
-            and self._quick_deploy_stages is not None
-            and stage in self._quick_deploy_stages
-        )
-
-    def _quick_deploy(self, quick_deploy_button: object, stage: StageId | None) -> None:
+    def _quick_deploy(self, quick_deploy_button: object) -> None:
         logging.info("Quick Deploy.")
-        if stage is not None:
-            if self._quick_deploy_stages is None:
-                self._quick_deploy_stages = set()
-            self._quick_deploy_stages.add(stage)
         self.tap(quick_deploy_button, log=False)
         self._prep_phase = _PHASE_QUICK
         self._formation_in_use = False
