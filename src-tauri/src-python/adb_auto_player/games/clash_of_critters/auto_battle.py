@@ -302,16 +302,56 @@ class AutoBattleMixin(DeployMixin):
             return True
 
         if not retry or not self._field_has_units():
-            logging.info(
-                f"Stage {stage}: deploying prepared formation {step.index + 1}."
-            )
-            if self._deploy_formation(step) == 0:
-                logging.warning("No tatari could be deployed, stopping.")
+            if not self._deploy_current_step(stage):
                 return False
         self._prep_phase = _PHASE_FORMATION
         self._formation_in_use = True
         self._tap_fight()
         return True
+
+    def _deploy_current_step(self, stage: StageId) -> bool:
+        """Deploy the current formation of the plan, filled completely.
+
+        A formation that cannot be filled (after the fill rounds of the deploy)
+        is dropped for the next formation of the plan, which starts a fresh count
+        of fights.
+
+        Args:
+            stage: The stage being played.
+
+        Returns:
+            False when the auto battle should stop: nothing could be placed, or
+            no formation is left that can be filled.
+        """
+        steps = self._plan_steps or []
+        total = sum(1 for step in steps if step is not None)
+        while True:
+            step = steps[self._plan_pos]
+            if step is None:  # Quick Deploy is never after a formation
+                return True
+            logging.info(
+                f"Stage {stage}: đội hình {step.index + 1}/{total}, "
+                f"lần đánh {self._plan_fights}/"
+                f"{self.settings.auto_battle.max_formation_attempts}."
+            )
+            result = self._deploy_formation(step)
+            if result.count == 0:
+                logging.warning("No tatari could be deployed, stopping.")
+                return False
+            if result.complete:
+                return True
+            if self._plan_pos + 1 >= len(steps):
+                logging.error(
+                    f"Stage {stage}: không đội hình nào xếp đủ quân (đội hình "
+                    f"{step.index + 1}: {result.count}/{result.needed}), dừng."
+                )
+                return False
+            logging.warning(
+                f"Stage {stage}: đội hình {step.index + 1} chỉ có "
+                f"{result.count}/{result.needed} quân, đổi đội hình khác."
+            )
+            self._plan_pos += 1
+            self._plan_fights = 1
 
     def _keep_formation(self) -> bool:
         """Fight with the formation of the last win instead of Quick Deploy.

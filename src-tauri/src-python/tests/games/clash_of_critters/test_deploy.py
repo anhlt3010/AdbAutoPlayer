@@ -325,7 +325,9 @@ def test_a_drag_that_did_not_register_is_repeated_once(bot: MagicMock) -> None:
     _flaky_drags(bot, working_from_attempt=2)
     bot._scan_owned.return_value = {"grass-4-2"}
     bot._visible_cards.return_value = [(CARD_A, "grass-4-2")]
-    assert bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),))).count == 1
+    assert (
+        bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),))).count == 1
+    )
     assert bot._drag_card.call_count == 2
 
 
@@ -351,7 +353,9 @@ def test_unreadable_counter_means_no_checking(bot: MagicMock) -> None:
     bot._read_deployed_count.return_value = None
     bot._scan_owned.return_value = {"grass-4-2"}
     bot._visible_cards.return_value = [(CARD_A, "grass-4-2")]
-    assert bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),))).count == 1
+    assert (
+        bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),))).count == 1
+    )
     assert bot._drag_card.call_count == 1
 
 
@@ -515,7 +519,9 @@ def test_missing_unit_is_filled_in_a_later_round(bot: MagicMock) -> None:
     bot._visible_cards.return_value = [(CARD_A, "grass-4-2")]
     result = bot._deploy_formation(_one_unit())
     assert result == DeployResult(1, 1)
-    clears = [c for c in bot.tap.call_args_list if xy(c.args[0]) == xy(CLEAR_FIELD_POINT)]
+    clears = [
+        c for c in bot.tap.call_args_list if xy(c.args[0]) == xy(CLEAR_FIELD_POINT)
+    ]
     assert len(clears) == 1  # the field is never cleared again to fill it
 
 

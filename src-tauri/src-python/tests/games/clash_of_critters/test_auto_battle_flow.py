@@ -1,5 +1,6 @@
 """Tests for the Clash of Critters auto battle state machine."""
 
+import logging
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -21,6 +22,7 @@ from adb_auto_player.games.clash_of_critters.auto_battle import (
     VICTORY_TITLE,
     AutoBattleMixin,
 )
+from adb_auto_player.games.clash_of_critters.deploy import DeployResult
 from adb_auto_player.games.clash_of_critters.formation import (
     Formation,
     FormationUnit,
@@ -68,7 +70,7 @@ def bot() -> MagicMock:
     game.tap = MagicMock()
     game._tap_common_button = MagicMock(return_value=False)
     game._read_stage = MagicMock(return_value=NORMAL)
-    game._deploy_formation = MagicMock(return_value=15)
+    game._deploy_formation = MagicMock(return_value=DeployResult(15, 15))
     game._read_deployed_count = MagicMock(return_value=15)
     game.find_any_template = MagicMock(return_value=None)
     game.template_dir = MagicMock()
@@ -284,7 +286,7 @@ def test_missing_formation_falls_back_to_quick_deploy(
 
 def test_nothing_placed_means_no_fight_and_stop(bot: MagicMock) -> None:
     bot._read_stage.return_value = BOSS
-    bot._deploy_formation.return_value = 0
+    bot._deploy_formation.return_value = DeployResult(0, 0)
     _show(bot, QUICK_DEPLOY_BUTTON, FIGHT_BUTTON)
     assert bot._auto_battle_step() is False
     assert _tapped(bot) == []
@@ -385,7 +387,7 @@ def test_a_later_formation_that_places_nothing_stops(
     bot: MagicMock, a_formation: MagicMock
 ) -> None:
     a_formation.return_value = (_formation(0), _formation(1))
-    bot._deploy_formation.side_effect = [15, 0]
+    bot._deploy_formation.side_effect = [DeployResult(15, 15), DeployResult(0, 0)]
     for _ in range(MAX_ATTEMPTS):
         _visit(bot, BOSS)
     bot.tap.reset_mock()
@@ -678,3 +680,54 @@ def test_a_common_button_comes_before_the_reward_screen(bot: MagicMock) -> None:
     _show(bot, PINBALL_REWARD_GEM, PINBALL_REWARD_CLOSE)
     assert bot._auto_battle_step() is True
     bot.tap.assert_not_called()
+
+
+# --- a formation that cannot be filled ------------------------------------------
+
+
+def test_an_incomplete_formation_moves_on_to_the_next_one(
+    bot: MagicMock, a_formation: MagicMock
+) -> None:
+    a_formation.return_value = (_formation(0), _formation(1))
+    bot._deploy_formation.side_effect = [DeployResult(10, 15), DeployResult(15, 15)]
+    assert _visit(bot, BOSS, lost=False) is True
+    assert bot._deploy_formation.call_count == 2
+    assert bot._deploy_formation.call_args.args[0] == _formation(1)
+    assert _tapped(bot).count(FIGHT_BUTTON) == 1
+
+
+def test_the_last_incomplete_formation_stops_without_fighting(
+    bot: MagicMock, a_formation: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
+    a_formation.return_value = (_formation(0),)
+    bot._deploy_formation.return_value = DeployResult(10, 15)
+    assert _visit(bot, BOSS, lost=False) is False
+    assert _tapped(bot) == []
+    errors = [r.getMessage() for r in caplog.records if r.levelno == logging.ERROR]
+    assert len(errors) == 1
+    assert "10/15" in errors[0]
+    assert str(BOSS) in errors[0]
+
+
+def test_the_next_formation_starts_with_a_fresh_fight_count(
+    bot: MagicMock, a_formation: MagicMock
+) -> None:
+    a_formation.return_value = (_formation(0), _formation(1))
+    bot._deploy_formation.side_effect = [DeployResult(10, 15), DeployResult(15, 15)]
+    _visit(bot, BOSS, lost=False)
+    for _ in range(MAX_ATTEMPTS - 1):
+        assert _visit(bot, BOSS) is True
+    assert bot._deploy_formation.call_count == 2
+    assert _visit(bot, BOSS) is False  # all the fights of the last formation used
+
+
+def test_progress_is_logged(
+    bot: MagicMock, a_formation: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO)
+    a_formation.return_value = (_formation(0), _formation(1))
+    _visit(bot, BOSS, lost=False)
+    text = " | ".join(r.getMessage() for r in caplog.records)
+    assert f"{BOSS}" in text
+    assert "đội hình 1/2" in text
+    assert f"lần đánh 1/{MAX_ATTEMPTS}" in text
