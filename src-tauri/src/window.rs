@@ -68,11 +68,6 @@ pub fn setup_window_close_handler(app: &mut App) -> Result<(), Box<dyn std::erro
 
             let _ = save_window_position(&app_handle);
 
-            // Quitting must not leave the formation viewer window keeping the app alive.
-            if let Some(viewer) = app_handle.get_webview_window("formation-viewer") {
-                let _ = viewer.destroy();
-            }
-
             let _ = app_handle.emit("kill-python", ());
         }
     });
