@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "description": "Capability for the formation viewer window",
+  "identifier": "formation-viewer",
+  "permissions": [
+    "core:default",
+    "pytauri:default"
+  ],
+  "windows": [
+    "formation-viewer"
+  ]
+}

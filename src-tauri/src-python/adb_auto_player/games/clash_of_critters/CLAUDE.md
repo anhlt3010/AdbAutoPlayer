@@ -23,6 +23,7 @@ Game module for Clash of Critters (`com.farlightgames.pgame.gp.vn`, base resolut
 - Card recognition (`card_recognition.py`): the card's element from its icon colour; then a template from the player's own earlier cards (`CardTemplateStore`, PNGs in `<app config dir>/clash_of_critters_cards/<element>/<evolution_id>.png`; delete the folder to forget them); only for an unknown card the wiki sprites are matched (outline score + colour score, glitter twin by colour). Deployed cards (dimmed with a green check) are skipped.
 - Geometry constants (field cells, tray slots, boxes) are measured on 1080x1920 captures kept in `docs/superpowers/specs/assets/` and `tests/games/clash_of_critters/data/`.
 - **`Point` equality is always true in this repo** (a dataclass without fields): compare `(p.x, p.y)` in code and in tests.
+- Formation viewer: a button left of the eye button on the "Tự Động Chiến Đấu" card (`TaskCard.svelte`) opens a second Tauri window (label `formation-viewer`, route `/formation-viewer`, one window only) with the formations of a stage and their exact tiers. The window calls the PyTauri command `get_formation_view` (`__main__.py`), which runs `formation_view.load_formation_view()`: a typed stage ("15-50", en dashes accepted) needs no device; otherwise one screenshot is taken and the stage is read by OCR from the top-centre label (`VIEW_STAGE_BOX`; visible on the preparation and fight screens only, so camp, victory, defeat and the stage map answer `stage_unreadable`). Statuses: `ok`, `no_device`, `stage_unreadable`, `stage_invalid`, `no_formation`. It only takes a screenshot and never sends input, so it is safe while the auto battle runs. Sprites travel as 96 px base64 data URIs (CSP `img-src 'self' data:`). **A patch zip carries only the Python part**: the button, the window, the CSP and the capabilities need a full app build.
 
 ## Events Category Rules
 
@@ -56,7 +57,7 @@ def my_event(self) -> None:
 
 When the user asks for a zip of this game to copy into their installed AdbAutoPlayer (`%LOCALAPPDATA%\AdbAutoPlayer`), build it with the layout below so the user can extract it straight over the install root.
 
-- Python code goes to `Lib/site-packages/adb_auto_player/games/clash_of_critters/`: every `.py` file of the folder (`__init__.py`, `main.py`, `settings.py`, `auto_battle.py`, `deploy.py`, `battle_layout.py`, `card_recognition.py`, `deployment_plan.py`, `formation.py`, `tatari_db.py`).
+- Python code goes to `Lib/site-packages/adb_auto_player/games/clash_of_critters/`: every `.py` file of the folder (`__init__.py`, `main.py`, `settings.py`, `auto_battle.py`, `deploy.py`, `battle_layout.py`, `card_recognition.py`, `deployment_plan.py`, `formation.py`, `formation_view.py`, `tatari_db.py`).
 - The data folders `tatari_db/` and `tatari_formations/` go to `games/clash_of_critters/` next to `templates/`.
 - Template images go to `games/clash_of_critters/templates/` (the install root, where Tauri bundles resources, per `src-tauri/tauri.bundle.templates.json`). This is the folder the app reads templates from.
 - Never include `__pycache__/`, `README.md`, `CLAUDE.md` or tests.
