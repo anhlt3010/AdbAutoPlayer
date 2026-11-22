@@ -1,7 +1,8 @@
 <script lang="ts">
   import { t } from "#lib/i18n/i18n.ts";
   import type { MenuButton } from "#lib/menu/model.ts";
-  import { ui } from "#lib/stores.svelte.ts";
+  import { profiles, ui } from "#lib/stores.svelte.ts";
+  import { openFormationViewer } from "#lib/formation/viewer.ts";
 
   interface Props {
     b: MenuButton;
@@ -12,7 +13,41 @@
   let { b, disableActions, variant }: Props = $props();
 
   const isHidden = $derived(ui.isTaskHidden(b.taskKey));
+  // Task keys are "<game title>::<command args>" and the args of a command are its
+  // full registered name ("<game module>.<function>"). Only the Clash of Critters
+  // auto battle has a formation viewer.
+  const FORMATION_VIEWER_TASK_KEY =
+    "Clash of Critters::clash_of_critters.auto_battle";
+  const hasFormationViewer = $derived(b.taskKey === FORMATION_VIEWER_TASK_KEY);
 </script>
+
+{#snippet formationButton()}
+  {#if hasFormationViewer}
+    <button
+      class="hide-btn formation-btn"
+      class:palette={variant === "palette"}
+      onclick={() => openFormationViewer(profiles.active)}
+      title={$t("Show formation")}
+      aria-label={$t("Show formation")}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        width="13"
+        height="13"
+      >
+        <rect x="3" y="3" width="7" height="7" />
+        <rect x="14" y="3" width="7" height="7" />
+        <rect x="3" y="14" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" />
+      </svg>
+    </button>
+  {/if}
+{/snippet}
 
 {#snippet hideButton()}
   {#if b.taskKey}
@@ -111,6 +146,7 @@
       {/if}
     </button>
   {/if}
+  {@render formationButton()}
   {@render hideButton()}
 </div>
 
@@ -145,6 +181,15 @@
     bottom: auto;
     top: 50%;
     transform: translateY(-50%);
+  }
+
+  /* Left of the hide button (10px + 22px + 6px gap). */
+  .formation-btn {
+    right: 38px;
+  }
+
+  .formation-btn.palette {
+    right: 68px;
   }
 
   .task-wrap:hover .hide-btn,
