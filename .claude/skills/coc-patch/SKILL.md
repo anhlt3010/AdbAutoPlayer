@@ -50,3 +50,26 @@ git push origin coc-vn-v<X.Y.Z>
 ```
 
 - Check afterwards that `git ls-remote --tags origin coc-vn-v<X.Y.Z>` shows the commit of the branch head.
+
+## Step 5 - create the GitHub release (pre-release)
+
+`gh` lives in `C:\Program Files\GitHub CLI`; if `gh` is not found in the shell, run `export PATH="$PATH:/c/Program Files/GitHub CLI"` first and check `gh auth status`.
+
+- Always create the patch release as a **pre-release**. The self-updater of the setup reads `releases/latest/download/latest.json`, and a patch release marked Latest would shadow the `coc-vn-setup-v*` release and break app updates. Never pass `--latest` here.
+- Creating a release is public: show the title, tag, assets and pre-release flag to the user and create it only after they confirm.
+
+```bash
+gh release create coc-vn-v<X.Y.Z> \
+  <dir>/clash_of_critters_patch_v<X.Y.Z>.zip \
+  --repo anhlt3010/AdbAutoPlayer \
+  --title "Clash of Critters (VN) - v<X.Y.Z>" \
+  --notes-file <dir>/release_note_coc-vn-v<X.Y.Z>.md \
+  --prerelease --latest=false
+```
+
+- Afterwards check that the release is not the Latest one:
+
+```bash
+gh release view coc-vn-v<X.Y.Z> --repo anhlt3010/AdbAutoPlayer --json isPrerelease,isDraft,assets
+gh release list --repo anhlt3010/AdbAutoPlayer --limit 3
+```
