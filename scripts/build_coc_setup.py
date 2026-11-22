@@ -35,8 +35,18 @@ GAMES_REL = "src-tauri/src-python/adb_auto_player/games"
 KEEP_SETTINGS = {"ADB.toml", "App.toml", "ClashOfCritters.toml"}
 TARGET = "x86_64-pc-windows-msvc"
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
-PRODUCT_NAME = "AdbAutoPlayerCoC"
-IDENTIFIER = "com.anhlt3010.AdbAutoPlayerCoC"
+PRODUCT_NAME = "CocAutoPlayer"
+IDENTIFIER = "com.anhlt3010.CocAutoPlayer"
+# (file, old, new) text swaps applied in the staging copy only.
+REBRAND = (
+    ("src-tauri/src/tray.rs", "Show AdbAutoPlayer", f"Show {PRODUCT_NAME}"),
+    ("src-tauri/src/tray.rs", '.tooltip("AdbAutoPlayer")', f'.tooltip("{PRODUCT_NAME}")'),
+    ("src-tauri/src/main.rs", "AdbAutoPlayer_crash.log", f"{PRODUCT_NAME}_crash.log"),
+    ("src-tauri/src/main.rs", "AdbAutoPlayer - Startup Error", f"{PRODUCT_NAME} - Startup Error"),
+    ("src-tauri/src/discord.rs", '"username": "AdbAutoPlayer"', f'"username": "{PRODUCT_NAME}"'),
+    ("src/lib/components/modern/StatusBar.svelte", ">AdbAutoPlayer<", f">{PRODUCT_NAME}<"),
+    ("src/lib/components/updater/UpdateContainer.svelte", "new version of AdbAutoPlayer", f"new version of {PRODUCT_NAME}"),
+)
 REPO_URL = "https://github.com/anhlt3010/AdbAutoPlayer"
 UPDATER_ENDPOINT = f"{REPO_URL}/releases/latest/download/latest.json"
 
@@ -105,7 +115,30 @@ def _patch_config(stage: Path, version: str, pubkey: str | None) -> None:
         conf["bundle"]["createUpdaterArtifacts"] = True
     else:
         conf["bundle"]["createUpdaterArtifacts"] = False  # no signing key needed
+    # MIT: the copyright notice must ship with the app.
+    win_path = stage / "src-tauri" / "tauri.bundle.windows.json"
+    win = json.loads(win_path.read_text(encoding="utf-8"))
+    win["bundle"]["resources"]["../LICENSE"] = "./LICENSE"
+    win_path.write_text(json.dumps(win, indent=2) + chr(10), encoding="utf-8")
     conf_path.write_text(json.dumps(conf, indent=2) + "\n", encoding="utf-8")
+
+
+def _rebrand(stage: Path) -> None:
+    """Swap the visible app name (tray, crash log, UI) in the staging copy."""
+    for rel, old, new in REBRAND:
+        path = stage / rel
+        text = path.read_text(encoding="utf-8")
+        if old not in text:
+            sys.exit(f"rebrand: {old!r} not found in {rel} - update REBRAND")
+        path.write_text(text.replace(old, new), encoding="utf-8")
+
+
+def _apply_icon(stage: Path, icon: Path | None) -> None:
+    """Regenerate every app icon from one square PNG (>= 1024 px recommended)."""
+    if icon is None:
+        print("WARNING: no --icon given, keeping the original AdbAutoPlayer icon")
+        return
+    _run([_tool("pnpm"), "tauri", "icon", str(icon.resolve())], stage)
 
 
 def _link_node_modules(stage: Path) -> None:
@@ -210,6 +243,7 @@ def main() -> None:
     parser.add_argument("--stage-only", action="store_true")
     parser.add_argument("--updater", action="store_true", help="signed, self-updating")
     parser.add_argument("--pubkey-file", type=Path, help="public key from tauri signer")
+    parser.add_argument("--icon", type=Path, help="square PNG for the new app icon")
     parser.add_argument("--tag", help="release tag the exe will be uploaded to")
     args = parser.parse_args()
 
@@ -235,11 +269,14 @@ def main() -> None:
     _stage(args.ref, stage)
     _strip_other_games(stage)
     _patch_config(stage, version, pubkey)
+    _rebrand(stage)
     if args.stage_only:
         print("stage-only: done")
         return
 
     _link_node_modules(stage)
+    icon = args.icon or (REPO / "scripts" / "coc_icon.png")
+    _apply_icon(stage, icon if icon.exists() else None)
     python_exe = _prepare_pyembed(stage)
     _install_python(stage, python_exe)
     built = _build(stage, python_exe)

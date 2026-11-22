@@ -5,7 +5,7 @@ description: Build the Windows setup installer (NSIS .exe) of AdbAutoPlayer that
 
 # Clash of Critters only setup
 
-Builds `AdbAutoPlayerCoC_<X.Y.Z>_x64-setup.exe` with every other game removed. For the python-only patch zip use the `coc-patch` skill instead.
+Builds `CocAutoPlayer_<X.Y.Z>_x64-setup.exe` with every other game removed. For the python-only patch zip use the `coc-patch` skill instead.
 
 ## Step 1 - pull, then ask the version
 
@@ -39,10 +39,13 @@ python scripts/build_coc_setup.py <version>
 What the script does (all in a staging copy at `../../coc_setup_build/src`, the repo is never touched):
 
 - exports `HEAD` with `git archive`, deletes every game folder except `clash_of_critters` and the seed `AFKJourney.toml`
-- gives the app its own identity (`productName`/`mainBinaryName` `AdbAutoPlayerCoC`, identifier `com.anhlt3010.AdbAutoPlayerCoC`) so it installs beside an existing AdbAutoPlayer: separate install folder, shortcuts, uninstall entry and settings folder (`%APPDATA%\com.anhlt3010.AdbAutoPlayerCoC`); never change these between releases or updates and settings break
+- gives the app its own identity (`productName`/`mainBinaryName` `CocAutoPlayer`, identifier `com.anhlt3010.CocAutoPlayer`) so it installs beside an existing AdbAutoPlayer: separate install folder, shortcuts, uninstall entry and settings folder (`%APPDATA%\com.anhlt3010.CocAutoPlayer`); never change these between releases or updates and settings break
+- swaps the visible name to `CocAutoPlayer` in the tray menu and tooltip, crash log file and dialog title, Discord webhook username and the UI brand name (the `REBRAND` list in the script; if upstream changes one of those lines the script stops and the list needs updating)
+- regenerates all app icons with `pnpm tauri icon` from `scripts/coc_icon.png` (or `--icon <png>`); without an image the original icon is kept and a warning is printed. Ask the user for a square PNG, 1024 px recommended
+- ships the MIT `LICENSE` inside the install folder (the license requires the notice to stay with copies)
 - sets the version, points the updater endpoint to the `anhlt3010` fork (so the app never self-updates to the full upstream app) and turns off updater artifacts (no signing key needed)
 - copies `pyembed`, installs the stripped package into it, regenerates `tauri.bundle.templates.json`, runs `pnpm tauri build` with `tauri.bundle.windows.json`
-- output: `AdbAutoPlayerCoC_<version>_x64-setup.exe`, two levels above the repo (override with `--out`)
+- output: `CocAutoPlayer_<version>_x64-setup.exe`, two levels above the repo (override with `--out`)
 
 `--stage-only` stops after staging, useful to inspect what will be packaged.
 
