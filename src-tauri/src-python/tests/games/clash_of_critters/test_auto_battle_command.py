@@ -29,10 +29,3 @@ def test_the_game_has_the_battle_mixins() -> None:
 def test_the_game_keeps_its_own_common_button_handling() -> None:
     # The mixin only declares it; the game supplies the real one.
     assert ClashOfCritters._tap_common_button is not AutoBattleMixin._tap_common_button
-
-
-def test_show_formation_is_registered_in_the_battle_category() -> None:
-    command = COMMAND_REGISTRY[MODULE][f"{MODULE}.show_formation"]
-    assert command.menu_item is not None
-    assert command.menu_item.label == "Xem Đội Hình"
-    assert command.menu_item.category == "Battle"

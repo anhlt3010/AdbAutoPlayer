@@ -83,19 +83,6 @@ class ArtifactAdventureSettings(BaseModel):
     )
 
 
-class FormationViewSettings(BaseModel):
-    """Settings for the Xem Đội Hình task."""
-
-    stage: str = Field(
-        default="",
-        title="Stage",
-        description=(
-            "Stage to show, for example 15-50. Leave empty to read the stage from "
-            "the screen (only the preparation and fight screens show it)."
-        ),
-    )
-
-
 class Settings(TomlSettings):
     """Clash of Critters Settings model."""
 
@@ -104,7 +91,4 @@ class Settings(TomlSettings):
     )
     artifact_adventure: ArtifactAdventureSettings = Field(
         default_factory=ArtifactAdventureSettings, title="Phiêu Lưu Cổ Vật"
-    )
-    formation_view: FormationViewSettings = Field(
-        default_factory=FormationViewSettings, title="Xem Đội Hình"
     )
