@@ -88,7 +88,14 @@ One-time setup for the user: `pnpm tauri signer generate -w <path>/coc.key` (set
 - Creating a release is public: show the title, tag, assets and Latest flag to the user and create it only after they confirm. The tag must already be pushed (Step 5).
 
 ```bash
-gh release create coc-vn-setup-v<X.Y.Z>   <dir>/CocAutoPlayer_<X.Y.Z>_x64-setup.exe   <dir>/CocAutoPlayer_<X.Y.Z>_x64-setup.exe.sig   <dir>/latest.json   --repo anhlt3010/AdbAutoPlayer   --title "CocAutoPlayer <X.Y.Z>"   --notes-file <dir>/release_note_coc-setup-v<X.Y.Z>.md   --latest
+gh release create coc-vn-setup-v<X.Y.Z> \
+  <dir>/CocAutoPlayer_<X.Y.Z>_x64-setup.exe \
+  <dir>/CocAutoPlayer_<X.Y.Z>_x64-setup.exe.sig \
+  <dir>/latest.json \
+  --repo anhlt3010/AdbAutoPlayer \
+  --title "CocAutoPlayer <X.Y.Z>" \
+  --notes-file <dir>/release_note_coc-setup-v<X.Y.Z>.md \
+  --latest
 ```
 
 - Afterwards check that all three assets are there and the release is Latest:
