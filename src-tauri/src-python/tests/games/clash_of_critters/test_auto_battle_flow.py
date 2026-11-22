@@ -15,6 +15,9 @@ from adb_auto_player.games.clash_of_critters.auto_battle import (
     HUB_BATTLE_BUTTON,
     PINBALL_REWARD_CLOSE,
     PINBALL_REWARD_GEM,
+    PINBALL_REWARD_CONFIRM,
+    PINBALL_REWARD_UNLOCKED,
+    PINBALL_REWARD_UNLOCKED_TITLE,
     PREP_REPORT_ICON,
     QUICK_DEPLOY_BUTTON,
     RETRY_BUTTON,
@@ -654,12 +657,37 @@ def test_the_pinball_reward_templates_exist() -> None:
     templates = Path(auto_battle.__file__).parent / "templates"
     assert (templates / PINBALL_REWARD_GEM).is_file()
     assert (templates / PINBALL_REWARD_CLOSE).is_file()
+    assert (templates / PINBALL_REWARD_UNLOCKED).is_file()
 
 
 def test_the_pinball_reward_screen_is_closed_with_the_x(bot: MagicMock) -> None:
     _show(bot, PINBALL_REWARD_GEM, PINBALL_REWARD_CLOSE)
     assert bot._auto_battle_step() is True
     assert _tapped(bot) == [PINBALL_REWARD_CLOSE]
+
+
+def test_an_unlocked_reward_is_tapped_before_the_x(bot: MagicMock) -> None:
+    _show(bot, PINBALL_REWARD_GEM, PINBALL_REWARD_UNLOCKED, PINBALL_REWARD_CLOSE)
+    assert bot._auto_battle_step() is True
+    assert _tapped(bot) == [PINBALL_REWARD_UNLOCKED]
+
+
+def test_the_unlocked_popup_is_confirmed(bot: MagicMock) -> None:
+    _show(bot, PINBALL_REWARD_UNLOCKED_TITLE, PINBALL_REWARD_CONFIRM)
+    assert bot._auto_battle_step() is True
+    assert _tapped(bot) == [PINBALL_REWARD_CONFIRM]
+
+
+def test_the_confirm_button_alone_is_not_tapped(bot: MagicMock) -> None:
+    _show(bot, PINBALL_REWARD_CONFIRM)
+    bot._auto_battle_step()
+    bot.tap.assert_not_called()
+
+
+def test_the_unlocked_banner_alone_is_not_tapped(bot: MagicMock) -> None:
+    _show(bot, PINBALL_REWARD_UNLOCKED)
+    bot._auto_battle_step()
+    bot.tap.assert_not_called()
 
 
 def test_the_x_alone_is_not_tapped(bot: MagicMock) -> None:

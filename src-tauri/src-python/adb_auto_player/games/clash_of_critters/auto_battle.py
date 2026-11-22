@@ -43,6 +43,13 @@ CONTINUE_BUTTON = "continue_button.png"  # "Tiếp Tục", back to the stage map
 # stage map, ...), so the X alone is never tapped.
 PINBALL_REWARD_GEM = "pinball_reward_gem.png"
 PINBALL_REWARD_CLOSE = "pinball_reward_close.png"
+# "Đã Mở Khóa!" banner on a reward card that was just unlocked. It is tapped before
+# the X, so the unlocked reward is claimed first.
+PINBALL_REWARD_UNLOCKED = "pinball_reward_unlocked.png"
+# Popup opened by that tap: the big "Đã Mở Khóa!" title and the "Xác Nhận" button.
+# The button is only tapped together with the title ("Xác Nhận" shows elsewhere).
+PINBALL_REWARD_UNLOCKED_TITLE = "pinball_reward_unlocked_title.png"
+PINBALL_REWARD_CONFIRM = "pinball_reward_confirm.png"
 
 _SCREENS = [
     DEFEAT_TITLE,
@@ -164,13 +171,27 @@ class AutoBattleMixin(DeployMixin):
         return True
 
     def _close_pinball_reward_screen(self) -> bool:
-        """Close the pinball reward upgrade screen with the X of the bottom bar.
+        """Handle the pinball reward upgrade screen.
+
+        A card showing "Đã Mở Khóa!" is tapped first; once none is left the screen
+        is closed with the X of the bottom bar.
 
         Returns:
-            True if the screen was open and the X was tapped.
+            True if the screen was open and something was tapped.
         """
+        if self.find_any_template([PINBALL_REWARD_UNLOCKED_TITLE]) is not None:
+            confirm = self.find_any_template([PINBALL_REWARD_CONFIRM])
+            if confirm is not None:
+                logging.info("Pinball reward popup shown, confirming it.")
+                self.tap(confirm, log=False)
+                return True
         if self.find_any_template([PINBALL_REWARD_GEM]) is None:
             return False
+        unlocked = self.find_any_template([PINBALL_REWARD_UNLOCKED])
+        if unlocked is not None:
+            logging.info("Pinball reward unlocked, tapping it.")
+            self.tap(unlocked, log=False)
+            return True
         close = self.find_any_template([PINBALL_REWARD_CLOSE])
         if close is None:
             return False
