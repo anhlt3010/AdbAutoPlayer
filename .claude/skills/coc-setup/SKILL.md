@@ -5,7 +5,7 @@ description: Build the Windows setup installer (NSIS .exe) of AdbAutoPlayer that
 
 # Clash of Critters only setup
 
-Builds `AdbAutoPlayer_CoC_<X.Y.Z>_x64-setup.exe` with every other game removed. For the python-only patch zip use the `coc-patch` skill instead.
+Builds `AdbAutoPlayerCoC_<X.Y.Z>_x64-setup.exe` with every other game removed. For the python-only patch zip use the `coc-patch` skill instead.
 
 ## Step 1 - pull, then ask the version
 
@@ -39,9 +39,10 @@ python scripts/build_coc_setup.py <version>
 What the script does (all in a staging copy at `../../coc_setup_build/src`, the repo is never touched):
 
 - exports `HEAD` with `git archive`, deletes every game folder except `clash_of_critters` and the seed `AFKJourney.toml`
+- gives the app its own identity (`productName`/`mainBinaryName` `AdbAutoPlayerCoC`, identifier `com.anhlt3010.AdbAutoPlayerCoC`) so it installs beside an existing AdbAutoPlayer: separate install folder, shortcuts, uninstall entry and settings folder (`%APPDATA%\com.anhlt3010.AdbAutoPlayerCoC`); never change these between releases or updates and settings break
 - sets the version, points the updater endpoint to the `anhlt3010` fork (so the app never self-updates to the full upstream app) and turns off updater artifacts (no signing key needed)
 - copies `pyembed`, installs the stripped package into it, regenerates `tauri.bundle.templates.json`, runs `pnpm tauri build` with `tauri.bundle.windows.json`
-- output: `AdbAutoPlayer_CoC_<version>_x64-setup.exe`, two levels above the repo (override with `--out`)
+- output: `AdbAutoPlayerCoC_<version>_x64-setup.exe`, two levels above the repo (override with `--out`)
 
 `--stage-only` stops after staging, useful to inspect what will be packaged.
 
@@ -66,7 +67,7 @@ One-time setup for the user: `pnpm tauri signer generate -w <path>/coc.key` (set
 
 - Confirm the exe exists and show its size (the full app is about 160 MB).
 - Confirm the staged games folder holds only `clash_of_critters` and that the build log has no `afk_journey` resource entries.
-- Tell the user it was not run on a device; recommend installing it once to check that only Clash of Critters appears.
+- Tell the user it was not run on a device; recommend installing it once on a machine that already has AdbAutoPlayer, to check that both coexist and only Clash of Critters appears. `mainBinaryName` is untested with pytauri; if the app fails to start, drop that line from the script first.
 
 ## Step 5 - release note, tag, push
 

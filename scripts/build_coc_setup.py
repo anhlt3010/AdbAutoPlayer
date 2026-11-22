@@ -35,6 +35,8 @@ GAMES_REL = "src-tauri/src-python/adb_auto_player/games"
 KEEP_SETTINGS = {"ADB.toml", "App.toml", "ClashOfCritters.toml"}
 TARGET = "x86_64-pc-windows-msvc"
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
+PRODUCT_NAME = "AdbAutoPlayerCoC"
+IDENTIFIER = "com.anhlt3010.AdbAutoPlayerCoC"
 REPO_URL = "https://github.com/anhlt3010/AdbAutoPlayer"
 UPDATER_ENDPOINT = f"{REPO_URL}/releases/latest/download/latest.json"
 
@@ -88,6 +90,14 @@ def _patch_config(stage: Path, version: str, pubkey: str | None) -> None:
     _run(["node", "scripts/set-version.cjs", version], stage)
     conf_path = stage / "src-tauri" / "tauri.conf.json"
     conf = json.loads(conf_path.read_text(encoding="utf-8"))
+    # Own identity so it installs beside the original AdbAutoPlayer: the install
+    # folder, uninstall entry and shortcuts come from productName, and the
+    # settings folder (%APPDATA%\<identifier>) comes from identifier.
+    conf["productName"] = PRODUCT_NAME
+    conf["mainBinaryName"] = PRODUCT_NAME
+    conf["identifier"] = IDENTIFIER
+    for window in conf["app"]["windows"]:
+        window["title"] = PRODUCT_NAME
     # A CoC-only build must never auto-update to the full upstream app.
     conf["plugins"]["updater"]["endpoints"] = [UPDATER_ENDPOINT]
     if pubkey:
@@ -235,7 +245,7 @@ def main() -> None:
     built = _build(stage, python_exe)
 
     args.out.mkdir(parents=True, exist_ok=True)
-    final = args.out / f"AdbAutoPlayer_CoC_{version}_x64-setup.exe"
+    final = args.out / f"{PRODUCT_NAME}_{version}_x64-setup.exe"
     shutil.copy2(built, final)
     if pubkey:
         tag = args.tag or f"coc-vn-setup-v{version}"
