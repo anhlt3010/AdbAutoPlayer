@@ -41,6 +41,7 @@ What the script does (all in a staging copy at `../../coc_setup_build/src`, the 
 - exports `HEAD` with `git archive`, deletes every game folder except `clash_of_critters` and the seed `AFKJourney.toml`
 - gives the app its own identity (`productName`/`mainBinaryName` `CocAutoPlayer`, identifier `com.anhlt3010.CocAutoPlayer`) so it installs beside an existing AdbAutoPlayer: separate install folder, shortcuts, uninstall entry and settings folder (`%APPDATA%\com.anhlt3010.CocAutoPlayer`); never change these between releases or updates and settings break
 - swaps the visible name to `CocAutoPlayer` in the tray menu and tooltip, crash log file and dialog title, Discord webhook username and the UI brand name (the `REBRAND` list in the script; if upstream changes one of those lines the script stops and the list needs updating)
+- points the in-app docs link and the Discord avatar to the CoC site `https://anhlt3010.github.io/AdbAutoPlayer/` (`docs-coc/`, with `docs-coc/icon.png` as the avatar); `.github/workflows/coc-pages.yml` deploys it from `game/coc-vn`
 - regenerates all app icons with `pnpm tauri icon` from `scripts/coc_icon.png` (or `--icon <png>`); without an image the original icon is kept and a warning is printed. Ask the user for a square PNG, 1024 px recommended
 - ships the MIT `LICENSE` inside the install folder (the license requires the notice to stay with copies)
 - sets the version, points the updater endpoint to the `anhlt3010` fork (so the app never self-updates to the full upstream app) and turns off updater artifacts (no signing key needed)

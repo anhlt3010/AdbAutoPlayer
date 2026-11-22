@@ -37,6 +37,7 @@ TARGET = "x86_64-pc-windows-msvc"
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 PRODUCT_NAME = "CocAutoPlayer"
 IDENTIFIER = "com.anhlt3010.CocAutoPlayer"
+DOCS_URL = "https://anhlt3010.github.io/AdbAutoPlayer/"
 # (file, old, new) text swaps applied in the staging copy only.
 REBRAND = (
     ("src-tauri/src/tray.rs", "Show AdbAutoPlayer", f"Show {PRODUCT_NAME}"),
@@ -44,6 +45,16 @@ REBRAND = (
     ("src-tauri/src/main.rs", "AdbAutoPlayer_crash.log", f"{PRODUCT_NAME}_crash.log"),
     ("src-tauri/src/main.rs", "AdbAutoPlayer - Startup Error", f"{PRODUCT_NAME} - Startup Error"),
     ("src-tauri/src/discord.rs", '"username": "AdbAutoPlayer"', f'"username": "{PRODUCT_NAME}"'),
+    (
+        "src-tauri/src/discord.rs",
+        "https://raw.githubusercontent.com/AdbAutoPlayer/AdbAutoPlayer/refs/heads/main/app-icon.png",
+        DOCS_URL + "icon.png",
+    ),
+    (
+        "src/lib/components/sticky/DocumentationIconSticky.svelte",
+        "https://AdbAutoPlayer.github.io/AdbAutoPlayer/",
+        DOCS_URL,
+    ),
     ("src/lib/components/modern/StatusBar.svelte", ">AdbAutoPlayer<", f">{PRODUCT_NAME}<"),
     ("src/lib/components/updater/UpdateContainer.svelte", "new version of AdbAutoPlayer", f"new version of {PRODUCT_NAME}"),
 )

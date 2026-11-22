@@ -1,0 +1,26 @@
+name: CoC GitHub Pages
+on:
+  push:
+    branches: ["game/coc-vn"]
+    paths:
+      - "docs-coc/**"
+      - ".github/workflows/coc-pages.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs-coc
+      - uses: actions/deploy-pages@v4
+        id: deployment
