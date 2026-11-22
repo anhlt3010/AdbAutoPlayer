@@ -196,8 +196,27 @@ def _install_python(stage: Path, python_exe: Path) -> None:
             shutil.rmtree(child)
 
 
+# Data folders of the game that the upstream bundle-templates.cjs does not know: it
+# only lists ``templates/`` and rewrites tauri.bundle.templates.json on every build.
+COC_DATA_DIRS = ("tatari_db", "tatari_formations")
+
+
+def _add_coc_data_resources(stage: Path) -> None:
+    """Add the CoC data folders to the regenerated templates bundle config."""
+    games = "src-python/adb_auto_player/games"
+    path = stage / "src-tauri" / "tauri.bundle.templates.json"
+    conf = json.loads(path.read_text(encoding="utf-8"))
+    for name in COC_DATA_DIRS:
+        src = f"{games}/{KEEP_GAME}/{name}/"
+        if not (stage / "src-tauri" / src).is_dir():
+            sys.exit(f"{src} missing in the staging copy - is it committed?")
+        conf["bundle"]["resources"][src] = f"./games/{KEEP_GAME}/{name}/"
+    path.write_text(json.dumps(conf, indent=2) + "\n", encoding="utf-8")
+
+
 def _build(stage: Path, python_exe: Path) -> Path:
     _run(["node", "scripts/bundle-templates.cjs"], stage)
+    _add_coc_data_resources(stage)
     env = {
         "PYO3_PYTHON": str(python_exe),
         "CARGO_TARGET_DIR": str(REPO / "target"),  # reuse the compiled dependencies
