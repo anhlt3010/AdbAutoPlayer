@@ -246,6 +246,22 @@ def _write_updater_files(built: Path, final: Path, version: str, tag: str) -> No
     print(f"Updater files: {final.name}.sig, {out}")
 
 
+KEYS_DIR = REPO.parent.parent / "release-keys"  # outside the repo, never committed
+
+
+def _load_env_file(path: Path) -> None:
+    """Load KEY=VALUE (or `export KEY=VALUE`) lines; real env vars win."""
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip().removeprefix("export ").strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
+    print(f"loaded signing env from {path}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("version", help="X.Y.Z (a leading v is ignored)")
@@ -264,8 +280,11 @@ def main() -> None:
 
     pubkey = None
     if args.updater:
-        if not args.pubkey_file or not args.pubkey_file.exists():
-            sys.exit("--updater needs --pubkey-file pointing to the .pub file")
+        _load_env_file(KEYS_DIR / "coc.env")
+        pubkey_file = args.pubkey_file or KEYS_DIR / "coc.key.pub"
+        if not pubkey_file.exists():
+            sys.exit(f"--updater needs the .pub file ({pubkey_file} not found)")
+        args.pubkey_file = pubkey_file
         if not os.environ.get("TAURI_SIGNING_PRIVATE_KEY"):
             sys.exit("--updater needs env TAURI_SIGNING_PRIVATE_KEY (+ _PASSWORD)")
         raw = args.pubkey_file.read_text(encoding="utf-8").strip()
