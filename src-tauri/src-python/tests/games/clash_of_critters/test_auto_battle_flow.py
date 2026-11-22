@@ -9,6 +9,8 @@ import pytest
 from adb_auto_player.games.clash_of_critters import auto_battle
 from adb_auto_player.games.clash_of_critters.auto_battle import (
     AUTO_FIGHT_BUTTON,
+    BATTLE_REPORT_RETRY_BUTTON,
+    BATTLE_REPORT_TITLE,
     CONTINUE_BUTTON,
     DEFEAT_TITLE,
     FIGHT_BUTTON,
@@ -708,6 +710,21 @@ def test_a_common_button_comes_before_the_reward_screen(bot: MagicMock) -> None:
     _show(bot, PINBALL_REWARD_GEM, PINBALL_REWARD_CLOSE)
     assert bot._auto_battle_step() is True
     bot.tap.assert_not_called()
+
+
+# --- the battle report screen (after Chiến Đấu on camp / pinball) ---------------
+
+
+def test_the_battle_report_templates_exist() -> None:
+    templates = Path(auto_battle.__file__).parent / "templates"
+    assert (templates / BATTLE_REPORT_TITLE).is_file()
+    assert (templates / BATTLE_REPORT_RETRY_BUTTON).is_file()
+
+
+def test_the_battle_report_is_left_with_retry_not_the_x(bot: MagicMock) -> None:
+    _show(bot, BATTLE_REPORT_TITLE, BATTLE_REPORT_RETRY_BUTTON, PINBALL_REWARD_CLOSE)
+    assert bot._auto_battle_step() is True
+    assert _tapped(bot) == [BATTLE_REPORT_RETRY_BUTTON]
 
 
 # --- a formation that cannot be filled ------------------------------------------

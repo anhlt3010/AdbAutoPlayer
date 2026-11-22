@@ -50,8 +50,14 @@ PINBALL_REWARD_UNLOCKED = "pinball_reward_unlocked.png"
 # The button is only tapped together with the title ("Xác Nhận" shows elsewhere).
 PINBALL_REWARD_UNLOCKED_TITLE = "pinball_reward_unlocked_title.png"
 PINBALL_REWARD_CONFIRM = "pinball_reward_confirm.png"
+# "Báo Cáo Trận Đấu" screen, which can open when "Chiến Đấu" is pressed on the camp or
+# pinball screen. Its yellow "Thử Lại" button is wider than the defeat screen's one,
+# so it has its own template; the X of the bottom bar is not tapped.
+BATTLE_REPORT_TITLE = "battle_report_title.png"
+BATTLE_REPORT_RETRY_BUTTON = "battle_report_retry_button.png"
 
 _SCREENS = [
+    BATTLE_REPORT_TITLE,
     DEFEAT_TITLE,
     VICTORY_TITLE,
     QUICK_DEPLOY_BUTTON,
@@ -155,6 +161,8 @@ class AutoBattleMixin(DeployMixin):
             if retry is not None:
                 logging.info("Defeated, trying again.")
                 self.tap(retry, log=False)
+        elif screen.template == BATTLE_REPORT_TITLE:
+            self._retry_from_battle_report()
         elif screen.template == VICTORY_TITLE:
             self._keep_field = self._formation_in_use
             self._plan_stage = None  # the stage is done: a new run of it starts over
@@ -169,6 +177,13 @@ class AutoBattleMixin(DeployMixin):
             logging.info("On the camp screen, opening the stage map.")
             self.tap(screen, log=False)
         return True
+
+    def _retry_from_battle_report(self) -> None:
+        """Press "Thử Lại" on the battle report screen (not its X)."""
+        retry = self.find_any_template([BATTLE_REPORT_RETRY_BUTTON])
+        if retry is not None:
+            logging.info("Battle report shown, pressing Thử Lại.")
+            self.tap(retry, log=False)
 
     def _close_pinball_reward_screen(self) -> bool:
         """Handle the pinball reward upgrade screen.
