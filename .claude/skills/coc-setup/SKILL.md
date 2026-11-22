@@ -60,7 +60,7 @@ export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="<password>"
 python scripts/build_coc_setup.py <version> --updater --pubkey-file <file>.key.pub
 ```
 
-- With `--updater` the script loads `release-keys/coc.env` (two levels above the repo; lines `TAURI_SIGNING_PRIVATE_KEY=...` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD=...`) and defaults `--pubkey-file` to `release-keys/coc.key.pub`; real env vars take precedence. Never read, print or ask for the password.
+- With `--updater` the script loads `release-keys/coc.env` (two levels above the repo; lines `TAURI_SIGNING_PRIVATE_KEY=...` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD=...`) and defaults `--pubkey-file` to `release-keys/coc.key.pub`; `--env-file <path>` points to another env file; real env vars take precedence. Never read, print or ask for the password.
 - Never print, commit or log the private key or password. If the env vars or the `.pub` file are missing, point the user to the one-time setup below and stop.
 - The release must be a GitHub release on `anhlt3010/AdbAutoPlayer` with tag `coc-vn-setup-v<X.Y.Z>` holding three assets: the `.exe`, the `.exe.sig` and `latest.json`.
 - The updater reads `releases/latest/download/latest.json`, so the setup release must be the repo's latest release. Mark `coc-vn-v*` patch releases as pre-release, otherwise they shadow it.

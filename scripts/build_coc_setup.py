@@ -270,6 +270,12 @@ def main() -> None:
     parser.add_argument("--stage-only", action="store_true")
     parser.add_argument("--updater", action="store_true", help="signed, self-updating")
     parser.add_argument("--pubkey-file", type=Path, help="public key from tauri signer")
+    parser.add_argument(
+        "--env-file",
+        type=Path,
+        default=KEYS_DIR / "coc.env",
+        help="file with the TAURI_SIGNING_* variables (default: release-keys/coc.env)",
+    )
     parser.add_argument("--icon", type=Path, help="square PNG for the new app icon")
     parser.add_argument("--tag", help="release tag the exe will be uploaded to")
     args = parser.parse_args()
@@ -280,7 +286,9 @@ def main() -> None:
 
     pubkey = None
     if args.updater:
-        _load_env_file(KEYS_DIR / "coc.env")
+        if args.env_file != KEYS_DIR / "coc.env" and not args.env_file.exists():
+            sys.exit(f"--env-file not found: {args.env_file}")
+        _load_env_file(args.env_file)
         pubkey_file = args.pubkey_file or KEYS_DIR / "coc.key.pub"
         if not pubkey_file.exists():
             sys.exit(f"--updater needs the .pub file ({pubkey_file} not found)")
