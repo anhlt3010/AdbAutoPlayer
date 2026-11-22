@@ -77,4 +77,25 @@ One-time setup for the user: `pnpm tauri signer generate -w <path>/coc.key` (set
 ## Step 5 - release note, tag, push
 
 - Write a short Vietnamese release note (what is in this setup, version, that it is CoC-only and does not auto-update to upstream). Show it for approval; once approved save it next to the exe as `release_note_coc-setup-v<X.Y.Z>.md`. Do not write it to the repo or `CHANGELOG.md`.
-- After approval only: `git tag coc-vn-setup-v<X.Y.Z>`, push the branch first, then the tag, then check `git ls-remote --tags origin coc-vn-setup-v<X.Y.Z>`. Attaching the exe to a GitHub release is manual unless the user asks.
+- After approval only: `git tag coc-vn-setup-v<X.Y.Z>`, push the branch first, then the tag, then check `git ls-remote --tags origin coc-vn-setup-v<X.Y.Z>`.
+
+## Step 6 - create the GitHub release (Latest)
+
+`gh` lives in `C:\Program Files\GitHub CLI`; if `gh` is not found in the shell, run `export PATH="$PATH:/c/Program Files/GitHub CLI"` first and check `gh auth status`.
+
+- This release must be **Latest** (`--latest`, not pre-release, not draft): the app's updater reads `releases/latest/download/latest.json`.
+- The user chooses the build kind in Step 3. For a build without `--updater` there is no `.sig` or `latest.json`, so attach only the `.exe` and do not mark it Latest.
+- Creating a release is public: show the title, tag, assets and Latest flag to the user and create it only after they confirm. The tag must already be pushed (Step 5).
+
+```bash
+gh release create coc-vn-setup-v<X.Y.Z>   <dir>/CocAutoPlayer_<X.Y.Z>_x64-setup.exe   <dir>/CocAutoPlayer_<X.Y.Z>_x64-setup.exe.sig   <dir>/latest.json   --repo anhlt3010/AdbAutoPlayer   --title "CocAutoPlayer <X.Y.Z>"   --notes-file <dir>/release_note_coc-setup-v<X.Y.Z>.md   --latest
+```
+
+- Afterwards check that all three assets are there and the release is Latest:
+
+```bash
+gh release view coc-vn-setup-v<X.Y.Z> --repo anhlt3010/AdbAutoPlayer --json isDraft,isPrerelease,assets
+gh release list --repo anhlt3010/AdbAutoPlayer --limit 3
+```
+
+- Also check that `https://github.com/anhlt3010/AdbAutoPlayer/releases/latest/download/latest.json` returns the new version.
