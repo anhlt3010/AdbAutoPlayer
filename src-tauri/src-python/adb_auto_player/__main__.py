@@ -191,6 +191,13 @@ class TauriQueueHandler(logging.Handler):
         )
         try:
             Emitter.emit(self.app_handle, "log-message", log_message)
+            # A task asks for the formation viewer (cards tab) with this log flag.
+            if getattr(record, "open_card_teaching", False):
+                Emitter.emit(
+                    self.app_handle,
+                    "formation-viewer:open-cards",
+                    OpenCardsEvent(profile_index=self.profile_index),
+                )
         except Exception:
             # Silence IPC errors during rapid window events
             pass
@@ -283,6 +290,10 @@ class TaskCompletedEventEvent(BaseModel):
     profile_index: int
     msg: str | None
     exit_code: int | None
+
+
+class OpenCardsEvent(BaseModel):
+    profile_index: int
 
 
 class EmptyModel(BaseModel):
