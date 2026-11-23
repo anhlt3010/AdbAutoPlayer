@@ -268,8 +268,9 @@ class CardTemplateStore:
         folder.mkdir(parents=True, exist_ok=True)
         ok, encoded = cv2.imencode(".png", template)
         if ok:
+            # The signature is left as loaded: another process may have written a
+            # file meanwhile, so the next miss reloads the folder once.
             (folder / f"{evolution_id}.png").write_bytes(encoded.tobytes())
-            self._signatures[element] = self._signature(element)
 
 
 def _alpha_from_background(bgr: np.ndarray) -> np.ndarray:

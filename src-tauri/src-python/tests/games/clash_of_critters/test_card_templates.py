@@ -126,6 +126,17 @@ def test_store_sees_template_replaced_in_place(
     assert reader.match(_card(cleared, OTHER_WATER_CARD), "water") == "water-3-3"
 
 
+def test_own_save_does_not_hide_a_template_written_meanwhile(
+    tmp_path: Path, cleared: np.ndarray
+) -> None:
+    battle = CardTemplateStore(tmp_path)
+    assert battle.match(_card(cleared, WATER_CARD), "water") is None
+    # The viewer teaches one card while the battle recognizes another one.
+    CardTemplateStore(tmp_path).save("water-3-3", _card(cleared, WATER_CARD))
+    battle.save("water-5-2", _card(cleared, OTHER_WATER_CARD))
+    assert battle.match(_card(cleared, WATER_CARD), "water") == "water-3-3"
+
+
 def test_is_deployed_on_real_screens(cleared: np.ndarray, deployed: np.ndarray) -> None:
     assert not any(is_deployed(_card(cleared, i)) for i in range(12))
     found = {i for i in range(12) if is_deployed(_card(deployed, i))}
