@@ -8,7 +8,12 @@ import numpy as np
 import pytest
 from adb_auto_player.games.clash_of_critters.battle_layout import (
     ALL_FILTER_POINT,
+    BATTLE_LAYOUT,
+    CARD_SIZE,
+    DOJO_LAYOUT,
     ELEMENT_FILTER_POINTS,
+    FIELD_COLUMNS_X,
+    MAX_DEPLOYED,
     cell_at,
     cell_center,
     find_card_lefts,
@@ -145,3 +150,53 @@ def test_no_free_intermediate_cell_falls_back_to_a_direct_drag() -> None:
 def test_cell_at_is_the_inverse_of_cell_center() -> None:
     assert cell_at(cell_center(2, 3)) == (2, 3)
     assert cell_at(Point(1, 1)) is None
+
+
+# --- Võ Đường layout ---------------------------------------------------------------
+
+ASSETS_DIR = Path(__file__).parents[5] / "docs" / "superpowers" / "specs" / "assets"
+DOJO_LEFT_TOLERANCE = 6
+
+
+def test_dojo_cell_center_corners() -> None:
+    assert xy(cell_center(1, 1, DOJO_LAYOUT)) == (429, 634)
+    assert xy(cell_center(4, 3, DOJO_LAYOUT)) == (654, 974)
+
+
+@pytest.mark.parametrize("row, col", [(5, 1), (1, 4), (0, 1), (1, 0)])
+def test_dojo_cell_center_out_of_range(row: int, col: int) -> None:
+    with pytest.raises(ValueError):
+        cell_center(row, col, DOJO_LAYOUT)
+
+
+def test_battle_layout_matches_module_constants() -> None:
+    assert BATTLE_LAYOUT.field_columns_x == FIELD_COLUMNS_X
+    assert BATTLE_LAYOUT.max_deployed == MAX_DEPLOYED
+    assert tuple(CARD_SIZE) == BATTLE_LAYOUT.card_size
+
+
+def test_dojo_tray_slots() -> None:
+    slots = tray_slots(DOJO_LAYOUT)
+    assert len(slots) == 10
+    assert xy(slots[0]) == (132, 1354)
+    assert xy(slots[-1]) == (989, 1598)
+
+
+def test_dojo_find_card_lefts_on_capture() -> None:
+    image = cv2.imread(str(ASSETS_DIR / "dojo_prep_cleared.png"))
+    assert image is not None
+    lefts = find_card_lefts(image, DOJO_LAYOUT)
+    # The fifth card is clipped by the tray edge and is left out.
+    assert len(lefts) == 4
+    for found, expected in zip(lefts, (35, 240, 457, 674), strict=True):
+        assert abs(found - expected) <= DOJO_LEFT_TOLERANCE
+
+
+def test_dojo_plan_drag_first_leg_is_steep_or_goes_through_a_free_cell() -> None:
+    card = Point(132, 1354)
+    for row in range(1, 5):
+        for col in range(1, 4):
+            path = plan_drag(card, row, col, set(), DOJO_LAYOUT)
+            assert xy(path[-1]) == xy(cell_center(row, col, DOJO_LAYOUT))
+            first = path[1]
+            assert abs(first.x - card.x) <= 0.5 * abs(first.y - card.y)

@@ -10,7 +10,6 @@ next step does. When every step was lost the auto battle stops.
 import logging
 from time import monotonic, sleep
 
-from adb_auto_player.games.clash_of_critters.battle_layout import STAGE_LABEL_BOX
 from adb_auto_player.games.clash_of_critters.deploy import DeployMixin
 from adb_auto_player.games.clash_of_critters.formation import (
     Formation,
@@ -121,7 +120,7 @@ class AutoBattleMixin(DeployMixin):
 
     def _read_stage(self) -> StageId | None:
         """Read the stage number ("15-50") from the preparation screen."""
-        left, top, right, bottom = STAGE_LABEL_BOX
+        left, top, right, bottom = self._layout.stage_label_box
         crop = self.get_screenshot()[top:bottom, left:right]
         return parse_stage(RapidOCRBackend().extract_text(crop))
 

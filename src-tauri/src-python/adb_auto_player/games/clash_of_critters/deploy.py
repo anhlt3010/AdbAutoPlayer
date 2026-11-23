@@ -5,18 +5,15 @@ import re
 from dataclasses import dataclass
 from time import monotonic, sleep
 
+import cv2
 import numpy as np
 from adb_auto_player.file_loader import SettingsLoader
 from adb_auto_player.game import Game
 from adb_auto_player.games.clash_of_critters.battle_layout import (
     ALL_FILTER_POINT,
-    CLEAR_FIELD_POINT,
-    COUNTER_BOX,
+    BATTLE_LAYOUT,
     ELEMENT_FILTER_POINTS,
-    MAX_DEPLOYED,
-    CARD_SIZE,
-    TRAY_BOX,
-    TRAY_ROWS_Y,
+    PrepLayout,
     card_box,
     cell_at,
     find_card_lefts,
@@ -54,11 +51,9 @@ _CLEAR_SETTLE_SECONDS = 1.0
 # polls.
 _STABLE_MAX_POLLS = 8
 _STABLE_MAX_DIFF = 0.3
-# Swipe along the gap between the two tray rows; forward reveals cards on the right.
-# The tray keeps moving after the finger lifts (about 1.25x the swipe), so a page
-# still overlaps the previous one.
-_SCROLL_Y = 1383
-_SCROLL_FROM_X, _SCROLL_TO_X = 900, 400
+# The swipe along the gap between the two tray rows (``layout.scroll_y``) moves the
+# tray forward to reveal cards on the right. The tray keeps moving after the finger
+# lifts (about 1.25x the swipe), so a page still overlaps the previous one.
 # Mean absolute pixel difference of the tray that counts as "the tray moved".
 _TRAY_MOVED_MIN_DIFF = 3.0
 _COUNTER_PATTERN = re.compile(r"(\d+)\s*/\s*\d+")
@@ -95,6 +90,11 @@ class DeployResult:
 class DeployMixin(Game):
     """Reads the tray of owned tatari and deploys formations by drag and drop."""
 
+    # Geometry of the preparation screen (a Võ Đường command sets DOJO_LAYOUT).
+    _layout: PrepLayout = BATTLE_LAYOUT
+    # The element of every card in the tray when it is known (Võ Đường), else None:
+    # the element is then read from the icon colour of each card.
+    _tray_element: str | None = None
     _recognizer: CardRecognizer | None = None
     # Last value read from the deployed counter (None if unknown or unreadable).
     _deployed_count: int | None = None
@@ -121,14 +121,19 @@ class DeployMixin(Game):
         """
         screenshot = self.get_screenshot()
         recognizer = self._get_recognizer()
-        lefts = find_card_lefts(screenshot)
+        layout = self._layout
+        lefts = find_card_lefts(screenshot, layout)
         cards: list[tuple[Point, str | None]] = []
-        for row_y in TRAY_ROWS_Y:
+        for row_y in layout.tray_rows_y:
             for card_left in lefts:
-                center = Point(card_left + CARD_SIZE[0] // 2, row_y)
-                left, top, right, bottom = card_box(center)
+                center = Point(card_left + layout.card_size[0] // 2, row_y)
+                left, top, right, bottom = card_box(center, layout)
+                crop = screenshot[top:bottom, left:right]
+                if layout.card_size != BATTLE_LAYOUT.card_size:
+                    # The recognizer's boxes are measured on the battle card size.
+                    crop = cv2.resize(crop, BATTLE_LAYOUT.card_size)
                 cards.append(
-                    (center, recognizer.recognize(screenshot[top:bottom, left:right]))
+                    (center, recognizer.recognize(crop, element=self._tray_element))
                 )
         return cards
 
@@ -139,7 +144,7 @@ class DeployMixin(Game):
             The first screenshot whose tray equals the one before it (or the last
             one taken if the tray never settles within the time limit).
         """
-        left, top, right, bottom = TRAY_BOX
+        left, top, right, bottom = self._layout.tray_box
         previous = self.get_screenshot()
         poll_seconds = self.settings.auto_battle.tray_settle_poll_seconds
         for _ in range(_STABLE_MAX_POLLS):
@@ -164,16 +169,17 @@ class DeployMixin(Game):
         Returns:
             False if the tray did not move (it is at that end).
         """
-        left, top, right, bottom = TRAY_BOX
+        layout = self._layout
+        left, top, right, bottom = layout.tray_box
         before = self.get_screenshot()[top:bottom, left:right].astype(np.int16)
         start_x, end_x = (
-            (_SCROLL_FROM_X, _SCROLL_TO_X)
+            (layout.scroll_from_x, layout.scroll_to_x)
             if forward
-            else (_SCROLL_TO_X, _SCROLL_FROM_X)
+            else (layout.scroll_to_x, layout.scroll_from_x)
         )
         self.device.swipe(
-            self._apply_vertical_offset(Point(start_x, _SCROLL_Y)),
-            self._apply_vertical_offset(Point(end_x, _SCROLL_Y)),
+            self._apply_vertical_offset(Point(start_x, layout.scroll_y)),
+            self._apply_vertical_offset(Point(end_x, layout.scroll_y)),
             duration=_SCROLL_SECONDS,
         )
         after = self._wait_tray_stable()[top:bottom, left:right].astype(np.int16)
@@ -214,7 +220,7 @@ class DeployMixin(Game):
 
     def _read_deployed_count(self) -> int | None:
         """Read n from the "Đã triển khai: n/15" counter, or None if unreadable."""
-        left, top, right, bottom = COUNTER_BOX
+        left, top, right, bottom = self._layout.counter_box
         crop = self.get_screenshot()[top:bottom, left:right]
         text = RapidOCRBackend().extract_text(crop)
         match = _COUNTER_PATTERN.search(text)
@@ -222,6 +228,8 @@ class DeployMixin(Game):
 
     def _select_element(self, element: str | None) -> None:
         """Show only the tray cards of one element (None shows all)."""
+        if not self._layout.has_element_filter:
+            return
         point = ALL_FILTER_POINT if element is None else ELEMENT_FILTER_POINTS[element]
         self.tap(point, log=False)
         self._wait_tray_stable()
@@ -278,7 +286,7 @@ class DeployMixin(Game):
         """
         occupied = self._occupied if self._occupied is not None else set()
         for attempt in range(_DRAG_ATTEMPTS):
-            path = plan_drag(card, row, col, occupied)
+            path = plan_drag(card, row, col, occupied, self._layout)
             before = self._deployed_count
             self._drag_card(card, path[1])
             after = self._read_deployed_count()
@@ -289,7 +297,7 @@ class DeployMixin(Game):
             )
             if before is None or after is None or after > before:
                 if len(path) == 3:  # noqa: PLR2004
-                    middle = cell_at(path[1])
+                    middle = cell_at(path[1], self._layout)
                     if not self._field_move(path[1], path[2]):
                         if middle is not None:
                             occupied.add(middle)
@@ -364,21 +372,23 @@ class DeployMixin(Game):
             logging.error(f"Cannot read the tatari data ({error!r}); not deploying.")
             return DeployResult(0, 0)
 
-        self.tap(CLEAR_FIELD_POINT, log=False)
+        clear_point = self._layout.clear_field_point
+        self.tap(clear_point, log=False)
         sleep(_CLEAR_SETTLE_SECONDS)
         count = self._read_deployed_count()
         if count not in (0, None):
             logging.warning(
                 f"Field not empty after clearing ({count}), clearing again."
             )
-            self.tap(CLEAR_FIELD_POINT, log=False)
+            self.tap(clear_point, log=False)
             sleep(_CLEAR_SETTLE_SECONDS)
             count = self._read_deployed_count()
         self._deployed_count = count
         self._occupied = set()
 
         by_element: dict[str, list[FormationUnit]] = {}
-        for unit in formation.units[:MAX_DEPLOYED]:
+        max_deployed = self._layout.max_deployed
+        for unit in formation.units[:max_deployed]:
             by_element.setdefault(unit.tatari_id.split("-")[0], []).append(unit)
 
         missing: dict[str, dict[str, FormationUnit]] = {}
@@ -450,7 +460,9 @@ class DeployMixin(Game):
             self._select_element(element)
             owned = self._scan_owned()
             plan = plan_deployment(
-                Formation(formation.stage, tuple(units)), owned, MAX_DEPLOYED
+                Formation(formation.stage, tuple(units)),
+                owned,
+                self._layout.max_deployed,
             )
             wanted = {p.evolution_id: p.unit for p in plan if p.evolution_id}
             absent = [p.unit.evolution_id for p in plan if not p.evolution_id]

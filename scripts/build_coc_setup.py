@@ -220,7 +220,7 @@ def _install_python(stage: Path, python_exe: Path) -> None:
 
 # Data folders of the game that the upstream bundle-templates.cjs does not know: it
 # only lists ``templates/`` and rewrites tauri.bundle.templates.json on every build.
-COC_DATA_DIRS = ("tatari_db", "tatari_formations")
+COC_DATA_DIRS = ("tatari_db", "tatari_formations", "tatari_dojo")
 
 
 def _add_coc_data_resources(stage: Path) -> None:

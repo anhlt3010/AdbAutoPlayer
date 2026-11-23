@@ -8,7 +8,7 @@ from time import monotonic, sleep
 import cv2
 import numpy as np
 from adb_auto_player.decorators import register_command, register_game
-from adb_auto_player.games.clash_of_critters.auto_battle import AutoBattleMixin
+from adb_auto_player.games.clash_of_critters.badge_dojo import BadgeDojoMixin
 from adb_auto_player.games.clash_of_critters.settings import Settings
 from adb_auto_player.models.decorators import GameGUIMetadata, GUIMetadata
 from adb_auto_player.models.device import Resolution
@@ -372,7 +372,7 @@ def fishing_button_state(screenshot: np.ndarray) -> str | None:
     settings_file="ClashOfCritters.toml",
     gui_metadata=GameGUIMetadata(settings_class=Settings),
 )
-class ClashOfCritters(AutoBattleMixin):
+class ClashOfCritters(BadgeDojoMixin):
     def __init__(self) -> None:
         """Initialize ClashOfCritters."""
         super().__init__()
@@ -471,6 +471,19 @@ class ClashOfCritters(AutoBattleMixin):
         else:
             logging.info("Already on Fishing Contest screen.")
         self._run_fishing_contest()
+
+    @register_command(
+        gui=GUIMetadata(
+            label="Võ Đường Huy Hiệu",
+            category="Chế Độ",
+            tooltip=(
+                "Võ Đường Huy Hiệu: play every Võ Đường whose Thử Thách button is "
+                "yellow, stage after stage, with the prepared formations."
+            ),
+        )
+    )
+    def badge_dojo(self) -> None:
+        self._badge_dojo()
 
     def _run_fishing_contest(self) -> None:
         """Cast, wait for a bite and reel in, until no cast starts anymore.

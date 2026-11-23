@@ -12,6 +12,7 @@ from adb_auto_player.games.clash_of_critters import deploy
 from adb_auto_player.games.clash_of_critters.battle_layout import (
     ALL_FILTER_POINT,
     CLEAR_FIELD_POINT,
+    DOJO_LAYOUT,
     ELEMENT_FILTER_POINTS,
     MAX_DEPLOYED,
     cell_center,
@@ -673,3 +674,87 @@ def test_a_card_saved_during_the_second_pass_blocks_the_formation(
     assert result.blocked is True
     assert result.complete is False
     assert bot._await_card_teaching.call_count == 2
+
+
+# --- Võ Đường layout ---------------------------------------------------------------
+
+DOJO_CAPTURE = (
+    Path(__file__).parents[5]
+    / "docs"
+    / "superpowers"
+    / "specs"
+    / "assets"
+    / "dojo_prep_cleared.png"
+)
+
+
+def test_select_element_taps_nothing_without_a_filter(bot: MagicMock) -> None:
+    bot._layout = DOJO_LAYOUT
+    DeployMixin._select_element(bot, "grass")
+    bot.tap.assert_not_called()
+
+
+def test_dojo_visible_cards_resize_the_crop_to_the_battle_card_size(
+    bot: MagicMock,
+) -> None:
+    bot._layout = DOJO_LAYOUT
+    bot.get_screenshot.return_value = cv2.imread(str(DOJO_CAPTURE))
+    recognizer = MagicMock()
+    recognizer.recognize.return_value = "grass-4-2"
+    bot._get_recognizer = MagicMock(return_value=recognizer)
+    cards = DeployMixin._visible_cards(bot)
+    assert len(cards) == 8  # 4 whole cards per row, 2 rows
+    shapes = {c.args[0].shape for c in recognizer.recognize.call_args_list}
+    assert shapes == {(190, 160, 3)}
+    assert [point.y for point, _ in cards[::4]] == [1354, 1598]
+
+
+def test_dojo_clear_field_taps_the_dojo_point(bot: MagicMock) -> None:
+    bot._layout = DOJO_LAYOUT
+    bot._scan_owned.return_value = {"grass-4-2"}
+    bot._visible_cards.return_value = [(Point(132, 1354), "grass-4-2")]
+    bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),)))
+    assert xy(bot.tap.call_args_list[0].args[0]) == (1000, 1040)
+    assert xy(bot._drag_card.call_args.args[1]) == (429, 634)
+
+
+def test_dojo_deploys_at_most_five_units(bot: MagicMock) -> None:
+    bot._layout = DOJO_LAYOUT
+    ids = [f"grass-{i}-2" for i in range(7)]
+    bot._scan_owned.return_value = set(ids)
+    units = tuple(_unit(evo, 1 + i % 4, 1 + i // 4) for i, evo in enumerate(ids))
+    bot._visible_cards.return_value = [
+        (Point(cell_center(u.row, u.col, DOJO_LAYOUT).x, 1354), u.evolution_id)
+        for u in units
+    ]
+    bot._deploy_formation(Formation(STAGE, units))
+    assert bot._drag_card.call_count == DOJO_LAYOUT.max_deployed
+
+
+@pytest.mark.parametrize("layout, width", [(None, 200), (DOJO_LAYOUT, 530)])
+def test_read_deployed_count_uses_the_box_of_the_layout(
+    bot: MagicMock, layout: object, width: int
+) -> None:
+    if layout is not None:
+        bot._layout = layout
+    bot.get_screenshot.return_value = np.zeros((1920, 1080, 3), np.uint8)
+    with patch.object(deploy, "RapidOCRBackend") as backend:
+        backend.return_value.extract_text.return_value = "0/5"
+        DeployMixin._read_deployed_count(bot)
+    crop = backend.return_value.extract_text.call_args.args[0]
+    assert crop.shape[1] == width
+
+
+@pytest.mark.parametrize("tray_element", [None, "grass"])
+def test_visible_cards_pass_the_tray_element_to_the_recognizer(
+    bot: MagicMock, tray_element: str | None
+) -> None:
+    bot._layout = DOJO_LAYOUT
+    bot._tray_element = tray_element
+    bot.get_screenshot.return_value = cv2.imread(str(DOJO_CAPTURE))
+    recognizer = MagicMock()
+    recognizer.recognize.return_value = "grass-4-2"
+    bot._get_recognizer = MagicMock(return_value=recognizer)
+    DeployMixin._visible_cards(bot)
+    kwargs = {tuple(c.kwargs.items()) for c in recognizer.recognize.call_args_list}
+    assert kwargs == {(("element", tray_element),)}

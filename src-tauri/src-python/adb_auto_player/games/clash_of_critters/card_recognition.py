@@ -351,18 +351,23 @@ class CardRecognizer:
         self._debug_dir = debug_dir
         self._images: dict[str, np.ndarray | None] = {}
 
-    def recognize(self, card_bgr: np.ndarray) -> str | None:
+    def recognize(self, card_bgr: np.ndarray, element: str | None = None) -> str | None:
         """Recognize one tray card.
 
         Args:
             card_bgr: One tray card (BGR), as cut with ``card_box``.
+            element: The element of the card when the caller knows it (the tray of
+                a Võ Đường only holds one element). Without it the element is read
+                from the colour of the icon, which a card whose background bleeds
+                into the icon box can fool.
 
         Returns:
             The evolution id (glitter ids end in "g"), or None when the card is
             deployed or not recognized with enough confidence.
         """
-        left, top, right, bottom = ELEMENT_ICON_BOX
-        element = classify_element(card_bgr[top:bottom, left:right])
+        if element is None:
+            left, top, right, bottom = ELEMENT_ICON_BOX
+            element = classify_element(card_bgr[top:bottom, left:right])
         if element not in ELEMENTS or is_deployed(card_bgr):
             return None
 

@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -70,7 +71,10 @@ class Formation:
 
 
 def _read_stage_file(root: Path, stage: StageId) -> dict | None:
-    path = root / str(stage.chapter) / f"{stage}.json"
+    return _read_json(root / str(stage.chapter) / f"{stage}.json")
+
+
+def _read_json(path: Path) -> dict | None:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -129,9 +133,33 @@ def load_formations(root: Path, stage: StageId) -> tuple[Formation, ...]:
     Returns:
         The usable formations in file order (empty if the stage has none).
     """
+    return _load_shared(lambda current: _read_stage_file(root, current), stage)
+
+
+def load_dojo_formations(
+    root: Path, element: str, stage: StageId
+) -> tuple[Formation, ...]:
+    """Load the formations of a Võ Đường stage, following "shared_with" links.
+
+    Args:
+        root: The tatari_dojo folder (one sub-folder per element).
+        element: The element of the Võ Đường, for example "grass".
+        stage: The stage to load, for example 4-2 (Võ Đường 4, stage 2).
+
+    Returns:
+        The usable formations in file order (empty if the stage has none).
+    """
+    return _load_shared(
+        lambda current: _read_json(root / element / f"{current}.json"), stage
+    )
+
+
+def _load_shared(
+    read: Callable[[StageId], dict | None], stage: StageId
+) -> tuple[Formation, ...]:
     current = stage
     for _ in range(_MAX_SHARE_HOPS + 1):
-        data = _read_stage_file(root, current)
+        data = read(current)
         if data is None:
             logging.debug(f"No formation file for stage {current}.")
             return ()

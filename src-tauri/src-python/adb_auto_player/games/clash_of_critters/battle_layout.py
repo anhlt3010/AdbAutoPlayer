@@ -5,6 +5,7 @@ Boxes are ``(left, top, right, bottom)``.
 """
 
 from collections.abc import Collection
+from dataclasses import dataclass
 
 import numpy as np
 from adb_auto_player.models.geometry import Point
@@ -51,38 +52,114 @@ STAGE_LABEL_BOX = (380, 25, 550, 95)
 COUNTER_BOX = (300, 1110, 500, 1170)
 
 
-def cell_center(row: int, col: int) -> Point:
+@dataclass(frozen=True)
+class PrepLayout:
+    """Geometry of one kind of battle preparation screen (1080x1920).
+
+    ``BATTLE_LAYOUT`` is the auto battle screen, ``DOJO_LAYOUT`` the one of the
+    Võ Đường Huy Hiệu fights. Boxes are ``(left, top, right, bottom)``.
+    """
+
+    field_columns_x: tuple[int, ...]
+    field_rows_y: tuple[int, ...]
+    max_deployed: int
+    tray_columns_x: tuple[int, ...]
+    tray_rows_y: tuple[int, ...]
+    card_size: tuple[int, int]
+    tray_box: tuple[int, int, int, int]
+    card_band_rows: tuple[int, int]
+    card_width_range: tuple[int, int]
+    scroll_y: int
+    scroll_from_x: int
+    scroll_to_x: int
+    clear_field_point: Point
+    counter_box: tuple[int, int, int, int]
+    stage_label_box: tuple[int, int, int, int]
+    has_element_filter: bool
+
+
+BATTLE_LAYOUT = PrepLayout(
+    field_columns_x=FIELD_COLUMNS_X,
+    field_rows_y=FIELD_ROWS_Y,
+    max_deployed=MAX_DEPLOYED,
+    tray_columns_x=TRAY_COLUMNS_X,
+    tray_rows_y=TRAY_ROWS_Y,
+    card_size=CARD_SIZE,
+    tray_box=TRAY_BOX,
+    card_band_rows=_CARD_BAND_ROWS,
+    card_width_range=_CARD_WIDTH_RANGE,
+    scroll_y=1383,
+    scroll_from_x=900,
+    scroll_to_x=400,
+    clear_field_point=CLEAR_FIELD_POINT,
+    counter_box=COUNTER_BOX,
+    stage_label_box=STAGE_LABEL_BOX,
+    has_element_filter=True,
+)
+
+# Võ Đường: a 3x4 field with at most 5 units, 5 wider tray columns, no element
+# filter (the tray only holds the element of the Võ Đường). Measured on the
+# captures ``docs/superpowers/specs/assets/dojo_prep_*.png``.
+DOJO_LAYOUT = PrepLayout(
+    field_columns_x=(429, 541, 654),
+    field_rows_y=(634, 747, 860, 974),
+    max_deployed=5,
+    tray_columns_x=(132, 337, 554, 771, 989),
+    tray_rows_y=(1354, 1598),
+    card_size=(194, 232),
+    tray_box=(20, 1230, 1050, 1725),
+    card_band_rows=(1255, 1420),
+    card_width_range=(178, 198),
+    scroll_y=1468,
+    scroll_from_x=900,
+    scroll_to_x=400,
+    clear_field_point=Point(1000, 1040),
+    counter_box=(100, 1130, 630, 1210),
+    stage_label_box=(500, 45, 640, 110),
+    has_element_filter=False,
+)
+
+
+def cell_center(row: int, col: int, layout: PrepLayout = BATTLE_LAYOUT) -> Point:
     """Return the centre of a field cell.
 
     Args:
-        row: Row 1-5, top to bottom.
-        col: Column 1-5, left to right.
+        row: Row 1-n, top to bottom.
+        col: Column 1-n, left to right.
+        layout: The preparation screen the cell is on.
 
     Returns:
         The centre of the cell in screen pixels.
 
     Raises:
-        ValueError: The row or column is outside 1-5.
+        ValueError: The row or column is outside the field of the layout.
     """
-    if not 1 <= row <= len(FIELD_ROWS_Y) or not 1 <= col <= len(FIELD_COLUMNS_X):
-        raise ValueError(f"Cell ({row}, {col}) is outside the 5x5 field.")
-    return Point(FIELD_COLUMNS_X[col - 1], FIELD_ROWS_Y[row - 1])
+    rows, columns = layout.field_rows_y, layout.field_columns_x
+    if not 1 <= row <= len(rows) or not 1 <= col <= len(columns):
+        raise ValueError(
+            f"Cell ({row}, {col}) is outside the {len(columns)}x{len(rows)} field."
+        )
+    return Point(columns[col - 1], rows[row - 1])
 
 
-def tray_slots() -> list[Point]:
+def tray_slots(layout: PrepLayout = BATTLE_LAYOUT) -> list[Point]:
     """Return the centres of the visible tray cards, row by row."""
-    return [Point(x, y) for y in TRAY_ROWS_Y for x in TRAY_COLUMNS_X]
+    return [Point(x, y) for y in layout.tray_rows_y for x in layout.tray_columns_x]
 
 
-def card_box(center: Point) -> tuple[int, int, int, int]:
+def card_box(
+    center: Point, layout: PrepLayout = BATTLE_LAYOUT
+) -> tuple[int, int, int, int]:
     """Return the screen box of the card centred on a tray slot."""
-    width, height = CARD_SIZE
+    width, height = layout.card_size
     left = center.x - width // 2
     top = center.y - height // 2
     return left, top, left + width, top + height
 
 
-def find_card_lefts(screenshot_bgr: np.ndarray) -> list[int]:
+def find_card_lefts(
+    screenshot_bgr: np.ndarray, layout: PrepLayout = BATTLE_LAYOUT
+) -> list[int]:
     """Find the left edge of every whole card in the tray.
 
     The tray scrolls with some momentum, so cards are not always on the slots of
@@ -90,11 +167,12 @@ def find_card_lefts(screenshot_bgr: np.ndarray) -> list[int]:
 
     Args:
         screenshot_bgr: A full 1080x1920 screenshot (BGR).
+        layout: The preparation screen the tray is on.
 
     Returns:
         The left edges, left to right, of the cards that are fully visible.
     """
-    top, bottom = _CARD_BAND_ROWS
+    top, bottom = layout.card_band_rows
     bright = screenshot_bgr[top:bottom].min(axis=2) > _GAP_MIN_BRIGHTNESS
     is_gap = bright.mean(axis=0) > _GAP_MIN_FRACTION
     lefts: list[int] = []
@@ -106,15 +184,16 @@ def find_card_lefts(screenshot_bgr: np.ndarray) -> list[int]:
         start = x
         while x < len(is_gap) and not is_gap[x]:
             x += 1
-        if _CARD_WIDTH_RANGE[0] <= x - start <= _CARD_WIDTH_RANGE[1]:
+        if layout.card_width_range[0] <= x - start <= layout.card_width_range[1]:
             lefts.append(start)
     return lefts
 
 
-def cell_at(point: Point) -> tuple[int, int] | None:
+def cell_at(point: Point, layout: PrepLayout = BATTLE_LAYOUT) -> tuple[int, int] | None:
     """Return the (row, col) of the cell whose centre is exactly ``point``."""
-    if point.x in FIELD_COLUMNS_X and point.y in FIELD_ROWS_Y:
-        return FIELD_ROWS_Y.index(point.y) + 1, FIELD_COLUMNS_X.index(point.x) + 1
+    columns, rows = layout.field_columns_x, layout.field_rows_y
+    if point.x in columns and point.y in rows:
+        return rows.index(point.y) + 1, columns.index(point.x) + 1
     return None
 
 
@@ -123,7 +202,11 @@ def _is_steep(start: Point, end: Point) -> bool:
 
 
 def plan_drag(
-    card: Point, row: int, col: int, occupied: Collection[tuple[int, int]]
+    card: Point,
+    row: int,
+    col: int,
+    occupied: Collection[tuple[int, int]],
+    layout: PrepLayout = BATTLE_LAYOUT,
 ) -> list[Point]:
     """Plan the path of a unit from its tray card to a field cell.
 
@@ -137,19 +220,20 @@ def plan_drag(
         row: Target row 1-5.
         col: Target column 1-5.
         occupied: Cells that already hold a unit.
+        layout: The preparation screen the drag happens on.
 
     Returns:
         ``[card, target]``, or ``[card, intermediate_cell, target]``.
     """
-    target = cell_center(row, col)
+    target = cell_center(row, col, layout)
     if _is_steep(card, target):
         return [card, target]
     best: tuple[tuple[int, int], Point] | None = None
-    for r in range(1, len(FIELD_ROWS_Y) + 1):
-        for c in range(1, len(FIELD_COLUMNS_X) + 1):
+    for r in range(1, len(layout.field_rows_y) + 1):
+        for c in range(1, len(layout.field_columns_x) + 1):
             if (r, c) == (row, col) or (r, c) in occupied:
                 continue
-            middle = cell_center(r, c)
+            middle = cell_center(r, c, layout)
             if not _is_steep(card, middle):
                 continue
             distance = (abs(middle.x - target.x), abs(middle.y - target.y))

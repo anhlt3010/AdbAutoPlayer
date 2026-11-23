@@ -8,6 +8,7 @@ from adb_auto_player.games.clash_of_critters import formation as formation_modul
 from adb_auto_player.games.clash_of_critters.formation import (
     FormationUnit,
     StageId,
+    load_dojo_formations,
     load_formations,
     parse_stage,
 )
@@ -177,3 +178,74 @@ def test_unit_without_name_has_empty_name(tmp_path: Path) -> None:
     _write(tmp_path, "15-1", "15-1", [[unit]])
     result = load_formations(tmp_path, StageId(15, 1))
     assert result[0].units[0].name == ""
+
+
+# --- Võ Đường files: <root>/<element>/<dojo>-<stage>.json -------------------------
+
+DOJO_ROOT = Path(formation_module.__file__).parent / "tatari_dojo"
+DOJO_ELEMENTS = ("water", "fire", "grass", "rock", "lightning")
+DOJO_UNITS = 5
+DOJO_ROWS, DOJO_COLS = 4, 3
+
+
+def _write_dojo(
+    root: Path,
+    element: str,
+    stage: str,
+    shared_with: str,
+    formations: list[list[dict]],
+) -> None:
+    folder = root / element
+    folder.mkdir(parents=True, exist_ok=True)
+    data = {
+        "element": element,
+        "stage": stage,
+        "shared_with": shared_with,
+        "formations": [{"source": "x", "units": units} for units in formations],
+    }
+    (folder / f"{stage}.json").write_text(json.dumps(data), encoding="utf-8")
+
+
+def _five_units() -> list[dict]:
+    return [_unit(1 + i % 4, 1 + i // 4) for i in range(DOJO_UNITS)]
+
+
+def test_dojo_formations_read_the_element_folder(tmp_path: Path) -> None:
+    _write_dojo(tmp_path, "water", "4-1", "", [_five_units()])
+    formations = load_dojo_formations(tmp_path, "water", StageId(4, 1))
+    assert len(formations) == 1
+    assert len(formations[0].units) == DOJO_UNITS
+
+
+def test_dojo_formations_follow_shared_with(tmp_path: Path) -> None:
+    _write_dojo(tmp_path, "grass", "4-2", "4-1 \u2013 4-10", [])
+    _write_dojo(tmp_path, "grass", "4-1", "4-1 \u2013 4-10", [_five_units()])
+    formations = load_dojo_formations(tmp_path, "grass", StageId(4, 2))
+    assert len(formations) == 1
+    assert formations[0].stage == StageId(4, 2)
+
+
+def test_dojo_formations_ignore_other_elements(tmp_path: Path) -> None:
+    _write_dojo(tmp_path, "fire", "4-1", "", [_five_units()])
+    assert load_dojo_formations(tmp_path, "grass", StageId(4, 1)) == ()
+
+
+def test_dojo_formations_missing_file_is_empty(tmp_path: Path) -> None:
+    assert load_dojo_formations(tmp_path, "grass", StageId(4, 1)) == ()
+
+
+def test_dojo_real_data_has_five_units_in_the_grid() -> None:
+    files = sorted(DOJO_ROOT.glob("*/*.json"))
+    assert files
+    for path in files:
+        assert path.parent.name in DOJO_ELEMENTS
+        dojo, stage = (int(part) for part in path.stem.split("-"))
+        formations = load_dojo_formations(
+            DOJO_ROOT, path.parent.name, StageId(dojo, stage)
+        )
+        assert formations, path
+        for formation in formations:
+            assert len(formation.units) == DOJO_UNITS, path
+            for unit in formation.units:
+                assert 1 <= unit.row <= DOJO_ROWS, path
+                assert 1 <= unit.col <= DOJO_COLS, path

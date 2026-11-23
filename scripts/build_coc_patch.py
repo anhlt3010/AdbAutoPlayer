@@ -3,7 +3,7 @@
 Layout (same as the earlier clash_of_critters_patch_v0.1.x zips)::
 
     Lib/site-packages/adb_auto_player/games/clash_of_critters/*.py
-    games/clash_of_critters/{templates,tatari_db,tatari_formations}/...
+    games/clash_of_critters/{templates,tatari_db,tatari_formations,tatari_dojo}/...
 
 Files are taken from a git ref (default HEAD), so uncommitted changes are not
 included.
@@ -22,7 +22,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 GAME_DIR = "src-tauri/src-python/adb_auto_player/games/clash_of_critters"
-DATA_DIRS = ("templates", "tatari_db", "tatari_formations")
+DATA_DIRS = ("templates", "tatari_db", "tatari_formations", "tatari_dojo")
 PY_DEST = "Lib/site-packages/adb_auto_player/games/clash_of_critters"
 DATA_DEST = "games/clash_of_critters"
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")

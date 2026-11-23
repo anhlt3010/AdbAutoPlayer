@@ -353,3 +353,17 @@ def test_unreadable_crop_ignored_by_dedup(tmp_path: Path) -> None:
 
 def test_waiting_count_without_debug_dir(tmp_path: Path) -> None:
     assert _spy(tmp_path).waiting_count() == 0
+
+
+def test_a_known_tray_element_beats_a_misleading_icon_colour(
+    screen: np.ndarray, tmp_path: Path
+) -> None:
+    # A card whose background bleeds into the icon box reads as another element
+    # (a Võ Đường card of an evolved tatari read as lightning); the tray of a Võ Đường
+    # only holds one element, so the caller can tell it.
+    card = _card(screen, 2).copy()  # water-3-3
+    left, top, right, bottom = ELEMENT_ICON_BOX
+    card[top:bottom, left:right] = (0, 255, 255)  # yellow: reads as lightning
+    recognizer = CardRecognizer(TatariDb.load(DB_ROOT), CardTemplateStore(tmp_path))
+    assert recognizer.recognize(card) != "water-3-3"
+    assert recognizer.recognize(card, element="water") == "water-3-3"
