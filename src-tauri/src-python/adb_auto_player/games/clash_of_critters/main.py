@@ -136,7 +136,7 @@ _TAP_WINDOW_SECONDS = 0.03
 # direction of travel of at least `_MIN_TURN_STEP` px (a bounce, not jitter) makes
 # the speed start over.
 _SPEED_SAMPLES = 5
-_MIN_SAMPLES_FOR_TURN = 2
+_MIN_SPEED_SAMPLES = 2
 _MIN_TURN_STEP = 2
 
 
@@ -197,7 +197,11 @@ def seconds_to_reach(
 
 
 def plan_tap(
-    bobber: float, speed: float, zone: tuple[int, int], lead: float
+    bobber: float,
+    speed: float,
+    zone: tuple[int, int],
+    lead: float,
+    window: float = _TAP_WINDOW_SECONDS,
 ) -> float | None:
     """Decide when to tap so the tap lands on the centre of the yellow zone.
 
@@ -206,16 +210,23 @@ def plan_tap(
         speed: Signed bobber speed in px/s.
         zone: Left and right x of the yellow zone.
         lead: Seconds between the tap command and the game seeing the tap.
+        window: How far ahead the moment to send the tap may be. Pass the time
+            between two frames, so no crossing falls between two reads.
 
     Returns:
         Seconds to wait before tapping now, or None when it is not time yet (or
-        the moment has passed and the next crossing is far away).
+        the moment has passed and the next crossing is far away). A tap that is
+        late is still planned (0.0) while it lands inside the zone.
     """
     centre = (zone[0] + zone[1]) / 2
     crossing = seconds_to_reach(bobber, speed, centre, _BOBBER_MIN_X, _BOBBER_MAX_X)
-    if crossing is None or abs(crossing - lead) > _TAP_WINDOW_SECONDS:
+    if crossing is None:
         return None
-    return max(0.0, crossing - lead)
+    late = max(_TAP_WINDOW_SECONDS, (zone[1] - zone[0]) / 2 / abs(speed))
+    delay = crossing - lead
+    if delay > window or delay < -late:
+        return None
+    return max(0.0, delay)
 
 
 def smoothed_speed(samples: Sequence[tuple[int, float]]) -> float:
@@ -228,7 +239,7 @@ def smoothed_speed(samples: Sequence[tuple[int, float]]) -> float:
         px/s from the first to the last sample; 0.0 without two samples apart in
         time.
     """
-    if len(samples) < 2:  # noqa: PLR2004
+    if len(samples) < _MIN_SPEED_SAMPLES:
         return 0.0
     (first_x, first_at), (last_x, last_at) = samples[0], samples[-1]
     if last_at <= first_at:
@@ -242,14 +253,20 @@ def _add_speed_sample(
     """Record a new bobber position; start over when the bobber turns around."""
     if samples and bobber == samples[-1][0]:
         return
-    if len(samples) >= _MIN_SAMPLES_FOR_TURN:
+    if len(samples) >= _MIN_SPEED_SAMPLES:
         step = bobber - samples[-1][0]
         last_step = samples[-1][0] - samples[-2][0]
         if abs(step) >= _MIN_TURN_STEP and step * last_step < 0:
-            last = samples[-1]
+            # The pair around the bounce would give a wrong speed: drop it.
             samples.clear()
-            samples.append(last)
     samples.append((bobber, now))
+
+
+def _frame_gap(samples: Sequence[tuple[int, float]]) -> float:
+    """Seconds between the last two different bobber frames (0.0 if unknown)."""
+    if len(samples) < _MIN_SPEED_SAMPLES:
+        return 0.0
+    return samples[-1][1] - samples[-2][1]
 
 
 def fishing_button_state(screenshot: np.ndarray) -> str | None:
@@ -437,6 +454,7 @@ class ClashOfCritters(AutoBattleMixin):
         logging.info("Tension bar shown, timing the taps.")
         lead = self.settings.fishing_contest.tap_lead_seconds
         zone: tuple[int, int] | None = None
+        zone_blocked_until = 0.0
         samples: deque[tuple[int, float]] = deque(maxlen=_SPEED_SAMPLES)
         seen_at = monotonic()
         hits = 0
@@ -449,15 +467,20 @@ class ClashOfCritters(AutoBattleMixin):
             seen_at = now
             bobber, seen_zone = bar
             _add_speed_sample(samples, bobber, now)
-            if seen_zone is not None and (
-                bobber < seen_zone[0] - _BOBBER_HALF_WIDTH
-                or bobber > seen_zone[1] + _BOBBER_HALF_WIDTH
+            if (
+                seen_zone is not None
+                and now >= zone_blocked_until
+                and (
+                    bobber < seen_zone[0] - _BOBBER_HALF_WIDTH
+                    or bobber > seen_zone[1] + _BOBBER_HALF_WIDTH
+                )
             ):
                 zone = seen_zone
             if zone is None:
                 continue
             speed = smoothed_speed(samples)
-            delay = plan_tap(bobber, speed, zone, lead)
+            window = max(_TAP_WINDOW_SECONDS, _frame_gap(samples))
+            delay = plan_tap(bobber, speed, zone, lead, window)
             if delay is None:
                 continue
             sleep(delay)
@@ -468,6 +491,9 @@ class ClashOfCritters(AutoBattleMixin):
             )
             self.tap(_FISHING_BUTTON, log=False)
             zone = None
+            # The hit shows (and the zone shrinks) only after the tap landed and a
+            # frame came in; a held frame still shows the old zone.
+            zone_blocked_until = monotonic() + lead + window
         logging.info("Tension bar gone.")
 
     def _close_fishing_popup(self) -> bool:

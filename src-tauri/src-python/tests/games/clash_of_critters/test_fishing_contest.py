@@ -1,3 +1,4 @@
+from collections import deque
 from itertools import pairwise
 from pathlib import Path
 from types import SimpleNamespace
@@ -169,6 +170,8 @@ def _tap_times(
     zone: tuple[int, int] | None,
     lead: float,
     end: float = _BAR_END_SECONDS,
+    hold_hz: float | None = None,
+    read_seconds: float = 0.0,
 ) -> list[float]:
     """Run `_play_tension_bar` on a fake clock; return the clock of every tap."""
     clock = [0.0]
@@ -177,11 +180,15 @@ def _tap_times(
     monkeypatch.setattr(
         coc_main, "sleep", lambda seconds: clock.__setitem__(0, clock[0] + seconds)
     )
-    monkeypatch.setattr(
-        coc_main,
-        "read_tension_bar",
-        lambda _screenshot: (_bobber_x(clock[0]), zone) if clock[0] < end else None,
-    )
+
+    def read(_screenshot):
+        clock[0] += read_seconds
+        seen_at = clock[0]
+        if hold_hz is not None:  # the stream repeats a frame until the next one
+            seen_at = int(clock[0] * hold_hz) / hold_hz
+        return (_bobber_x(seen_at), zone) if clock[0] < end else None
+
+    monkeypatch.setattr(coc_main, "read_tension_bar", read)
     fake = SimpleNamespace(
         settings=SimpleNamespace(
             fishing_contest=SimpleNamespace(tap_lead_seconds=lead)
@@ -214,3 +221,38 @@ def test_tension_bar_uses_the_lead_setting(monkeypatch):
 
 def test_tension_bar_no_tap_without_a_zone(monkeypatch):
     assert _tap_times(monkeypatch, None, 0.15) == []
+
+
+def test_tension_bar_held_frames_do_not_tap_twice(monkeypatch):
+    # The stream repeats a frame at 25 fps: the same frame must not tap again
+    # before the first tap can have landed.
+    taps = _tap_times(monkeypatch, (596, 604), 0.3, end=1.2, hold_hz=25)
+    assert len(taps) == 1
+
+
+def test_tension_bar_slow_reads_do_not_skip_a_crossing(monkeypatch):
+    # A read takes 0.1 s (12 reads per second at most is already slow): the
+    # crossing of the centre (x 625 at 0.75 s) must not fall between two reads.
+    # Zone (500, 750) is readable from the start (the bobber is 40 px outside).
+    taps = _tap_times(monkeypatch, (500, 750), 0.15, end=1.2, read_seconds=0.1)
+    assert len(taps) == 1
+    assert taps[0] == pytest.approx(0.75 - 0.15, abs=0.12)
+
+
+def test_plan_tap_window_follows_the_frame_interval():
+    assert plan_tap(400, 300, (596, 604), 0.15, window=0.6) == pytest.approx(
+        2 / 3 - 0.15
+    )
+
+
+def test_plan_tap_late_tap_is_accepted_while_it_lands_inside_the_zone():
+    # centre in 0.033 s, tap lands 0.117 s late = 35 px past the centre
+    assert plan_tap(590, 300, (450, 750), 0.15) == 0.0
+    assert plan_tap(590, 300, (596, 604), 0.15) is None
+
+
+def test_speed_samples_start_over_at_a_bounce():
+    samples: deque[tuple[int, float]] = deque(maxlen=5)
+    for x, at in [(780, 0.0), (790, 0.03), (795, 0.06), (790, 0.09)]:
+        coc_main._add_speed_sample(samples, x, at)
+    assert list(samples) == [(790, 0.09)]
