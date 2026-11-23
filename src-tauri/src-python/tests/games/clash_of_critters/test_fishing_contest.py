@@ -5,7 +5,10 @@ import numpy as np
 import pytest
 from adb_auto_player.games.clash_of_critters.main import (
     fishing_button_state,
+    plan_tap,
     read_tension_bar,
+    seconds_to_reach,
+    smoothed_speed,
 )
 
 
@@ -75,3 +78,51 @@ def test_result_template_survives_the_wrapped_line():
     screen = cv2.imread(str(DATA / "fishing_personal_record_text.png"))
     screen[:, 920:] = 0
     assert _result_match(screen) > 0.9
+
+
+_LOW, _HIGH = 380, 800
+
+
+def test_seconds_to_reach_moving_toward_target():
+    assert seconds_to_reach(400, 300, 700, _LOW, _HIGH) == pytest.approx(1.0)
+
+
+def test_seconds_to_reach_moving_away_bounces_once():
+    assert seconds_to_reach(500, 300, 400, _LOW, _HIGH) == pytest.approx(700 / 300)
+
+
+def test_seconds_to_reach_moving_left_bounces_off_the_left_end():
+    # left end (120 px), then right until 600 (220 px)
+    assert seconds_to_reach(500, -300, 600, _LOW, _HIGH) == pytest.approx(340 / 300)
+
+
+def test_seconds_to_reach_negative_velocity_toward_target():
+    assert seconds_to_reach(700, -300, 400, _LOW, _HIGH) == pytest.approx(1.0)
+
+
+def test_seconds_to_reach_slow_speed_is_none():
+    assert seconds_to_reach(500, 10, 600, _LOW, _HIGH) is None
+
+
+def test_plan_tap_small_zone_aims_at_centre():
+    # centre 600 is reached in 0.17 s: tap 0.02 s from now (lead 0.15 s)
+    delay = plan_tap(549, 300, (596, 604), 0.15)
+    assert delay == pytest.approx(0.02)
+
+
+def test_plan_tap_not_close_yet_is_none():
+    assert plan_tap(400, 300, (596, 604), 0.15) is None
+
+
+def test_plan_tap_passed_the_centre_is_none():
+    assert plan_tap(610, 300, (596, 604), 0.15) is None
+
+
+def test_plan_tap_wide_zone_taps_once_per_crossing():
+    assert plan_tap(560, 300, (450, 750), 0.15) == 0.0
+
+
+def test_smoothed_speed():
+    assert smoothed_speed([(100, 0.0), (130, 0.1)]) == pytest.approx(300.0)
+    assert smoothed_speed([(100, 0.0)]) == 0.0
+    assert smoothed_speed([(100, 1.0), (130, 1.0)]) == 0.0

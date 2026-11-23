@@ -2,6 +2,7 @@
 
 import logging
 import re
+from collections.abc import Sequence
 from time import monotonic, sleep
 
 import cv2
@@ -127,6 +128,14 @@ _ZONE_MARGIN = 20
 # The bar is over when the bobber was not seen for this long.
 _TENSION_BAR_GONE_SECONDS = 1.5
 _TENSION_BAR_POLL_SECONDS = 0.01
+# The bobber centre bounces between these x values.
+_BOBBER_MIN_X, _BOBBER_MAX_X = 380, 800
+# Slower than this the bobber is taken as standing still: no tap is planned.
+_MIN_SPEED = 50.0  # px/s
+# A tap is planned when the moment to send it is at most this far from now.
+_TAP_WINDOW_SECONDS = 0.03
+# Number of (x, time) samples the speed is averaged over.
+_SPEED_SAMPLES = 5
 
 
 def read_tension_bar(
@@ -156,6 +165,73 @@ def read_tension_bar(
         return bobber, None
     left, right = int(yellow_x.min()), int(yellow_x.max())
     return bobber, (left + _TENSION_BAR_LEFT, right + _TENSION_BAR_LEFT)
+
+
+def seconds_to_reach(
+    x: float, velocity: float, target: float, low: float, high: float
+) -> float | None:
+    """Time until a bouncing point first reaches a target.
+
+    Args:
+        x: Current position.
+        velocity: Signed speed in px/s.
+        target: Position to reach.
+        low: Left end, where the point bounces.
+        high: Right end, where the point bounces.
+
+    Returns:
+        Seconds from now, or None when the point is (almost) standing still.
+    """
+    if abs(velocity) < _MIN_SPEED:
+        return None
+    width = high - low
+    period = 2 * width
+    offset = x - low
+    # Unfold the bounces: the point always moves right on a line of `period`.
+    start = offset if velocity > 0 else period - offset
+    goal = target - low
+    distance = min((goal - start) % period, (period - goal - start) % period)
+    return distance / abs(velocity)
+
+
+def plan_tap(
+    bobber: float, speed: float, zone: tuple[int, int], lead: float
+) -> float | None:
+    """Decide when to tap so the tap lands on the centre of the yellow zone.
+
+    Args:
+        bobber: Bobber x.
+        speed: Signed bobber speed in px/s.
+        zone: Left and right x of the yellow zone.
+        lead: Seconds between the tap command and the game seeing the tap.
+
+    Returns:
+        Seconds to wait before tapping now, or None when it is not time yet (or
+        the moment has passed and the next crossing is far away).
+    """
+    centre = (zone[0] + zone[1]) / 2
+    crossing = seconds_to_reach(bobber, speed, centre, _BOBBER_MIN_X, _BOBBER_MAX_X)
+    if crossing is None or abs(crossing - lead) > _TAP_WINDOW_SECONDS:
+        return None
+    return max(0.0, crossing - lead)
+
+
+def smoothed_speed(samples: Sequence[tuple[int, float]]) -> float:
+    """Signed bobber speed from (x, time) samples.
+
+    Args:
+        samples: Bobber x and the time it was seen, oldest first.
+
+    Returns:
+        px/s from the first to the last sample; 0.0 without two samples apart in
+        time.
+    """
+    if len(samples) < 2:  # noqa: PLR2004
+        return 0.0
+    (first_x, first_at), (last_x, last_at) = samples[0], samples[-1]
+    if last_at <= first_at:
+        return 0.0
+    return (last_x - first_x) / (last_at - first_at)
 
 
 def fishing_button_state(screenshot: np.ndarray) -> str | None:
