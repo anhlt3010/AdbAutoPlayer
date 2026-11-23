@@ -4,4 +4,5 @@ export const EventNames = {
   ADB_SETTINGS_UPDATED: "adb-settings-updated",
   GAME_SETTINGS_UPDATED: "game-settings-updated",
   PROFILE_STATE_UPDATE: "profile-state-update",
+  OPEN_CARDS_VIEWER: "formation-viewer:open-cards",
 };

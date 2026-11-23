@@ -7,7 +7,10 @@
   import FormationGrid from "#lib/components/formation/FormationGrid.svelte";
   import UnrecognizedCards from "#lib/components/formation/UnrecognizedCards.svelte";
   import { stepStage } from "#lib/formation/stage.ts";
-  import { FORMATION_VIEWER_REFRESH_EVENT } from "#lib/formation/viewer.ts";
+  import {
+    FORMATION_VIEWER_REFRESH_EVENT,
+    FORMATION_VIEWER_TAB_EVENT,
+  } from "#lib/formation/viewer.ts";
   import type { FormationView } from "#lib/formation/types.ts";
 
   let profileIndex = $state(0);
@@ -114,10 +117,14 @@
   }
 
   onMount(() => {
-    const profile = new URLSearchParams(window.location.search).get("profile");
-    profileIndex = Number(profile ?? "0") || 0;
+    const params = new URLSearchParams(window.location.search);
+    profileIndex = Number(params.get("profile") ?? "0") || 0;
+    if (params.get("tab") === "cards") {
+      tab = "cards";
+    }
 
     let unlisten: (() => void) | undefined;
+    let unlistenTab: (() => void) | undefined;
     void (async () => {
       try {
         await applySettingsFromFile();
@@ -132,10 +139,17 @@
           void load(null);
         },
       );
+      unlistenTab = await listen(FORMATION_VIEWER_TAB_EVENT, () => {
+        tab = "cards";
+        cardsReload++;
+      });
     })();
     void load(null);
 
-    return () => unlisten?.();
+    return () => {
+      unlisten?.();
+      unlistenTab?.();
+    };
   });
 </script>
 

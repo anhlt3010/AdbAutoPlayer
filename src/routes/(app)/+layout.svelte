@@ -37,6 +37,7 @@
     startTask,
   } from "#pytauri/apiClient.ts";
   import { t } from "#lib/i18n/i18n.ts";
+  import { openFormationViewer } from "#lib/formation/viewer.ts";
 
   let { children } = $props();
 
@@ -98,6 +99,15 @@
       );
 
       unsubscribers.push(stateUnsub);
+
+      // The auto battle needs the user to teach it unrecognized tray cards.
+      const cardsUnsub = await listen<{ profile_index: number }>(
+        EventNames.OPEN_CARDS_VIEWER,
+        (event) => {
+          void openFormationViewer(event.payload.profile_index, "cards");
+        },
+      );
+      unsubscribers.push(cardsUnsub);
     };
 
     setupListeners();

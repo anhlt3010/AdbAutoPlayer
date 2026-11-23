@@ -6,6 +6,8 @@ import { showErrorToast } from "#lib/toast/toast-error.ts";
 
 export const FORMATION_VIEWER_LABEL = "formation-viewer";
 export const FORMATION_VIEWER_REFRESH_EVENT = "formation-viewer:refresh";
+// Asks an open viewer to show its "unrecognized cards" tab.
+export const FORMATION_VIEWER_TAB_EVENT = "formation-viewer:show-cards";
 
 const WINDOW_WIDTH = 420;
 const WINDOW_HEIGHT = 560;
@@ -22,14 +24,17 @@ let opening: Promise<void> | null = null;
  * A second click while the first one is still opening the window is ignored,
  * otherwise both would try to create the same window label.
  */
-export function openFormationViewer(profileIndex: number): Promise<void> {
-  opening ??= open(profileIndex).finally(() => {
+export function openFormationViewer(
+  profileIndex: number,
+  tab?: "cards",
+): Promise<void> {
+  opening ??= open(profileIndex, tab).finally(() => {
     opening = null;
   });
   return opening;
 }
 
-async function open(profileIndex: number): Promise<void> {
+async function open(profileIndex: number, tab?: "cards"): Promise<void> {
   const tr = get(t);
   const failTitle = tr("Failed to open the formation viewer");
   try {
@@ -41,10 +46,13 @@ async function open(profileIndex: number): Promise<void> {
       await emitTo(FORMATION_VIEWER_LABEL, FORMATION_VIEWER_REFRESH_EVENT, {
         profile_index: profileIndex,
       });
+      if (tab === "cards") {
+        await emitTo(FORMATION_VIEWER_LABEL, FORMATION_VIEWER_TAB_EVENT, {});
+      }
       return;
     }
     const created = new WebviewWindow(FORMATION_VIEWER_LABEL, {
-      url: `/formation-viewer?profile=${profileIndex}`,
+      url: `/formation-viewer?profile=${profileIndex}${tab ? `&tab=${tab}` : ""}`,
       title: tr("Formation viewer"),
       width: WINDOW_WIDTH,
       height: WINDOW_HEIGHT,
