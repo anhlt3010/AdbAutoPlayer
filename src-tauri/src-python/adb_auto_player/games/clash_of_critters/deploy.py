@@ -66,6 +66,8 @@ _COUNTER_PATTERN = re.compile(r"(\d+)\s*/\s*\d+")
 _FILL_ATTEMPTS = 5
 # How often the folder of unrecognized cards is checked while the user teaches them.
 _TEACH_POLL_SECONDS = 1.0
+# Times the user is asked again because a pass saved new unrecognized cards.
+_TEACH_ROUNDS = 3
 
 
 @dataclass(frozen=True)
@@ -384,8 +386,11 @@ class DeployMixin(Game):
 
         # A card the bot did not recognize looks like a tatari the player lacks:
         # wait for the user to teach those cards, then place the units still absent.
-        if absent and self._get_recognizer().waiting_count() > 0:
-            if not self._await_card_teaching():
+        # A pass can save new crops (a card of the same tatari at another tier), so
+        # repeat while units are absent and crops are waiting.
+        teach_rounds = 0
+        while absent and self._get_recognizer().waiting_count() > 0:
+            if teach_rounds >= _TEACH_ROUNDS or not self._await_card_teaching():
                 self._select_element(None)
                 count = self._units_on_field(needed, missing)
                 self._deployed_count = count
@@ -394,10 +399,11 @@ class DeployMixin(Game):
                     "bỏ đội hình này."
                 )
                 return DeployResult(count, needed, blocked=True)
+            teach_rounds += 1
             retry: dict[str, list[FormationUnit]] = {}
             for unit in absent:
                 retry.setdefault(unit.tatari_id.split("-")[0], []).append(unit)
-            more_needed, _ = self._deploy_elements(formation, retry, missing)
+            more_needed, absent = self._deploy_elements(formation, retry, missing)
             needed += more_needed
 
         count = self._units_on_field(needed, missing)

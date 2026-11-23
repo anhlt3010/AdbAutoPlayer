@@ -657,3 +657,19 @@ def test_no_wait_and_no_second_pass_without_waiting_cards(bot: MagicMock) -> Non
     bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),)))
     bot._await_card_teaching.assert_not_called()
     assert bot._scan_owned.call_count == 1
+
+
+def test_a_card_saved_during_the_second_pass_blocks_the_formation(
+    bot: MagicMock,
+) -> None:
+    # Teaching A deletes its crop, but B (same tatari, other tier) is then saved
+    # as a new crop in pass two: the unit stays absent with a crop waiting.
+    bot._get_recognizer.return_value.waiting_count.return_value = 1
+    bot._await_card_teaching = MagicMock(side_effect=[True, False])
+    bot._scan_owned.side_effect = [{"grass-4-2"}, set()]
+    bot._visible_cards.side_effect = [[(CARD_A, "grass-4-2")], []]
+    formation = Formation(STAGE, (_unit("grass-4-2", 1, 1), _unit("grass-3-1", 2, 2)))
+    result = bot._deploy_formation(formation)
+    assert result.blocked is True
+    assert result.complete is False
+    assert bot._await_card_teaching.call_count == 2
