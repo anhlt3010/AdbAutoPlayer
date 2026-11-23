@@ -144,6 +144,21 @@ class CardTemplateStore:
         """
         self._directory = directory
         self._templates: dict[str, dict[str, np.ndarray]] = {}
+        # Files (name, modification time) of each element folder when it was read;
+        # another process (the formation viewer) may add or replace templates.
+        self._signatures: dict[str, tuple[tuple[str, int], ...]] = {}
+
+    def _signature(self, element: str) -> tuple[tuple[str, int], ...]:
+        folder = self._directory / element
+        if not folder.is_dir():
+            return ()
+        files = []
+        for path in folder.glob("*.png"):
+            try:
+                files.append((path.name, path.stat().st_mtime_ns))
+            except OSError:
+                continue
+        return tuple(sorted(files))
 
     @staticmethod
     def _template_of(card_bgr: np.ndarray) -> np.ndarray:
@@ -156,6 +171,7 @@ class CardTemplateStore:
         if loaded is not None:
             return loaded
         loaded = {}
+        self._signatures[element] = self._signature(element)
         folder = self._directory / element
         if folder.is_dir():
             for path in sorted(folder.glob("*.png")):
@@ -180,6 +196,13 @@ class CardTemplateStore:
             The evolution id of the best template scoring at least
             ``_TEMPLATE_MIN_SCORE``, or None.
         """
+        found = self._best_template(card_bgr, element)
+        if found is None and self._signature(element) != self._signatures.get(element):
+            self._templates.pop(element, None)
+            found = self._best_template(card_bgr, element)
+        return found
+
+    def _best_template(self, card_bgr: np.ndarray, element: str) -> str | None:
         left, top, right, bottom = CARD_ART_BOX
         search = card_bgr[top:bottom, left:right]
         best_id, best_score = None, _TEMPLATE_MIN_SCORE
@@ -206,6 +229,7 @@ class CardTemplateStore:
         ok, encoded = cv2.imencode(".png", template)
         if ok:
             (folder / f"{evolution_id}.png").write_bytes(encoded.tobytes())
+            self._signatures[element] = self._signature(element)
 
 
 def _alpha_from_background(bgr: np.ndarray) -> np.ndarray:

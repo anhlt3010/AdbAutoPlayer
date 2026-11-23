@@ -1,5 +1,6 @@
 """Tests for the player's own card templates (cut from real tray cards)."""
 
+import os
 from pathlib import Path
 
 import cv2
@@ -101,6 +102,28 @@ def test_unreadable_template_file_is_skipped(
     store = CardTemplateStore(tmp_path)
     store.save("water-3-3", _card(cleared, WATER_CARD))
     assert store.match(_card(cleared, WATER_CARD), "water") == "water-3-3"
+
+
+def test_store_sees_template_added_by_another_store(
+    tmp_path: Path, cleared: np.ndarray
+) -> None:
+    reader = CardTemplateStore(tmp_path)
+    assert reader.match(_card(cleared, WATER_CARD), "water") is None
+    CardTemplateStore(tmp_path).save("water-3-3", _card(cleared, WATER_CARD))
+    assert reader.match(_card(cleared, WATER_CARD), "water") == "water-3-3"
+
+
+def test_store_sees_template_replaced_in_place(
+    tmp_path: Path, cleared: np.ndarray
+) -> None:
+    reader = CardTemplateStore(tmp_path)
+    reader.save("water-3-3", _card(cleared, WATER_CARD))
+    assert reader.match(_card(cleared, OTHER_WATER_CARD), "water") is None
+    CardTemplateStore(tmp_path).save("water-3-3", _card(cleared, OTHER_WATER_CARD))
+    path = tmp_path / "water" / "water-3-3.png"
+    stamp = path.stat().st_mtime_ns + 10**9
+    os.utime(path, ns=(stamp, stamp))
+    assert reader.match(_card(cleared, OTHER_WATER_CARD), "water") == "water-3-3"
 
 
 def test_is_deployed_on_real_screens(cleared: np.ndarray, deployed: np.ndarray) -> None:

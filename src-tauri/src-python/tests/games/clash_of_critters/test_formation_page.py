@@ -74,7 +74,7 @@ def test_unit_without_a_sprite_still_shows_its_name() -> None:
 
 
 def test_names_are_escaped() -> None:
-    name = "<script>alert(1)</script>&\""
+    name = '<script>alert(1)</script>&"'
     page = render_formation_page(
         _response([ViewFormation(level=None, units=[_unit(1, 1, name=name)])])
     )
