@@ -67,7 +67,9 @@ def bot() -> MagicMock:
         field["count"] += 1
 
     game.settings = SimpleNamespace(
-        auto_battle=SimpleNamespace(tray_settle_poll_seconds=0.5)
+        auto_battle=SimpleNamespace(
+            tray_settle_poll_seconds=0.5, card_teaching_wait_seconds=180
+        )
     )
     game.tap = MagicMock()
     game.device = MagicMock()
@@ -581,11 +583,77 @@ def test_progress_is_logged_per_element(
     assert "chưa nhận ra" not in text
 
 
-def test_waiting_unrecognized_cards_are_logged(
-    bot: MagicMock, caplog: pytest.LogCaptureFixture
+def _flagged(caplog: pytest.LogCaptureFixture) -> list[logging.LogRecord]:
+    return [r for r in caplog.records if getattr(r, "open_card_teaching", False)]
+
+
+def test_no_wait_without_waiting_cards(
+    bot: MagicMock, no_sleep: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO)
+    assert bot._await_card_teaching() is True
+    no_sleep.assert_not_called()
+    assert _flagged(caplog) == []
+
+
+def test_waits_until_the_cards_are_taught(
+    bot: MagicMock, no_sleep: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO)
+    bot._get_recognizer.return_value.waiting_count.side_effect = [2, 2, 2, 0]
+    assert bot._await_card_teaching() is True
+    assert len(_flagged(caplog)) == 1
+    assert "Có 2 thẻ chưa nhận ra" in _flagged(caplog)[0].getMessage()
+    assert no_sleep.call_args_list == [call(1.0), call(1.0)]
+
+
+def test_wait_times_out(
+    bot: MagicMock, no_sleep: MagicMock, caplog: pytest.LogCaptureFixture
 ) -> None:
     caplog.set_level(logging.INFO)
     bot._get_recognizer.return_value.waiting_count.return_value = 2
+    with patch.object(deploy, "monotonic", side_effect=[0.0, 10.0, 1000.0]):
+        assert bot._await_card_teaching() is False
+    assert len(_flagged(caplog)) == 1
+    assert any(r.levelno == logging.WARNING for r in caplog.records)
+
+
+def test_formation_is_blocked_after_a_timeout(bot: MagicMock) -> None:
+    bot._get_recognizer.return_value.waiting_count.return_value = 2
+    bot._await_card_teaching = MagicMock(return_value=False)
+    bot._scan_owned.return_value = set()
+    result = bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),)))
+    assert result.blocked is True
+    assert result.complete is False
+    bot._drag_card.assert_not_called()
+    assert bot._select_element.call_args_list[-1] == call(None)
+
+
+def test_teaching_places_only_the_missing_units(bot: MagicMock) -> None:
+    bot._get_recognizer.return_value.waiting_count.return_value = 2
+    bot._await_card_teaching = MagicMock(return_value=True)
+    # Pass one: only A is recognized. Pass two (after teaching): B is.
+    bot._scan_owned.side_effect = [{"grass-4-2"}, {"grass-3-1"}]
+    bot._visible_cards.side_effect = [
+        [(CARD_A, "grass-4-2")],
+        [(CARD_B, "grass-3-1")],
+    ]
+    formation = Formation(STAGE, (_unit("grass-4-2", 1, 1), _unit("grass-3-1", 2, 2)))
+    result = bot._deploy_formation(formation)
+    assert (result.count, result.needed, result.blocked) == (2, 2, False)
+    assert drags(bot._drag_card) == [
+        ((110, 1285), (300, 490)),
+        ((288, 1285), (420, 610)),
+    ]
+    clears = [
+        c for c in bot.tap.call_args_list if xy(c.args[0]) == xy(CLEAR_FIELD_POINT)
+    ]
+    assert len(clears) == 1
+
+
+def test_no_wait_and_no_second_pass_without_waiting_cards(bot: MagicMock) -> None:
+    bot._await_card_teaching = MagicMock(return_value=True)
+    bot._scan_owned.return_value = set()
     bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),)))
-    text = " | ".join(record.getMessage() for record in caplog.records)
-    assert "Có 2 thẻ chưa nhận ra, mở cửa sổ đội hình để chỉ cho bot." in text
+    bot._await_card_teaching.assert_not_called()
+    assert bot._scan_owned.call_count == 1

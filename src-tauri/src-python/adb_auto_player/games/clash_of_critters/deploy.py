@@ -3,7 +3,7 @@
 import logging
 import re
 from dataclasses import dataclass
-from time import sleep
+from time import monotonic, sleep
 
 import numpy as np
 from adb_auto_player.file_loader import SettingsLoader
@@ -64,6 +64,8 @@ _TRAY_MOVED_MIN_DIFF = 3.0
 _COUNTER_PATTERN = re.compile(r"(\d+)\s*/\s*\d+")
 # Rounds that try again the units that could not be placed (the field is not cleared).
 _FILL_ATTEMPTS = 5
+# How often the folder of unrecognized cards is checked while the user teaches them.
+_TEACH_POLL_SECONDS = 1.0
 
 
 @dataclass(frozen=True)
@@ -74,15 +76,18 @@ class DeployResult:
         count: Tatari on the field (the counter, or the number placed if the
             counter cannot be read).
         needed: Cells of the formation that have an owned tatari to put on them.
+        blocked: Unrecognized tray cards were still waiting for the user when the
+            wait ended, so the formation cannot be trusted to be complete.
     """
 
     count: int
     needed: int
+    blocked: bool = False
 
     @property
     def complete(self) -> bool:
         """Whether every cell that could be filled has a tatari."""
-        return self.count >= self.needed
+        return not self.blocked and self.count >= self.needed
 
 
 class DeployMixin(Game):
@@ -374,30 +379,26 @@ class DeployMixin(Game):
         for unit in formation.units[:MAX_DEPLOYED]:
             by_element.setdefault(unit.tatari_id.split("-")[0], []).append(unit)
 
-        needed = 0
         missing: dict[str, dict[str, FormationUnit]] = {}
-        for element, units in by_element.items():
-            self._select_element(element)
-            owned = self._scan_owned()
-            plan = plan_deployment(
-                Formation(formation.stage, tuple(units)), owned, MAX_DEPLOYED
-            )
-            wanted = {p.evolution_id: p.unit for p in plan if p.evolution_id}
-            absent = [p.unit.evolution_id for p in plan if not p.evolution_id]
-            summary = (
-                f"Hệ {element}: nhận diện {len(owned)} tatari trong tray, "
-                f"có {len(wanted)}/{len(plan)} tatari cần"
-            )
-            if absent:
-                logging.warning(f"{summary}, thiếu {', '.join(absent)}")
-            else:
-                logging.info(f"{summary}, đủ {len(plan)}/{len(plan)}")
-            needed += len(wanted)
-            missing[element] = self._place_wanted(wanted)
-            logging.info(
-                f"Hệ {element}: đã xếp {len(wanted) - len(missing[element])}"
-                f"/{len(wanted)}"
-            )
+        needed, absent = self._deploy_elements(formation, by_element, missing)
+
+        # A card the bot did not recognize looks like a tatari the player lacks:
+        # wait for the user to teach those cards, then place the units still absent.
+        if absent and self._get_recognizer().waiting_count() > 0:
+            if not self._await_card_teaching():
+                self._select_element(None)
+                count = self._units_on_field(needed, missing)
+                self._deployed_count = count
+                logging.warning(
+                    f"Đã xếp {count}/{needed} quân, còn thẻ chưa nhận ra: "
+                    "bỏ đội hình này."
+                )
+                return DeployResult(count, needed, blocked=True)
+            retry: dict[str, list[FormationUnit]] = {}
+            for unit in absent:
+                retry.setdefault(unit.tatari_id.split("-")[0], []).append(unit)
+            more_needed, _ = self._deploy_elements(formation, retry, missing)
+            needed += more_needed
 
         count = self._units_on_field(needed, missing)
         for fill_round in range(1, _FILL_ATTEMPTS + 1):
@@ -418,9 +419,79 @@ class DeployMixin(Game):
         self._deployed_count = count
 
         logging.info(f"Đã xếp {count}/{needed} quân của đội hình.")
-        waiting = self._get_recognizer().waiting_count()
-        if waiting > 0:
-            logging.info(
-                f"Có {waiting} thẻ chưa nhận ra, mở cửa sổ đội hình để chỉ cho bot."
-            )
         return DeployResult(count, needed)
+
+    def _deploy_elements(
+        self,
+        formation: Formation,
+        by_element: dict[str, list[FormationUnit]],
+        missing: dict[str, dict[str, FormationUnit]],
+    ) -> tuple[int, list[FormationUnit]]:
+        """Scan the tray and place the units of each element.
+
+        Args:
+            formation: The formation being deployed.
+            by_element: The units to place, grouped by element.
+            missing: Updated with the units that could not be placed, by element.
+
+        Returns:
+            The number of units that have an owned tatari to put on them, and the
+            units whose tatari is not in the tray (not owned, or not recognized).
+        """
+        needed = 0
+        absent_units: list[FormationUnit] = []
+        for element, units in by_element.items():
+            self._select_element(element)
+            owned = self._scan_owned()
+            plan = plan_deployment(
+                Formation(formation.stage, tuple(units)), owned, MAX_DEPLOYED
+            )
+            wanted = {p.evolution_id: p.unit for p in plan if p.evolution_id}
+            absent = [p.unit.evolution_id for p in plan if not p.evolution_id]
+            absent_units.extend(p.unit for p in plan if not p.evolution_id)
+            summary = (
+                f"Hệ {element}: nhận diện {len(owned)} tatari trong tray, "
+                f"có {len(wanted)}/{len(plan)} tatari cần"
+            )
+            if absent:
+                logging.warning(f"{summary}, thiếu {', '.join(absent)}")
+            else:
+                logging.info(f"{summary}, đủ {len(plan)}/{len(plan)}")
+            needed += len(wanted)
+            missing[element] = {
+                **missing.get(element, {}),
+                **self._place_wanted(wanted),
+            }
+            logging.info(
+                f"Hệ {element}: đã xếp {len(wanted) - len(missing[element])}"
+                f"/{len(wanted)}"
+            )
+        return needed, absent_units
+
+    def _await_card_teaching(self) -> bool:
+        """Open the formation window and wait until no unrecognized card is left.
+
+        The log record carries the flag ``open_card_teaching``; the app turns it
+        into the event that opens the window on the cards tab. Teaching a card
+        deletes its crop, so the folder is polled.
+
+        Returns:
+            True when no card is waiting (at once if none was), False when
+            ``auto_battle.card_teaching_wait_seconds`` passed first.
+        """
+        recognizer = self._get_recognizer()
+        waiting = recognizer.waiting_count()
+        if waiting == 0:
+            return True
+        logging.info(
+            f"Có {waiting} thẻ chưa nhận ra, mở cửa sổ đội hình để chỉ cho bot.",
+            extra={"open_card_teaching": True},
+        )
+        limit = self.settings.auto_battle.card_teaching_wait_seconds
+        deadline = monotonic() + limit
+        while recognizer.waiting_count() > 0:
+            if monotonic() >= deadline:
+                logging.warning(f"Chờ {limit}s mà vẫn còn thẻ chưa nhận ra.")
+                return False
+            sleep(_TEACH_POLL_SECONDS)
+        return True

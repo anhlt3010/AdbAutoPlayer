@@ -776,3 +776,24 @@ def test_progress_is_logged(
     assert f"{BOSS}" in text
     assert "đội hình 1/2" in text
     assert f"lần đánh 1/{MAX_ATTEMPTS}" in text
+
+
+def test_blocked_formation_goes_to_the_next_one(
+    bot: MagicMock, a_formation: MagicMock
+) -> None:
+    a_formation.return_value = (_formation(0), _formation(1))
+    bot._deploy_formation.side_effect = [
+        DeployResult(0, 0, blocked=True),
+        DeployResult(15, 15),
+    ]
+    assert _visit(bot, BOSS, lost=False) is True
+    assert bot._deploy_formation.call_count == 2
+    assert bot._deploy_formation.call_args.args[0] == _formation(1)
+    assert _tapped(bot).count(FIGHT_BUTTON) == 1
+
+
+def test_blocked_last_formation_stops(bot: MagicMock) -> None:
+    bot._read_stage.return_value = BOSS
+    bot._deploy_formation.return_value = DeployResult(5, 5, blocked=True)
+    assert _visit(bot, BOSS, lost=False) is False
+    assert _tapped(bot).count(FIGHT_BUTTON) == 0

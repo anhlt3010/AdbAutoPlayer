@@ -371,6 +371,20 @@ class AutoBattleMixin(DeployMixin):
                 f"{self.settings.auto_battle.max_formation_attempts}."
             )
             result = self._deploy_formation(step)
+            if result.blocked:
+                if self._plan_pos + 1 >= len(steps):
+                    logging.error(
+                        f"Stage {stage}: đội hình {step.index + 1} còn thẻ chưa "
+                        "nhận ra và không còn đội hình khác, dừng."
+                    )
+                    return False
+                logging.warning(
+                    f"Stage {stage}: đội hình {step.index + 1} còn thẻ chưa "
+                    "nhận ra, đổi đội hình khác."
+                )
+                self._plan_pos += 1
+                self._plan_fights = 1
+                continue
             if result.count == 0:
                 logging.warning("No tatari could be deployed, stopping.")
                 return False
