@@ -1,0 +1,58 @@
+{
+  "element": "fire",
+  "dojo": 4,
+  "stage": "4-10",
+  "shared_with": "4-1 – 4-10",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 1,
+          "tatari_id": "fire-3",
+          "evolution_id": "fire-3-3",
+          "name": "Hellhound",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 2,
+          "tatari_id": "fire-6",
+          "evolution_id": "fire-6-3",
+          "name": "Charflutter",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 1,
+          "tatari_id": "fire-5",
+          "evolution_id": "fire-5-2g",
+          "name": "Firefox",
+          "tier": 2,
+          "glitter": true
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "tatari_id": "fire-4",
+          "evolution_id": "fire-4-3",
+          "name": "Azurion",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "tatari_id": "fire-9",
+          "evolution_id": "fire-9-2",
+          "name": "Kitjitsu",
+          "tier": 2,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

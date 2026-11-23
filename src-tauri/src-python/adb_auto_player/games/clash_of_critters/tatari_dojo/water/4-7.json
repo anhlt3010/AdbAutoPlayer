@@ -1,0 +1,58 @@
+{
+  "element": "water",
+  "dojo": 4,
+  "stage": "4-7",
+  "shared_with": "4-1 – 4-10",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 2,
+          "tatari_id": "water-7",
+          "evolution_id": "water-7-2",
+          "name": "Clawzor",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "tatari_id": "water-13",
+          "evolution_id": "water-13-2",
+          "name": "Polarpaw",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 1,
+          "tatari_id": "water-3",
+          "evolution_id": "water-3-3",
+          "name": "Frostique",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 2,
+          "tatari_id": "water-10",
+          "evolution_id": "water-10-3",
+          "name": "Waveflutter",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 3,
+          "tatari_id": "water-5",
+          "evolution_id": "water-5-3",
+          "name": "Tideon",
+          "tier": 3,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

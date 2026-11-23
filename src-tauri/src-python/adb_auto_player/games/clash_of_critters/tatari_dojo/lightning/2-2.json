@@ -1,0 +1,58 @@
+{
+  "element": "lightning",
+  "dojo": 2,
+  "stage": "2-2",
+  "shared_with": "2-1 – 2-8, 2-10",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 2,
+          "tatari_id": "lightning-3",
+          "evolution_id": "lightning-3-2",
+          "name": "Electroar",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "tatari_id": "lightning-5",
+          "evolution_id": "lightning-5-2",
+          "name": "Voltling",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "tatari_id": "lightning-8",
+          "evolution_id": "lightning-8-2",
+          "name": "Cheerlet",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 2,
+          "tatari_id": "lightning-4",
+          "evolution_id": "lightning-4-2",
+          "name": "Sparkdoe",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 3,
+          "tatari_id": "lightning-6",
+          "evolution_id": "lightning-6-2",
+          "name": "Surgehoof",
+          "tier": 2,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

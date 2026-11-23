@@ -1,0 +1,57 @@
+{
+  "element": "fire",
+  "dojo": 5,
+  "stage": "5-8",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 2,
+          "tatari_id": "fire-6",
+          "evolution_id": "fire-6-3",
+          "name": "Charflutter",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "tatari_id": "fire-9",
+          "evolution_id": "fire-9-3",
+          "name": "Taiglow",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 1,
+          "tatari_id": "fire-5",
+          "evolution_id": "fire-5-3",
+          "name": "Flarevix",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 1,
+          "tatari_id": "fire-7",
+          "evolution_id": "fire-7-3",
+          "name": "Pyroclobster",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 2,
+          "tatari_id": "fire-4",
+          "evolution_id": "fire-4-3",
+          "name": "Azurion",
+          "tier": 3,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "element": "fire",
+  "dojo": 7,
+  "stage": "7-10",
+  "shared_with": "7-1 – 7-10",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 3,
+          "tatari_id": "fire-6",
+          "evolution_id": "fire-6-3",
+          "name": "Charflutter",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "tatari_id": "fire-3",
+          "evolution_id": "fire-3-4",
+          "name": "Pyrodaemon",
+          "tier": 4,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 2,
+          "tatari_id": "fire-9",
+          "evolution_id": "fire-9-2",
+          "name": "Kitjitsu",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 3,
+          "tatari_id": "fire-4",
+          "evolution_id": "fire-4-3",
+          "name": "Azurion",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 1,
+          "tatari_id": "fire-5",
+          "evolution_id": "fire-5-4",
+          "name": "Phantifox",
+          "tier": 4,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

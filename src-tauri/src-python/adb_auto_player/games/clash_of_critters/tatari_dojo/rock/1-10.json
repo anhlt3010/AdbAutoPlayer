@@ -1,0 +1,57 @@
+{
+  "element": "rock",
+  "dojo": 1,
+  "stage": "1-10",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 1,
+          "tatari_id": "rock-5",
+          "evolution_id": "rock-5-1",
+          "name": "Punchimp",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 2,
+          "tatari_id": "rock-2",
+          "evolution_id": "rock-2-2",
+          "name": "Snoozebo",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "tatari_id": "rock-7",
+          "evolution_id": "rock-7-1",
+          "name": "Joeyo",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 1,
+          "tatari_id": "rock-10",
+          "evolution_id": "rock-10-1",
+          "name": "Taptail",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 3,
+          "tatari_id": "rock-1",
+          "evolution_id": "rock-1-2",
+          "name": "Rockhog",
+          "tier": 2,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

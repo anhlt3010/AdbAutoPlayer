@@ -1,0 +1,57 @@
+{
+  "element": "grass",
+  "dojo": 5,
+  "stage": "5-10",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 2,
+          "col": 1,
+          "tatari_id": "grass-2",
+          "evolution_id": "grass-2-2",
+          "name": "Pearpair",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "tatari_id": "grass-13",
+          "evolution_id": "grass-13-2",
+          "name": "Snapshade",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "tatari_id": "grass-4",
+          "evolution_id": "grass-4-3",
+          "name": "Serrabloom",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 2,
+          "tatari_id": "grass-6",
+          "evolution_id": "grass-6-3",
+          "name": "Pandarrior",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 1,
+          "tatari_id": "grass-7",
+          "evolution_id": "grass-7-3",
+          "name": "Solaflora",
+          "tier": 3,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

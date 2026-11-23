@@ -1,0 +1,58 @@
+{
+  "element": "fire",
+  "dojo": 2,
+  "stage": "2-4",
+  "shared_with": "2-1 – 2-4",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 1,
+          "tatari_id": "fire-13",
+          "evolution_id": "fire-13-2",
+          "name": "Sizzribb",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 1,
+          "tatari_id": "fire-9",
+          "evolution_id": "fire-9-1",
+          "name": "Tindercub",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "tatari_id": "fire-7",
+          "evolution_id": "fire-7-2",
+          "name": "Pyroprawn",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 3,
+          "tatari_id": "fire-4",
+          "evolution_id": "fire-4-3",
+          "name": "Azurion",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 2,
+          "tatari_id": "fire-5",
+          "evolution_id": "fire-5-2g",
+          "name": "Firefox",
+          "tier": 2,
+          "glitter": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "element": "fire",
+  "dojo": 5,
+  "stage": "5-6",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 1,
+          "tatari_id": "fire-13",
+          "evolution_id": "fire-13-2",
+          "name": "Sizzribb",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 2,
+          "tatari_id": "fire-6",
+          "evolution_id": "fire-6-3",
+          "name": "Charflutter",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "tatari_id": "fire-9",
+          "evolution_id": "fire-9-3",
+          "name": "Taiglow",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "tatari_id": "fire-8",
+          "evolution_id": "fire-8-3",
+          "name": "Hothog",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 2,
+          "tatari_id": "fire-7",
+          "evolution_id": "fire-7-3",
+          "name": "Pyroclobster",
+          "tier": 3,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

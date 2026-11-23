@@ -1,0 +1,58 @@
+{
+  "element": "grass",
+  "dojo": 4,
+  "stage": "4-8",
+  "shared_with": "4-1 – 4-10",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 1,
+          "tatari_id": "grass-8",
+          "evolution_id": "grass-8-3",
+          "name": "Terracrawler",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 2,
+          "tatari_id": "grass-3",
+          "evolution_id": "grass-3-3",
+          "name": "Frugagon",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "tatari_id": "grass-4",
+          "evolution_id": "grass-4-3",
+          "name": "Serrabloom",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "tatari_id": "grass-6",
+          "evolution_id": "grass-6-3",
+          "name": "Pandarrior",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 2,
+          "tatari_id": "grass-7",
+          "evolution_id": "grass-7-3",
+          "name": "Solaflora",
+          "tier": 3,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

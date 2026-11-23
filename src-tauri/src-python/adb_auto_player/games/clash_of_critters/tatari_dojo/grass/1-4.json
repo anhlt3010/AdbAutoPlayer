@@ -1,0 +1,58 @@
+{
+  "element": "grass",
+  "dojo": 1,
+  "stage": "1-4",
+  "shared_with": "1-1 – 1-10",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 2,
+          "tatari_id": "grass-4",
+          "evolution_id": "grass-4-1",
+          "name": "Manteeny",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "tatari_id": "grass-2",
+          "evolution_id": "grass-2-2",
+          "name": "Pearpair",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 1,
+          "tatari_id": "grass-9",
+          "evolution_id": "grass-9-1",
+          "name": "Cactobud",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 2,
+          "tatari_id": "grass-3",
+          "evolution_id": "grass-3-2",
+          "name": "Frugatoad",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 3,
+          "tatari_id": "grass-1",
+          "evolution_id": "grass-1-2",
+          "name": "Cluckeroo",
+          "tier": 2,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

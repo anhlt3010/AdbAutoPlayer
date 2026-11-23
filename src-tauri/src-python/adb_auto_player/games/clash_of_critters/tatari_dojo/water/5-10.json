@@ -1,0 +1,58 @@
+{
+  "element": "water",
+  "dojo": 5,
+  "stage": "5-10",
+  "shared_with": "5-2 – 5-10",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 2,
+          "col": 2,
+          "tatari_id": "water-7",
+          "evolution_id": "water-7-3",
+          "name": "Dreadclaw",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "tatari_id": "water-6",
+          "evolution_id": "water-6-2",
+          "name": "Swaystroll",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 1,
+          "tatari_id": "water-4",
+          "evolution_id": "water-4-3",
+          "name": "Seaswirl",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 2,
+          "tatari_id": "water-10",
+          "evolution_id": "water-10-3",
+          "name": "Waveflutter",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 3,
+          "tatari_id": "water-3",
+          "evolution_id": "water-3-3",
+          "name": "Frostique",
+          "tier": 3,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

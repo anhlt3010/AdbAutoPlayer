@@ -1,0 +1,58 @@
+{
+  "element": "water",
+  "dojo": 3,
+  "stage": "3-8",
+  "shared_with": "3-7 – 3-10",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 2,
+          "tatari_id": "water-8",
+          "evolution_id": "water-8-1",
+          "name": "Skinklet",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "tatari_id": "water-6",
+          "evolution_id": "water-6-2",
+          "name": "Swaystroll",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 3,
+          "col": 3,
+          "tatari_id": "water-1",
+          "evolution_id": "water-1-2",
+          "name": "Boldclaw",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 2,
+          "tatari_id": "water-3",
+          "evolution_id": "water-3-3",
+          "name": "Frostique",
+          "tier": 3,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 3,
+          "tatari_id": "water-12",
+          "evolution_id": "water-12-1",
+          "name": "Maskfry",
+          "tier": 1,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

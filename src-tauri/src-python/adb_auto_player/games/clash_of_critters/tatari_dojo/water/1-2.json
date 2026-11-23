@@ -1,0 +1,58 @@
+{
+  "element": "water",
+  "dojo": 1,
+  "stage": "1-2",
+  "shared_with": "1-1 – 1-10",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 1,
+          "tatari_id": "water-8",
+          "evolution_id": "water-8-1",
+          "name": "Skinklet",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 2,
+          "tatari_id": "water-1",
+          "evolution_id": "water-1-2",
+          "name": "Boldclaw",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "tatari_id": "water-6",
+          "evolution_id": "water-6-1",
+          "name": "Waddledo",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 1,
+          "tatari_id": "water-12",
+          "evolution_id": "water-12-1",
+          "name": "Maskfry",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 3,
+          "tatari_id": "water-2",
+          "evolution_id": "water-2-2",
+          "name": "Capypapa",
+          "tier": 2,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}

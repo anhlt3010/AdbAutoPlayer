@@ -1,0 +1,58 @@
+{
+  "element": "fire",
+  "dojo": 1,
+  "stage": "1-5",
+  "shared_with": "1-1 – 1-10",
+  "formations": [
+    {
+      "source": "critterformations",
+      "units": [
+        {
+          "row": 1,
+          "col": 1,
+          "tatari_id": "fire-13",
+          "evolution_id": "fire-13-1",
+          "name": "Poakie",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "tatari_id": "fire-6",
+          "evolution_id": "fire-6-1",
+          "name": "Ashlarva",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "tatari_id": "fire-9",
+          "evolution_id": "fire-9-1",
+          "name": "Tindercub",
+          "tier": 1,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 2,
+          "tatari_id": "fire-1",
+          "evolution_id": "fire-1-2",
+          "name": "Embertail",
+          "tier": 2,
+          "glitter": false
+        },
+        {
+          "row": 4,
+          "col": 3,
+          "tatari_id": "fire-2",
+          "evolution_id": "fire-2-2",
+          "name": "Scorchwing",
+          "tier": 2,
+          "glitter": false
+        }
+      ]
+    }
+  ]
+}
