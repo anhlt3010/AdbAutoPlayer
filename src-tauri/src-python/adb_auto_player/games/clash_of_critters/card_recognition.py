@@ -76,6 +76,11 @@ _CHECK_MIN_VALUE = 150
 _CHECK_MIN_FRACTION = 0.05
 _DIMMED_MAX_ART_MEAN = 100
 
+# Folders under the app config dir: the player's templates, and the crops of cards
+# that were not recognized (one per card, waiting to be taught in the viewer).
+TEMPLATE_DIR_NAME = "clash_of_critters_cards"
+UNRECOGNIZED_DIR_NAME = "clash_of_critters_unrecognized"
+
 _DEFAULT_THRESHOLD = 0.4
 _DEFAULT_MARGIN = 0.05
 
@@ -129,6 +134,43 @@ def is_deployed(card_bgr: np.ndarray) -> bool:
     return float(green.mean()) >= _CHECK_MIN_FRACTION
 
 
+def read_image(path: Path) -> np.ndarray | None:
+    """Read a BGR image (also from a non-ASCII path), or None if unreadable.
+
+    Args:
+        path: The image file.
+
+    Returns:
+        The image, or None.
+    """
+    try:
+        data = np.frombuffer(path.read_bytes(), np.uint8)
+    except OSError:
+        return None
+    return cv2.imdecode(data, cv2.IMREAD_COLOR)
+
+
+def art_match_score(card_bgr: np.ndarray, other_card_bgr: np.ndarray) -> float:
+    """Tell how well the art of one full card crop matches another.
+
+    The template of ``other_card_bgr`` (as the template store cuts it) is searched
+    in the art box of ``card_bgr``.
+
+    Args:
+        card_bgr: One tray card (BGR).
+        other_card_bgr: Another tray card of the same size (BGR).
+
+    Returns:
+        The best normalized correlation, -1 to 1.
+    """
+    left, top, right, bottom = CARD_ART_BOX
+    template = CardTemplateStore._template_of(other_card_bgr)
+    scores = cv2.matchTemplate(
+        card_bgr[top:bottom, left:right], template, cv2.TM_CCOEFF_NORMED
+    )
+    return _best(scores)
+
+
 class CardTemplateStore:
     """The player's own card templates, one PNG per evolution.
 
@@ -175,9 +217,7 @@ class CardTemplateStore:
         folder = self._directory / element
         if folder.is_dir():
             for path in sorted(folder.glob("*.png")):
-                image = cv2.imdecode(
-                    np.frombuffer(path.read_bytes(), np.uint8), cv2.IMREAD_COLOR
-                )
+                image = read_image(path)
                 if image is None:
                     logging.warning(f"Skipping unreadable card template {path}.")
                     continue
@@ -332,13 +372,32 @@ class CardRecognizer:
         result = self._match(card_bgr, element)
         if result is None:
             logging.debug(f"A {element} card was not recognized.")
-            if self._debug_dir is not None:
-                self._debug_dir.mkdir(parents=True, exist_ok=True)
-                name = hashlib.sha1(card_bgr.tobytes()).hexdigest()[:12]
-                cv2.imwrite(str(self._debug_dir / f"{name}.png"), card_bgr)
+            self._save_unrecognized(card_bgr)
             return None
         self._templates.save(result, card_bgr)
         return result
+
+    def waiting_count(self) -> int:
+        """Number of saved crops of unrecognized cards (0 without a folder)."""
+        if self._debug_dir is None or not self._debug_dir.is_dir():
+            return 0
+        return sum(1 for _ in self._debug_dir.glob("*.png"))
+
+    def _save_unrecognized(self, card_bgr: np.ndarray) -> None:
+        """Save the crop of an unrecognized card, unless that card is saved already."""
+        if self._debug_dir is None:
+            return
+        self._debug_dir.mkdir(parents=True, exist_ok=True)
+        for path in self._debug_dir.glob("*.png"):
+            saved = read_image(path)
+            if saved is None or saved.shape != card_bgr.shape:
+                continue
+            if art_match_score(card_bgr, saved) >= _TEMPLATE_MIN_SCORE:
+                return
+        name = hashlib.sha1(card_bgr.tobytes()).hexdigest()[:12]
+        ok, encoded = cv2.imencode(".png", card_bgr)
+        if ok:
+            (self._debug_dir / f"{name}.png").write_bytes(encoded.tobytes())
 
     def _load(self, sprite: Sprite) -> np.ndarray | None:
         """Read a sprite as BGRA, or None if its file cannot be read."""

@@ -78,6 +78,7 @@ def bot() -> MagicMock:
     game._scan_owned = MagicMock(return_value=set())
     game._select_element = MagicMock()
     game._get_recognizer = MagicMock()
+    game._get_recognizer.return_value.waiting_count.return_value = 0
     game._wait_tray_stable = MagicMock()
     game._drag_card = MagicMock(side_effect=drag)
     game._field_move = MagicMock(return_value=True)
@@ -577,3 +578,14 @@ def test_progress_is_logged_per_element(
     assert "thiếu grass-3-1" in text
     assert "Hệ grass: đã xếp 1/1" in text
     assert "Đã xếp 1/1 quân" in text
+    assert "chưa nhận ra" not in text
+
+
+def test_waiting_unrecognized_cards_are_logged(
+    bot: MagicMock, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO)
+    bot._get_recognizer.return_value.waiting_count.return_value = 2
+    bot._deploy_formation(Formation(STAGE, (_unit("grass-4-2", 1, 1),)))
+    text = " | ".join(record.getMessage() for record in caplog.records)
+    assert "Có 2 thẻ chưa nhận ra, mở cửa sổ đội hình để chỉ cho bot." in text

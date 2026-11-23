@@ -23,6 +23,8 @@ from adb_auto_player.games.clash_of_critters.battle_layout import (
     plan_drag,
 )
 from adb_auto_player.games.clash_of_critters.card_recognition import (
+    TEMPLATE_DIR_NAME,
+    UNRECOGNIZED_DIR_NAME,
     CardRecognizer,
     CardTemplateStore,
 )
@@ -35,7 +37,6 @@ from adb_auto_player.games.clash_of_critters.tatari_db import TatariDb
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.ocr import RapidOCRBackend
 
-_TEMPLATE_DIR_NAME = "clash_of_critters_cards"
 _DRAG_SECONDS = 0.6
 # A drag is checked against the deployed counter and repeated once if it failed.
 _DRAG_ATTEMPTS = 2
@@ -99,8 +100,8 @@ class DeployMixin(Game):
             config_dir = SettingsLoader.get_app_config_dir()
             self._recognizer = CardRecognizer(
                 TatariDb.load(data_root),
-                CardTemplateStore(config_dir / _TEMPLATE_DIR_NAME),
-                debug_dir=config_dir / "clash_of_critters_unrecognized",
+                CardTemplateStore(config_dir / TEMPLATE_DIR_NAME),
+                debug_dir=config_dir / UNRECOGNIZED_DIR_NAME,
             )
         return self._recognizer
 
@@ -417,4 +418,9 @@ class DeployMixin(Game):
         self._deployed_count = count
 
         logging.info(f"Đã xếp {count}/{needed} quân của đội hình.")
+        waiting = self._get_recognizer().waiting_count()
+        if waiting > 0:
+            logging.info(
+                f"Có {waiting} thẻ chưa nhận ra, mở cửa sổ đội hình để chỉ cho bot."
+            )
         return DeployResult(count, needed)

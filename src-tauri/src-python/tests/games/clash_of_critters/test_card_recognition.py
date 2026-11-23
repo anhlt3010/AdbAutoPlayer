@@ -16,6 +16,7 @@ from adb_auto_player.games.clash_of_critters.battle_layout import (
 from adb_auto_player.games.clash_of_critters.card_recognition import (
     CardRecognizer,
     CardTemplateStore,
+    art_match_score,
     classify_element,
     is_deployed,
 )
@@ -305,3 +306,50 @@ def test_a_template_of_an_unknown_evolution_is_ignored(
     recognizer.result = "water-3-3"
     assert recognizer.recognize(_card(screen, 2)) == "water-3-3"
     assert recognizer.calls == ["water"]  # image recognition ran
+
+
+# --- unrecognized cards: one saved crop per card --------------------------------
+
+
+def _unrecognized(name: str) -> np.ndarray:
+    return _data_card(f"unrecognized_{name}.png")
+
+
+def _nothing_found(tmp_path: Path) -> _Spy:
+    recognizer = _Spy(
+        TatariDb.load(DB_ROOT),
+        CardTemplateStore(tmp_path / "cards"),
+        debug_dir=tmp_path / "unrecognized",
+    )
+    recognizer.result = None
+    return recognizer
+
+
+def test_art_match_score_same_card_scans() -> None:
+    assert art_match_score(_unrecognized("fire_8_a"), _unrecognized("fire_8_b")) >= 0.8
+    water_a, water_b = _unrecognized("water_10_a"), _unrecognized("water_10_b")
+    assert art_match_score(water_a, water_b) >= 0.8
+
+
+def test_art_match_score_different_cards() -> None:
+    fire, water = _unrecognized("fire_8_a"), _unrecognized("water_10_a")
+    assert art_match_score(fire, water) < 0.8
+
+
+def test_unrecognized_card_saved_once(tmp_path: Path) -> None:
+    recognizer = _nothing_found(tmp_path)
+    for name in ("fire_8_a", "fire_8_b", "water_10_a"):
+        assert recognizer.recognize(_unrecognized(name)) is None
+    assert recognizer.waiting_count() == 2
+
+
+def test_unreadable_crop_ignored_by_dedup(tmp_path: Path) -> None:
+    (tmp_path / "unrecognized").mkdir()
+    (tmp_path / "unrecognized" / "bad.png").write_bytes(b"junk")
+    recognizer = _nothing_found(tmp_path)
+    recognizer.recognize(_unrecognized("fire_8_a"))
+    assert recognizer.waiting_count() == 2
+
+
+def test_waiting_count_without_debug_dir(tmp_path: Path) -> None:
+    assert _spy(tmp_path).waiting_count() == 0
