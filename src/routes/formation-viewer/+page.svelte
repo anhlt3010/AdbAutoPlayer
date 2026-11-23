@@ -5,11 +5,16 @@
   import { applySettingsFromFile } from "#lib/utils/settings.ts";
   import { t } from "#lib/i18n/i18n.ts";
   import FormationGrid from "#lib/components/formation/FormationGrid.svelte";
+  import UnrecognizedCards from "#lib/components/formation/UnrecognizedCards.svelte";
   import { stepStage } from "#lib/formation/stage.ts";
   import { FORMATION_VIEWER_REFRESH_EVENT } from "#lib/formation/viewer.ts";
   import type { FormationView } from "#lib/formation/types.ts";
 
   let profileIndex = $state(0);
+  let tab = $state<"formation" | "cards">("formation");
+  let unrecognizedCount = $state(0);
+  // Bumped to make the unrecognized cards tab load its list again.
+  let cardsReload = $state(0);
   // The last answer that has formations; kept while a typed stage is invalid.
   let view = $state<FormationView | null>(null);
   let problem = $state<string | null>(null);
@@ -123,6 +128,7 @@
         FORMATION_VIEWER_REFRESH_EVENT,
         (event) => {
           profileIndex = event.payload.profile_index;
+          cardsReload++;
           void load(null);
         },
       );
@@ -138,6 +144,22 @@
 </svelte:head>
 
 <main class="viewer">
+  <nav class="tabs">
+    <button
+      class="tab"
+      class:active={tab === "formation"}
+      onclick={() => (tab = "formation")}>{$t("Formation")}</button
+    >
+    <button
+      class="tab"
+      class:active={tab === "cards"}
+      onclick={() => (tab = "cards")}
+      >{$t("Unrecognized cards ({{n}})", {
+        n: String(unrecognizedCount),
+      })}</button
+    >
+  </nav>
+
   <header class="bar">
     <div class="stage-box">
       <button
@@ -181,32 +203,46 @@
     >
     <button
       class="icon-btn"
-      onclick={() => load(null)}
+      onclick={() => {
+        cardsReload++;
+        void load(null);
+      }}
       title={$t("Refresh (read the screen)")}
       aria-label={$t("Refresh (read the screen)")}>⟳</button
     >
   </header>
 
-  {#if formations.length > 0}
-    <p class="counter">
-      {$t("Formation {{current}}/{{total}}", {
-        current: String(formationIndex + 1),
-        total: String(formations.length),
-      })}
-    </p>
-  {/if}
+  <!-- Kept mounted so the tab label shows the count from the start. -->
+  <div class="cards-tab" class:hidden={tab !== "cards"}>
+    <UnrecognizedCards
+      {profileIndex}
+      reloadToken={cardsReload}
+      onCountChange={(count) => (unrecognizedCount = count)}
+    />
+  </div>
 
-  {#if loading}
-    <p class="note">
-      {loadingTyped ? $t("Loading...") : $t("Reading the screen...")}
-    </p>
-  {/if}
-  {#if problemText}
-    <p class="problem">{problemText}</p>
-  {/if}
+  {#if tab === "formation"}
+    {#if formations.length > 0}
+      <p class="counter">
+        {$t("Formation {{current}}/{{total}}", {
+          current: String(formationIndex + 1),
+          total: String(formations.length),
+        })}
+      </p>
+    {/if}
 
-  {#if current}
-    <FormationGrid units={current.units} sprites={view?.sprites ?? {}} />
+    {#if loading}
+      <p class="note">
+        {loadingTyped ? $t("Loading...") : $t("Reading the screen...")}
+      </p>
+    {/if}
+    {#if problemText}
+      <p class="problem">{problemText}</p>
+    {/if}
+
+    {#if current}
+      <FormationGrid units={current.units} sprites={view?.sprites ?? {}} />
+    {/if}
   {/if}
 </main>
 
@@ -223,6 +259,36 @@
     padding: 12px;
     min-height: 100vh;
     box-sizing: border-box;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .tab {
+    padding: 4px 10px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-3);
+    cursor: pointer;
+  }
+
+  .tab.active {
+    color: var(--text-1);
+    border-bottom-color: var(--accent);
+  }
+
+  .cards-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .hidden {
+    display: none;
   }
 
   .bar {
