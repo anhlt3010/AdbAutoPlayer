@@ -2,6 +2,7 @@
 
 import logging
 import re
+from collections import deque
 from collections.abc import Sequence
 from time import monotonic, sleep
 
@@ -109,7 +110,8 @@ _ADVENTURE_IDLE_LIMIT_SECONDS = 60
 _PINBALL_TAB_TIMEOUT_SECONDS = 10
 
 # Tension bar shown after some bites: the red bobber runs back and forth on its own
-# (~300 px/s) and the purple button must be tapped while it is in the yellow zone.
+# (~300 px/s) and the purple button must be tapped while it is in the yellow zone
+# (the tap is timed to land on the zone centre, see `plan_tap`).
 # Every hit shrinks the zone, so several hits are needed. Measured at 1080x1920.
 _TENSION_BAR_BAND = (slice(1230, 1340), slice(270, 850))  # rows, cols
 _TENSION_BAR_LEFT = 270
@@ -121,10 +123,6 @@ _YELLOW_HUE_MIN, _YELLOW_HUE_MAX = 20, 35
 # The bobber hides the yellow under it: the zone is measured only while the bobber
 # is at least this far outside of it.
 _BOBBER_HALF_WIDTH = 40
-# Time from deciding to tap until the game sees the tap; the bobber position is
-# predicted that far ahead. Hits need the prediction this far inside the zone.
-_TAP_LEAD_SECONDS = 0.15
-_ZONE_MARGIN = 20
 # The bar is over when the bobber was not seen for this long.
 _TENSION_BAR_GONE_SECONDS = 1.5
 _TENSION_BAR_POLL_SECONDS = 0.01
@@ -134,8 +132,12 @@ _BOBBER_MIN_X, _BOBBER_MAX_X = 380, 800
 _MIN_SPEED = 50.0  # px/s
 # A tap is planned when the moment to send it is at most this far from now.
 _TAP_WINDOW_SECONDS = 0.03
-# Number of (x, time) samples the speed is averaged over.
+# Number of (x, time) samples the speed is averaged over. A step against the
+# direction of travel of at least `_MIN_TURN_STEP` px (a bounce, not jitter) makes
+# the speed start over.
 _SPEED_SAMPLES = 5
+_MIN_SAMPLES_FOR_TURN = 2
+_MIN_TURN_STEP = 2
 
 
 def read_tension_bar(
@@ -232,6 +234,22 @@ def smoothed_speed(samples: Sequence[tuple[int, float]]) -> float:
     if last_at <= first_at:
         return 0.0
     return (last_x - first_x) / (last_at - first_at)
+
+
+def _add_speed_sample(
+    samples: deque[tuple[int, float]], bobber: int, now: float
+) -> None:
+    """Record a new bobber position; start over when the bobber turns around."""
+    if samples and bobber == samples[-1][0]:
+        return
+    if len(samples) >= _MIN_SAMPLES_FOR_TURN:
+        step = bobber - samples[-1][0]
+        last_step = samples[-1][0] - samples[-2][0]
+        if abs(step) >= _MIN_TURN_STEP and step * last_step < 0:
+            last = samples[-1]
+            samples.clear()
+            samples.append(last)
+    samples.append((bobber, now))
 
 
 def fishing_button_state(screenshot: np.ndarray) -> str | None:
@@ -408,18 +426,19 @@ class ClashOfCritters(AutoBattleMixin):
         logging.warning("No Fishing Contest screen detected, stopping.")
 
     def _play_tension_bar(self) -> None:
-        """Tap the purple button each time the bobber runs through the yellow zone.
+        """Tap the purple button so each tap lands on the centre of the yellow zone.
 
         The zone is read only while the bobber is outside of it (the bobber hides
-        the yellow under it), and after every tap it is read again before the next
-        one, since a hit shrinks it. The bobber position is predicted
-        `_TAP_LEAD_SECONDS` ahead from its speed. Returns when the bar is gone.
+        the yellow under it) and forgotten after every tap, since a hit shrinks it.
+        From the bobber speed the time it reaches the zone centre is predicted
+        (`plan_tap`) and the tap is sent `fishing_contest.tap_lead_seconds` before
+        that. Returns when the bar is gone.
         """
         logging.info("Tension bar shown, timing the taps.")
+        lead = self.settings.fishing_contest.tap_lead_seconds
         zone: tuple[int, int] | None = None
-        last_x: int | None = None
-        last_at = seen_at = monotonic()
-        speed = 0.0
+        samples: deque[tuple[int, float]] = deque(maxlen=_SPEED_SAMPLES)
+        seen_at = monotonic()
         hits = 0
         while monotonic() - seen_at < _TENSION_BAR_GONE_SECONDS:
             sleep(_TENSION_BAR_POLL_SECONDS)  # lets the stream decoder run
@@ -429,10 +448,7 @@ class ClashOfCritters(AutoBattleMixin):
                 continue
             seen_at = now
             bobber, seen_zone = bar
-            if bobber != last_x:
-                if last_x is not None:
-                    speed = (bobber - last_x) / (now - last_at)
-                last_x, last_at = bobber, now
+            _add_speed_sample(samples, bobber, now)
             if seen_zone is not None and (
                 bobber < seen_zone[0] - _BOBBER_HALF_WIDTH
                 or bobber > seen_zone[1] + _BOBBER_HALF_WIDTH
@@ -440,13 +456,18 @@ class ClashOfCritters(AutoBattleMixin):
                 zone = seen_zone
             if zone is None:
                 continue
-            ahead = bobber + speed * _TAP_LEAD_SECONDS
-            left, right = zone[0] + _ZONE_MARGIN, zone[1] - _ZONE_MARGIN
-            if left <= bobber <= right and left <= ahead <= right:
-                hits += 1
-                logging.info(f"Tap {hits}: bobber {bobber} in zone {zone}.")
-                self.tap(_FISHING_BUTTON, log=False)
-                zone = None
+            speed = smoothed_speed(samples)
+            delay = plan_tap(bobber, speed, zone, lead)
+            if delay is None:
+                continue
+            sleep(delay)
+            hits += 1
+            logging.info(
+                f"Tap {hits}: bobber {bobber}, speed {speed:.0f} px/s, "
+                f"zone {zone}, lead {lead} s."
+            )
+            self.tap(_FISHING_BUTTON, log=False)
+            zone = None
         logging.info("Tension bar gone.")
 
     def _close_fishing_popup(self) -> bool:

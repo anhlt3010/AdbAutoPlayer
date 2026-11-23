@@ -1,4 +1,6 @@
+from itertools import pairwise
 from pathlib import Path
+from types import SimpleNamespace
 
 import cv2
 import numpy as np
@@ -8,7 +10,9 @@ from adb_auto_player.games.clash_of_critters.settings import (
     FishingContestSettings,
     Settings,
 )
+from adb_auto_player.games.clash_of_critters import main as coc_main
 from adb_auto_player.games.clash_of_critters.main import (
+    ClashOfCritters,
     fishing_button_state,
     plan_tap,
     read_tension_bar,
@@ -147,3 +151,66 @@ def test_fishing_contest_tap_lead_out_of_range_is_rejected(value):
 @pytest.mark.parametrize("value", [0.0, 0.5])
 def test_fishing_contest_tap_lead_range_ends_are_accepted(value):
     assert FishingContestSettings(tap_lead_seconds=value).tap_lead_seconds == value
+
+
+_SPEED = 300  # px/s, like the real bobber
+_BAR_END_SECONDS = 2.4
+
+
+def _bobber_x(seconds: float) -> int:
+    """Bobber that starts at x 400 and bounces between 380 and 800."""
+    width = _HIGH - _LOW
+    folded = (400 - _LOW + _SPEED * seconds) % (2 * width)
+    return _LOW + int(min(folded, 2 * width - folded))
+
+
+def _tap_times(
+    monkeypatch: pytest.MonkeyPatch,
+    zone: tuple[int, int] | None,
+    lead: float,
+    end: float = _BAR_END_SECONDS,
+) -> list[float]:
+    """Run `_play_tension_bar` on a fake clock; return the clock of every tap."""
+    clock = [0.0]
+    taps: list[float] = []
+    monkeypatch.setattr(coc_main, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(
+        coc_main, "sleep", lambda seconds: clock.__setitem__(0, clock[0] + seconds)
+    )
+    monkeypatch.setattr(
+        coc_main,
+        "read_tension_bar",
+        lambda _screenshot: (_bobber_x(clock[0]), zone) if clock[0] < end else None,
+    )
+    fake = SimpleNamespace(
+        settings=SimpleNamespace(
+            fishing_contest=SimpleNamespace(tap_lead_seconds=lead)
+        ),
+        get_screenshot=lambda: None,
+        tap=lambda *_args, **_kwargs: taps.append(clock[0]),
+    )
+    ClashOfCritters._play_tension_bar(fake)
+    return taps
+
+
+def test_tension_bar_small_zone_taps_once_near_the_centre(monkeypatch):
+    # The bobber reaches the centre (x 600) at 2/3 s; the tap leaves 0.15 s before.
+    taps = _tap_times(monkeypatch, (596, 604), 0.15, end=1.2)
+    assert len(taps) == 1
+    assert taps[0] == pytest.approx(2 / 3 - 0.15, abs=0.04)
+
+
+def test_tension_bar_wide_zone_is_tapped_once_per_crossing(monkeypatch):
+    taps = _tap_times(monkeypatch, (450, 750), 0.15)
+    assert len(taps) >= 1
+    assert all(later - earlier > 1.0 for earlier, later in pairwise(taps))
+
+
+def test_tension_bar_uses_the_lead_setting(monkeypatch):
+    late = _tap_times(monkeypatch, (596, 604), 0.1, end=1.2)
+    early = _tap_times(monkeypatch, (596, 604), 0.3, end=1.2)
+    assert late[0] - early[0] == pytest.approx(0.2, abs=0.05)
+
+
+def test_tension_bar_no_tap_without_a_zone(monkeypatch):
+    assert _tap_times(monkeypatch, None, 0.15) == []
