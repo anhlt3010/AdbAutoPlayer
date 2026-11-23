@@ -83,7 +83,7 @@ The user chose to **teach the bot once** per unrecognized card, over full automa
   - `CardTemplateStore`: reload an element folder when its modification time changed (see Approaches).
 - A new pure module, for example `games/clash_of_critters/card_teaching.py`, testable without a device:
   - list the waiting crops: id (file stem), element, the crop as a data URI;
-  - list the evolutions of an element for the picker, grouped by tatari, each with id, tier, glitter, name and sprite data URI (from `TatariDb.sprites_for_element` and `sprite_data_uri`);
+  - list the evolutions of an element for the picker, grouped by tatari, each with id, tier, glitter and sprite data URI (the row is labelled by `tatari_id`; `Sprite` has no name field) (from `TatariDb.sprites_for_element` and `sprite_data_uri`);
   - teach: given a crop id and an evolution id, check that the evolution exists in `tatari_db` and has the crop's element, call `CardTemplateStore.save`, then delete that crop and every other waiting crop that the new template matches. Return a status (`ok`, `unknown_crop`, `unknown_evolution`, `wrong_element`), not an exception.
 - `__main__.py`: two new profile-aware commands next to `get_formation_view`: one returns the waiting crops plus the picker data for their elements, and one teaches. Both run in `_executor`.
 - Log: after a tray scan in `deploy.py` that left cards unrecognized, one info line with the number of waiting crops (Vietnamese, like the other deploy logs).
