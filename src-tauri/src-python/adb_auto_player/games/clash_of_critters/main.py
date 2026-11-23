@@ -4,6 +4,8 @@ import logging
 import re
 from time import monotonic, sleep
 
+import cv2
+import numpy as np
 from adb_auto_player.decorators import register_command, register_game
 from adb_auto_player.games.clash_of_critters.auto_battle import AutoBattleMixin
 from adb_auto_player.games.clash_of_critters.settings import Settings
@@ -22,6 +24,29 @@ ARTIFACT_ADVENTURE_ICON = "artifact_adventure_icon.png"
 # Trophy card of the Zobo Hunt event on the pinball screen. Cropped to the Zobo face on
 # the trophy only: the coin bubble, the number and the "ends in N days" label change.
 ZOBO_HUNT_ICON = "zobo_hunt_icon.png"
+# Fish card of the Fishing Contest event on the pinball screen. Cropped to the fish
+# head and eye only: the rod count bubble, the number and the "ends in N days" label
+# change.
+FISHING_CONTEST_ICON = "fishing_contest_icon.png"
+# "Cuộc Thi Câu Cá" title of the event screen.
+FISHING_CONTEST_TITLE = "fishing_contest_title.png"
+# "người chơi trên máy" text of the catch result screen ("Đánh bại N% người chơi trên
+# máy chủ!"). It stays until tapped; a tap on the dimmed top area closes it (a tap
+# on the fish does not).
+FISHING_CONTEST_RESULT = "fishing_contest_result.png"
+_FISHING_RESULT_CLOSE = Point(540, 250)
+# Round fishing button. Its rod picture, the rod count and the "x1" badge change, so
+# its state is read from the colour of the left edge of the circle: green = cast,
+# grey = waiting for a bite, purple = a fish bites (tap to reel in).
+_FISHING_BUTTON = Point(540, 1580)
+_FISHING_STATE_PATCH = (slice(1560, 1600), slice(415, 435))  # rows, cols
+_FISHING_STATE_POLL_SECONDS = 0.2
+# Green that stays this long after a cast means no cast happened (out of rods).
+_FISHING_CAST_TIMEOUT_SECONDS = 10
+_GREY_MAX_SATURATION = 40
+_MIN_SATURATION, _MIN_VALUE = 100, 100
+_GREEN_HUE = range(35, 71)  # OpenCV hue, 0-179
+_PURPLE_HUE = range(125, 156)
 # Text of the "Bắt Đầu Ngay" button on the Zobo Hunt screen.
 ZOBO_HUNT_START_BUTTON = "zobo_hunt_start_button.png"
 # "X" close button at the bottom of the arena; shown for the whole hunt.
@@ -80,6 +105,81 @@ _ADVANCE_SETTLE_SECONDS = 3
 _ADVENTURE_IDLE_LIMIT_SECONDS = 60
 
 _PINBALL_TAB_TIMEOUT_SECONDS = 10
+
+# Tension bar shown after some bites: the red bobber runs back and forth on its own
+# (~300 px/s) and the purple button must be tapped while it is in the yellow zone.
+# Every hit shrinks the zone, so several hits are needed. Measured at 1080x1920.
+_TENSION_BAR_BAND = (slice(1230, 1340), slice(270, 850))  # rows, cols
+_TENSION_BAR_LEFT = 270
+_BOBBER_MIN_PIXELS = 200  # fewer red pixels: no bobber (e.g. the bite timer bar)
+_ZONE_MIN_COLUMNS = 30
+_VIVID_SATURATION, _VIVID_VALUE = 150, 150
+_RED_HUE_MAX, _RED_HUE_MIN = 8, 170  # red wraps around hue 0
+_YELLOW_HUE_MIN, _YELLOW_HUE_MAX = 20, 35
+# The bobber hides the yellow under it: the zone is measured only while the bobber
+# is at least this far outside of it.
+_BOBBER_HALF_WIDTH = 40
+# Time from deciding to tap until the game sees the tap; the bobber position is
+# predicted that far ahead. Hits need the prediction this far inside the zone.
+_TAP_LEAD_SECONDS = 0.15
+_ZONE_MARGIN = 20
+# The bar is over when the bobber was not seen for this long.
+_TENSION_BAR_GONE_SECONDS = 1.5
+_TENSION_BAR_POLL_SECONDS = 0.01
+
+
+def read_tension_bar(
+    screenshot: np.ndarray,
+) -> tuple[int, tuple[int, int] | None] | None:
+    """Find the bobber and the yellow zone of the tension bar.
+
+    Args:
+        screenshot: BGR screenshot at 1080x1920.
+
+    Returns:
+        None if no bobber is shown, else (bobber x, (zone left, zone right) or None
+        when no yellow is visible). The zone is partly hidden while the bobber is
+        over it.
+    """
+    band = cv2.cvtColor(screenshot[_TENSION_BAR_BAND], cv2.COLOR_BGR2HSV)
+    hue, saturation, value = band[..., 0], band[..., 1], band[..., 2]
+    vivid = (saturation > _VIVID_SATURATION) & (value > _VIVID_VALUE)
+    red = vivid & ((hue < _RED_HUE_MAX) | (hue > _RED_HUE_MIN))
+    _, red_x = np.nonzero(red)
+    if len(red_x) < _BOBBER_MIN_PIXELS:
+        return None
+    bobber = int(red_x.mean()) + _TENSION_BAR_LEFT
+    yellow = vivid & (hue > _YELLOW_HUE_MIN) & (hue < _YELLOW_HUE_MAX)
+    yellow_x = np.nonzero(yellow.any(axis=0))[0]
+    if len(yellow_x) < _ZONE_MIN_COLUMNS:
+        return bobber, None
+    left, right = int(yellow_x.min()), int(yellow_x.max())
+    return bobber, (left + _TENSION_BAR_LEFT, right + _TENSION_BAR_LEFT)
+
+
+def fishing_button_state(screenshot: np.ndarray) -> str | None:
+    """Read the state of the fishing button from its colour.
+
+    Args:
+        screenshot: BGR screenshot at 1080x1920.
+
+    Returns:
+        "cast" (green), "wait" (grey), "bite" (purple), or None if the button is
+        not shown (other screen, popup).
+    """
+    patch = cv2.cvtColor(screenshot[_FISHING_STATE_PATCH], cv2.COLOR_BGR2HSV)
+    hue, saturation, value = (int(v) for v in patch.reshape(-1, 3).mean(axis=0))
+    if value < _MIN_VALUE:
+        return None
+    if saturation < _GREY_MAX_SATURATION:
+        return "wait"
+    if saturation < _MIN_SATURATION:
+        return None
+    if hue in _GREEN_HUE:
+        return "cast"
+    if hue in _PURPLE_HUE:
+        return "bite"
+    return None
 
 
 @register_game(
@@ -155,6 +255,143 @@ class ClashOfCritters(AutoBattleMixin):
         else:
             logging.info("Already in the Zobo Hunt arena.")
         self._run_zobo_hunt()
+
+    @register_command(
+        gui=GUIMetadata(
+            label="Cuộc Thi Câu Cá",
+            category="Events",
+            tooltip=(
+                "Fishing Contest event: cast, wait for a bite and reel in until "
+                "out of rods."
+            ),
+        )
+    )
+    def fishing_contest(self) -> None:
+        # The tension bar needs fresh frames many times a second: stream.
+        self.open_eyes(device_streaming=True)
+        if self.find_any_template([FISHING_CONTEST_TITLE]) is None:
+            self._open_pinball_screen()
+            icon = self.wait_for_template(
+                FISHING_CONTEST_ICON,
+                timeout=_EVENT_ICON_TIMEOUT_SECONDS,
+                timeout_message="Fishing Contest icon not found on Pinball screen.",
+            )
+            logging.info("Opening Fishing Contest.")
+            self.tap(icon, log=False)
+            self.wait_for_template(
+                FISHING_CONTEST_TITLE,
+                timeout=_EVENT_ICON_TIMEOUT_SECONDS,
+                timeout_message="Fishing Contest screen did not open.",
+            )
+        else:
+            logging.info("Already on Fishing Contest screen.")
+        self._run_fishing_contest()
+
+    def _run_fishing_contest(self) -> None:
+        """Cast, wait for a bite and reel in, until no cast starts anymore.
+
+        Stops when a cast does not start (out of rods) or when no known state was
+        seen for a while. The reward popup ("Nhận Ngay") and common buttons are
+        pressed when they show up.
+        """
+        idle_since = monotonic()
+        cast_at: float | None = None
+        while monotonic() - idle_since < _ADVENTURE_IDLE_LIMIT_SECONDS:
+            screenshot = self.get_screenshot()
+            state = fishing_button_state(screenshot)
+            if state is None:
+                # Popups dim the button: look for them only then, so the bite
+                # window is polled fast.
+                if self._close_fishing_popup():
+                    idle_since = monotonic()
+                    sleep(_ADVENTURE_POLL_SECONDS)
+                else:
+                    sleep(_FISHING_STATE_POLL_SECONDS)
+                continue
+            idle_since = monotonic()
+            if state == "cast":
+                if cast_at is None:
+                    logging.info("Casting.")
+                    self.tap(_FISHING_BUTTON, log=False)
+                    cast_at = monotonic()
+                elif monotonic() - cast_at > _FISHING_CAST_TIMEOUT_SECONDS:
+                    logging.info("Cast did not start (out of rods?), stopping.")
+                    return
+            elif state == "bite" and read_tension_bar(screenshot) is not None:
+                self._play_tension_bar()
+                cast_at = None
+            elif state == "bite":
+                logging.info("Fish bites, reeling in.")
+                self.tap(_FISHING_BUTTON, log=False)
+                cast_at = None
+            else:
+                cast_at = None
+            sleep(_FISHING_STATE_POLL_SECONDS)
+
+        logging.warning("No Fishing Contest screen detected, stopping.")
+
+    def _play_tension_bar(self) -> None:
+        """Tap the purple button each time the bobber runs through the yellow zone.
+
+        The zone is read only while the bobber is outside of it (the bobber hides
+        the yellow under it), and after every tap it is read again before the next
+        one, since a hit shrinks it. The bobber position is predicted
+        `_TAP_LEAD_SECONDS` ahead from its speed. Returns when the bar is gone.
+        """
+        logging.info("Tension bar shown, timing the taps.")
+        zone: tuple[int, int] | None = None
+        last_x: int | None = None
+        last_at = seen_at = monotonic()
+        speed = 0.0
+        hits = 0
+        while monotonic() - seen_at < _TENSION_BAR_GONE_SECONDS:
+            sleep(_TENSION_BAR_POLL_SECONDS)  # lets the stream decoder run
+            bar = read_tension_bar(self.get_screenshot())
+            now = monotonic()
+            if bar is None:
+                continue
+            seen_at = now
+            bobber, seen_zone = bar
+            if bobber != last_x:
+                if last_x is not None:
+                    speed = (bobber - last_x) / (now - last_at)
+                last_x, last_at = bobber, now
+            if seen_zone is not None and (
+                bobber < seen_zone[0] - _BOBBER_HALF_WIDTH
+                or bobber > seen_zone[1] + _BOBBER_HALF_WIDTH
+            ):
+                zone = seen_zone
+            if zone is None:
+                continue
+            ahead = bobber + speed * _TAP_LEAD_SECONDS
+            left, right = zone[0] + _ZONE_MARGIN, zone[1] - _ZONE_MARGIN
+            if left <= bobber <= right and left <= ahead <= right:
+                hits += 1
+                logging.info(f"Tap {hits}: bobber {bobber} in zone {zone}.")
+                self.tap(_FISHING_BUTTON, log=False)
+                zone = None
+        logging.info("Tension bar gone.")
+
+    def _close_fishing_popup(self) -> bool:
+        """Close a popup of the fishing screen (reward, catch result, common).
+
+        Returns:
+            True if a popup was closed, False otherwise.
+        """
+        if self._tap_common_button():
+            return True
+        result = self.find_any_template(
+            [ARTIFACT_ADVENTURE_CLAIM_BUTTON, FISHING_CONTEST_RESULT]
+        )
+        if result is None:
+            return False
+        if result.template == FISHING_CONTEST_RESULT:
+            logging.info("Catch result shown, closing it.")
+            self.tap(_FISHING_RESULT_CLOSE, log=False)
+        else:
+            logging.info("Fish caught, pressing Nhận Ngay.")
+            self.tap(result, log=False)
+        return True
 
     def _start_zobo_hunt(self) -> None:
         """Open the Zobo Hunt event, wait for the user, then press Bắt Đầu Ngay.
