@@ -50,3 +50,28 @@ def test_read_tension_bar_finds_bobber_and_zone():
 def test_read_tension_bar_ignores_the_bite_timer_bar():
     # "Ngay! Kéo cần đi!" timer bar: yellow but no bobber.
     assert read_tension_bar(_band_screen("fishing_bite_timer.png")) is None
+
+
+TEMPLATES = (
+    Path(__file__).parents[3] / "adb_auto_player/games/clash_of_critters/templates"
+)
+
+
+def _result_match(screen: np.ndarray) -> float:
+    template = cv2.imread(str(TEMPLATES / "fishing_contest_result.png"))
+    return cv2.minMaxLoc(cv2.matchTemplate(screen, template, cv2.TM_CCOEFF_NORMED))[1]
+
+
+def test_result_template_matches_the_record_screen():
+    # Rows 1300-1460 of the "Kỷ lục cá nhân mới!" catch result screen.
+    assert (
+        _result_match(cv2.imread(str(DATA / "fishing_personal_record_text.png"))) > 0.9
+    )
+
+
+def test_result_template_survives_the_wrapped_line():
+    # "Đánh bại 100,00% ..." (new server record) pushes "máy chủ!" to the next
+    # line: the template must not need the word "máy".
+    screen = cv2.imread(str(DATA / "fishing_personal_record_text.png"))
+    screen[:, 920:] = 0
+    assert _result_match(screen) > 0.9

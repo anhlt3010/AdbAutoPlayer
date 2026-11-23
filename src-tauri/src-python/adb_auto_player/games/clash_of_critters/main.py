@@ -30,9 +30,10 @@ ZOBO_HUNT_ICON = "zobo_hunt_icon.png"
 FISHING_CONTEST_ICON = "fishing_contest_icon.png"
 # "Cuộc Thi Câu Cá" title of the event screen.
 FISHING_CONTEST_TITLE = "fishing_contest_title.png"
-# "người chơi trên máy" text of the catch result screen ("Đánh bại N% người chơi trên
-# máy chủ!"). It stays until tapped; a tap on the dimmed top area closes it (a tap
-# on the fish does not).
+# "người chơi trên" text of the catch result screen ("Đánh bại N% người chơi trên
+# máy chủ!"), also shown with a "Kỷ lục cá nhân/máy chủ mới!" banner. Without "máy":
+# a long "100,00%" wraps it to the next line. It stays until tapped; a tap on the
+# dimmed top area closes it (a tap on the fish does not).
 FISHING_CONTEST_RESULT = "fishing_contest_result.png"
 _FISHING_RESULT_CLOSE = Point(540, 250)
 # Round fishing button. Its rod picture, the rod count and the "x1" badge change, so
