@@ -74,7 +74,7 @@ def _crops(config_dir: Path) -> dict[str, tuple[np.ndarray, str]]:
 
 
 def _image_uri(image: np.ndarray) -> str:
-    ok, encoded = cv2.imencode(".png", image)
+    _, encoded = cv2.imencode(".png", image)  # a decoded image always encodes
     return _DATA_URI_PREFIX + base64.b64encode(encoded.tobytes()).decode("ascii")
 
 
