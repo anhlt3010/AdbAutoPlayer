@@ -30,7 +30,20 @@ export type Tier = number
 export type Glitter = boolean
 export type Units = ViewUnit[]
 export type Formations = ViewFormation[]
+export type Id = string
+export type Element = string
+export type Image = string
+export type Cards = WaitingCard[]
+export type EvolutionId1 = string
+export type TatariId1 = string
+export type Tier1 = number
+export type Glitter1 = boolean
+export type Sprite = (string | null)
 export type ProfileIndex3 = number
+export type CropId = string
+export type EvolutionId2 = string
+export type Status1 = ("ok" | "unknown_crop" | "unknown_evolution" | "wrong_element")
+export type ProfileIndex4 = number
 export type Trigger = ("adb-settings-updated" | "game-settings-updated")
 export type Content = string
 export type Filename = string
@@ -129,6 +142,14 @@ get_formation_view: {
 input: FormationViewBody
 output: FormationViewResponse
 }
+get_unrecognized_cards: {
+input: ProfileContext
+output: WaitingCardsResponse
+}
+teach_card: {
+input: TeachCardBody
+output: TeachCardResponse
+}
 cache_clear: {
 input: CacheClear
 output: RootModelNoneType
@@ -199,8 +220,49 @@ glitter: Glitter
 export interface Sprites {
 [k: string]: string
 }
-export interface CacheClear {
+/**
+ * The waiting cards and the picker data of their elements.
+ */
+export interface WaitingCardsResponse {
+cards: Cards
+choices: Choices
+[k: string]: unknown
+}
+/**
+ * A saved crop of a card that was not recognized.
+ */
+export interface WaitingCard {
+id: Id
+element: Element
+image: Image
+[k: string]: unknown
+}
+export interface Choices {
+[k: string]: CardChoice[]
+}
+/**
+ * One evolution the user can pick for a card.
+ */
+export interface CardChoice {
+evolution_id: EvolutionId1
+tatari_id: TatariId1
+tier: Tier1
+glitter: Glitter1
+sprite: Sprite
+[k: string]: unknown
+}
+export interface TeachCardBody {
 profile_index: ProfileIndex3
+crop_id: CropId
+evolution_id: EvolutionId2
+[k: string]: unknown
+}
+export interface TeachCardResponse {
+status: Status1
+[k: string]: unknown
+}
+export interface CacheClear {
+profile_index: ProfileIndex4
 trigger: Trigger
 [k: string]: unknown
 }

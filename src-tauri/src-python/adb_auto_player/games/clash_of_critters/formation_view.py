@@ -203,7 +203,8 @@ def grab_screenshot() -> np.ndarray:
 
 
 @cache
-def _load_db(folder: Path) -> TatariDb:
+def load_db(folder: Path) -> TatariDb:
+    """Load the tatari database once per folder."""
     return TatariDb.load(folder)
 
 
@@ -245,4 +246,4 @@ def load_formation_view(
         if stage is None:
             return _empty("stage_unreadable", None)
     formations = load_formations(root / "tatari_formations", stage)
-    return build_response(stage, formations, _load_db(root / "tatari_db"))
+    return build_response(stage, formations, load_db(root / "tatari_db"))

@@ -56,8 +56,18 @@ from adb_auto_player.device.adb.adb_scanner import (
     scan_emulator_ports as scan_emulator_ports_impl,
 )
 from adb_auto_player.file_loader import SettingsLoader
+from adb_auto_player.games.clash_of_critters.card_teaching import (
+    TeachStatus,
+    WaitingCardsResponse,
+    load_waiting_cards,
+)
+from adb_auto_player.games.clash_of_critters.card_teaching import (
+    teach_card as teach_card_impl,
+)
+from adb_auto_player.games.clash_of_critters.tatari_db import TatariDb
 from adb_auto_player.games.clash_of_critters.formation_view import (
     FormationViewResponse,
+    load_db,
     load_formation_view,
 )
 from adb_auto_player.ipc import GameGUIOptions, LogMessage
@@ -567,6 +577,59 @@ async def get_formation_view(
         _executor,
         lambda: ctx.run(load_formation_view, body.stage),
     )
+
+
+def _coc_tatari_db() -> TatariDb:
+    return load_db(SettingsLoader.games_dir() / "clash_of_critters" / "tatari_db")
+
+
+@tauri_profile_aware_command
+async def get_unrecognized_cards(
+    app_handle: AppHandle,
+    body: ProfileContext,
+) -> WaitingCardsResponse:
+    """Clash of Critters: the cards the auto battle did not recognize."""
+    ctx = copy_context()
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        _executor,
+        lambda: ctx.run(
+            lambda: load_waiting_cards(
+                SettingsLoader.get_app_config_dir(), _coc_tatari_db()
+            )
+        ),
+    )
+
+
+class TeachCardBody(ProfileContext):
+    crop_id: str
+    evolution_id: str
+
+
+class TeachCardResponse(BaseModel):
+    status: TeachStatus
+
+
+@tauri_profile_aware_command
+async def teach_card(
+    app_handle: AppHandle,
+    body: TeachCardBody,
+) -> TeachCardResponse:
+    """Clash of Critters: save an unrecognized card as a template of an evolution."""
+    ctx = copy_context()
+    loop = asyncio.get_event_loop()
+    status = await loop.run_in_executor(
+        _executor,
+        lambda: ctx.run(
+            lambda: teach_card_impl(
+                SettingsLoader.get_app_config_dir(),
+                _coc_tatari_db(),
+                body.crop_id,
+                body.evolution_id,
+            )
+        ),
+    )
+    return TeachCardResponse(status=status)
 
 
 @tauri_profile_aware_command

@@ -72,6 +72,26 @@ export async function getFormationView(
     return await pyInvoke("get_formation_view", body, options);
 }
 
+/**
+ * Clash of Critters: the cards the auto battle did not recognize.
+ */
+export async function getUnrecognizedCards(
+    body: Commands["get_unrecognized_cards"]["input"],
+    options?: InvokeOptions
+): Promise<Commands["get_unrecognized_cards"]["output"]> {
+    return await pyInvoke("get_unrecognized_cards", body, options);
+}
+
+/**
+ * Clash of Critters: save an unrecognized card as a template of an evolution.
+ */
+export async function teachCard(
+    body: Commands["teach_card"]["input"],
+    options?: InvokeOptions
+): Promise<Commands["teach_card"]["output"]> {
+    return await pyInvoke("teach_card", body, options);
+}
+
 export async function cacheClear(
     body: Commands["cache_clear"]["input"],
     options?: InvokeOptions
