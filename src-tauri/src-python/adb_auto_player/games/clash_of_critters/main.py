@@ -1,9 +1,8 @@
 """Clash of Critters Main Module."""
 
 import logging
+import math
 import re
-from collections import deque
-from collections.abc import Sequence
 from time import monotonic, sleep
 
 import cv2
@@ -126,18 +125,33 @@ _BOBBER_HALF_WIDTH = 40
 # The bar is over when the bobber was not seen for this long.
 _TENSION_BAR_GONE_SECONDS = 1.5
 _TENSION_BAR_POLL_SECONDS = 0.01
-# The bobber centre bounces between these x values.
-_BOBBER_MIN_X, _BOBBER_MAX_X = 380, 800
-# Slower than this the bobber is taken as standing still: no tap is planned.
-_MIN_SPEED = 50.0  # px/s
+# The bobber moves on a triangle wave between these x values at this speed
+# (measured on MuMu: x 308-806, half period ~1.41 s). Only its phase in wall-clock
+# time is unknown; `BobberClock` learns it. The stream delivers frames in bursts
+# (stalls of ~0.5 s, then catch-up), so the speed seen from frame arrival times is
+# useless, but the freshest frames give the phase.
+_BOBBER_MIN_X, _BOBBER_MAX_X = 308, 806
+_BOBBER_WIDTH = _BOBBER_MAX_X - _BOBBER_MIN_X
+_BOBBER_SPEED = 352.0  # px/s
+_BOBBER_PERIOD = 2 * _BOBBER_WIDTH / _BOBBER_SPEED  # seconds
+# Phase estimate creeps later by this many seconds per second (the speed is not
+# exact), so it follows the freshest frames and not a stale old minimum.
+_CLOCK_CREEP = 0.02
+# A frame this much older than the estimate is a decoding outlier: ignored.
+_STALE_GUARD_SECONDS = 0.5
+_CLOCK_MIN_OBSERVATIONS = 3
+# Heading: a run of at least this many frames that move steadily (steps of more
+# than `_HEADING_JITTER` px, none bigger than `_HEADING_MAX_STEP`, which is a
+# catch-up of the stream) with a total move of at least `_HEADING_MIN_MOVE` px.
+_HEADING_SAMPLES = 4
+_HEADING_MIN_MOVE = 6
+_HEADING_JITTER = 1
+_HEADING_MAX_STEP = 30
 # A tap is planned when the moment to send it is at most this far from now.
 _TAP_WINDOW_SECONDS = 0.03
-# Number of (x, time) samples the speed is averaged over. A step against the
-# direction of travel of at least `_MIN_TURN_STEP` px (a bounce, not jitter) makes
-# the speed start over.
-_SPEED_SAMPLES = 5
-_MIN_SPEED_SAMPLES = 2
-_MIN_TURN_STEP = 2
+# After a tap the zone is not read again for the lead plus this long: the shrunk
+# zone shows only after the tap landed and a possibly stale frame came in.
+_ZONE_REFRESH_SECONDS = 0.3
 
 
 def read_tension_bar(
@@ -169,104 +183,163 @@ def read_tension_bar(
     return bobber, (left + _TENSION_BAR_LEFT, right + _TENSION_BAR_LEFT)
 
 
-def seconds_to_reach(
-    x: float, velocity: float, target: float, low: float, high: float
-) -> float | None:
-    """Time until a bouncing point first reaches a target.
+class HeadingTracker:
+    """Finds the direction of the bobber from runs of steady frames.
 
-    Args:
-        x: Current position.
-        velocity: Signed speed in px/s.
-        target: Position to reach.
-        low: Left end, where the point bounces.
-        high: Right end, where the point bounces.
-
-    Returns:
-        Seconds from now, or None when the point is (almost) standing still.
+    The freshest frames come right after a stall, behind a big jump of x, and the
+    jump may be over a bounce. A run therefore restarts at every jump and at every
+    turn; once a run is long and steady enough, all its frames (also the first one,
+    the freshest) get the direction of the run.
     """
-    if abs(velocity) < _MIN_SPEED:
-        return None
-    width = high - low
-    period = 2 * width
-    offset = x - low
-    # Unfold the bounces: the point always moves right on a line of `period`.
-    start = offset if velocity > 0 else period - offset
-    goal = target - low
-    distance = min((goal - start) % period, (period - goal - start) % period)
-    return distance / abs(velocity)
+
+    def __init__(self) -> None:
+        """Start without a run."""
+        self._run: list[tuple[int, float]] = []
+        self._given = 0
+
+    def add(self, x: int, wall: float) -> list[tuple[int, int, float]]:
+        """Add a bobber position seen in a frame.
+
+        Args:
+            x: Bobber x.
+            wall: Wall-clock time the frame was decoded.
+
+        Returns:
+            (x, direction, wall) of the frames that now have a known direction:
+            direction is 1 (right) or -1 (left).
+        """
+        run = self._run
+        if run:
+            step = x - run[-1][0]
+            if abs(step) <= _HEADING_JITTER:
+                return []  # the same frame again
+            move = run[-1][0] - run[0][0]
+            if abs(step) > _HEADING_MAX_STEP or (len(run) > 1 and step * move < 0):
+                run.clear()
+                self._given = 0
+        run.append((x, wall))
+        if len(run) < _HEADING_SAMPLES:
+            return []
+        move = run[-1][0] - run[0][0]
+        if abs(move) < _HEADING_MIN_MOVE:
+            return []
+        direction = 1 if move > 0 else -1
+        frames = [(fx, direction, fw) for fx, fw in run[self._given :]]
+        self._given = len(run)
+        return frames
+
+
+class BobberClock:
+    """The phase of the bobber's triangle wave in wall-clock time.
+
+    A frame shows the bobber as it was `delay` seconds ago, and `delay` is never
+    below the delay of the freshest frame. The phase is therefore a lower
+    envelope: it moves earlier when a fresher frame arrives and creeps later
+    slowly, so stale frames and stalls of the stream do not move it.
+    """
+
+    def __init__(self) -> None:
+        """Start without a phase."""
+        self._phase: float | None = None
+        self._at = 0.0
+        self._count = 0
+
+    @property
+    def ready(self) -> bool:
+        """True once enough frames were seen to trust the phase."""
+        return self._count >= _CLOCK_MIN_OBSERVATIONS
+
+    def observe(self, x: float, direction: int, wall: float) -> None:
+        """Feed a bobber position seen in a frame.
+
+        Args:
+            x: Bobber x in the frame.
+            direction: 1 if the bobber moves right, -1 if left.
+            wall: Wall-clock time the frame was decoded.
+        """
+        along = x - _BOBBER_MIN_X
+        if direction < 0:
+            along = 2 * _BOBBER_WIDTH - along
+        offset = (wall - along / _BOBBER_SPEED) % _BOBBER_PERIOD
+        if self._phase is None:
+            self._phase = offset
+        else:
+            self._phase = (
+                self._phase + _CLOCK_CREEP * max(0.0, wall - self._at)
+            ) % _BOBBER_PERIOD
+            diff = (offset - self._phase + _BOBBER_PERIOD / 2) % _BOBBER_PERIOD
+            diff -= _BOBBER_PERIOD / 2
+            if -_STALE_GUARD_SECONDS < diff < 0:
+                self._phase += diff
+        self._at = max(self._at, wall)
+        self._count += 1
+
+    def position(self, wall: float) -> float | None:
+        """Model position of the bobber at a wall-clock time (None without phase)."""
+        if self._phase is None:
+            return None
+        along = ((wall - self._phase) % _BOBBER_PERIOD) * _BOBBER_SPEED
+        if along < _BOBBER_WIDTH:
+            return _BOBBER_MIN_X + along
+        return _BOBBER_MIN_X + 2 * _BOBBER_WIDTH - along
+
+    def seconds_until_tap(
+        self, target: float, wall: float, lead: float, late: float
+    ) -> float | None:
+        """Seconds until a tap must be sent to land on `target`.
+
+        Args:
+            target: Bobber x to land on.
+            wall: Now.
+            lead: Seconds between sending the tap and the model seeing it land.
+            late: How late (negative result) a tap may still be.
+
+        Returns:
+            The wait, at least `-late`, or None without a phase.
+        """
+        if self._phase is None:
+            return None
+        along = min(max(target - _BOBBER_MIN_X, 0.0), float(_BOBBER_WIDTH))
+        best: float | None = None
+        for on_wave in (along, 2 * _BOBBER_WIDTH - along):
+            base = self._phase + on_wave / _BOBBER_SPEED - lead
+            laps = math.ceil((wall - late - base) / _BOBBER_PERIOD)
+            delay = base + laps * _BOBBER_PERIOD - wall
+            if best is None or delay < best:
+                best = delay
+        return best
 
 
 def plan_tap(
-    bobber: float,
-    speed: float,
+    clock: BobberClock,
     zone: tuple[int, int],
+    wall: float,
     lead: float,
-    window: float = _TAP_WINDOW_SECONDS,
+    window: float,
 ) -> float | None:
     """Decide when to tap so the tap lands on the centre of the yellow zone.
 
     Args:
-        bobber: Bobber x.
-        speed: Signed bobber speed in px/s.
+        clock: The learned phase of the bobber.
         zone: Left and right x of the yellow zone.
-        lead: Seconds between the tap command and the game seeing the tap.
-        window: How far ahead the moment to send the tap may be. Pass the time
-            between two frames, so no crossing falls between two reads.
+        wall: Now.
+        lead: Total delay from the freshest frame to the game seeing the tap.
+        window: How far ahead the moment to send the tap may be (the time between
+            two loop passes, so no crossing falls between two of them).
 
     Returns:
-        Seconds to wait before tapping now, or None when it is not time yet (or
-        the moment has passed and the next crossing is far away). A tap that is
-        late is still planned (0.0) while it lands inside the zone.
+        Seconds to wait before tapping now, or None when it is not time yet or the
+        phase is unknown. A tap that is late is still planned (0.0) while it lands
+        inside the zone.
     """
-    centre = (zone[0] + zone[1]) / 2
-    crossing = seconds_to_reach(bobber, speed, centre, _BOBBER_MIN_X, _BOBBER_MAX_X)
-    if crossing is None:
+    if not clock.ready:
         return None
-    late = max(_TAP_WINDOW_SECONDS, (zone[1] - zone[0]) / 2 / abs(speed))
-    delay = crossing - lead
-    if delay > window or delay < -late:
+    centre = (zone[0] + zone[1]) / 2
+    late = max(_TAP_WINDOW_SECONDS, (zone[1] - zone[0]) / 2 / _BOBBER_SPEED)
+    delay = clock.seconds_until_tap(centre, wall, lead, late)
+    if delay is None or delay > window:
         return None
     return max(0.0, delay)
-
-
-def smoothed_speed(samples: Sequence[tuple[int, float]]) -> float:
-    """Signed bobber speed from (x, time) samples.
-
-    Args:
-        samples: Bobber x and the time it was seen, oldest first.
-
-    Returns:
-        px/s from the first to the last sample; 0.0 without two samples apart in
-        time.
-    """
-    if len(samples) < _MIN_SPEED_SAMPLES:
-        return 0.0
-    (first_x, first_at), (last_x, last_at) = samples[0], samples[-1]
-    if last_at <= first_at:
-        return 0.0
-    return (last_x - first_x) / (last_at - first_at)
-
-
-def _add_speed_sample(
-    samples: deque[tuple[int, float]], bobber: int, now: float
-) -> None:
-    """Record a new bobber position; start over when the bobber turns around."""
-    if samples and bobber == samples[-1][0]:
-        return
-    if len(samples) >= _MIN_SPEED_SAMPLES:
-        step = bobber - samples[-1][0]
-        last_step = samples[-1][0] - samples[-2][0]
-        if abs(step) >= _MIN_TURN_STEP and step * last_step < 0:
-            # The pair around the bounce would give a wrong speed: drop it.
-            samples.clear()
-    samples.append((bobber, now))
-
-
-def _frame_gap(samples: Sequence[tuple[int, float]]) -> float:
-    """Seconds between the last two different bobber frames (0.0 if unknown)."""
-    if len(samples) < _MIN_SPEED_SAMPLES:
-        return 0.0
-    return samples[-1][1] - samples[-2][1]
 
 
 def fishing_button_state(screenshot: np.ndarray) -> str | None:
@@ -447,16 +520,18 @@ class ClashOfCritters(AutoBattleMixin):
 
         The zone is read only while the bobber is outside of it (the bobber hides
         the yellow under it) and forgotten after every tap, since a hit shrinks it.
-        From the bobber speed the time it reaches the zone centre is predicted
-        (`plan_tap`) and the tap is sent `fishing_contest.tap_lead_seconds` before
-        that. Returns when the bar is gone.
+        The bobber moves on a known triangle wave: `BobberClock` learns its phase
+        from the freshest frames, `plan_tap` times the tap
+        `fishing_contest.tap_lead_seconds` before the bobber is on the zone centre.
+        Returns when the bar is gone.
         """
         logging.info("Tension bar shown, timing the taps.")
         lead = self.settings.fishing_contest.tap_lead_seconds
+        clock = BobberClock()
         zone: tuple[int, int] | None = None
         zone_blocked_until = 0.0
-        samples: deque[tuple[int, float]] = deque(maxlen=_SPEED_SAMPLES)
-        seen_at = monotonic()
+        tracker = HeadingTracker()
+        seen_at = pass_at = monotonic()
         hits = 0
         while monotonic() - seen_at < _TENSION_BAR_GONE_SECONDS:
             sleep(_TENSION_BAR_POLL_SECONDS)  # lets the stream decoder run
@@ -465,8 +540,11 @@ class ClashOfCritters(AutoBattleMixin):
             if bar is None:
                 continue
             seen_at = now
+            window = max(_TAP_WINDOW_SECONDS, now - pass_at)
+            pass_at = now
             bobber, seen_zone = bar
-            _add_speed_sample(samples, bobber, now)
+            for frame_x, direction, frame_at in tracker.add(bobber, now):
+                clock.observe(frame_x, direction, frame_at)
             if (
                 seen_zone is not None
                 and now >= zone_blocked_until
@@ -478,22 +556,19 @@ class ClashOfCritters(AutoBattleMixin):
                 zone = seen_zone
             if zone is None:
                 continue
-            speed = smoothed_speed(samples)
-            window = max(_TAP_WINDOW_SECONDS, _frame_gap(samples))
-            delay = plan_tap(bobber, speed, zone, lead, window)
+            delay = plan_tap(clock, zone, now, lead, window)
             if delay is None:
                 continue
             sleep(delay)
             hits += 1
+            model = clock.position(monotonic() + lead)
             logging.info(
-                f"Tap {hits}: bobber {bobber}, speed {speed:.0f} px/s, "
-                f"zone {zone}, lead {lead} s."
+                f"Tap {hits}: bobber {bobber}, zone {zone}, lead {lead} s, "
+                f"model puts the bobber at {model:.0f} when the tap lands."
             )
             self.tap(_FISHING_BUTTON, log=False)
             zone = None
-            # The hit shows (and the zone shrinks) only after the tap landed and a
-            # frame came in; a held frame still shows the old zone.
-            zone_blocked_until = monotonic() + lead + window
+            zone_blocked_until = monotonic() + lead + _ZONE_REFRESH_SECONDS
         logging.info("Tension bar gone.")
 
     def _close_fishing_popup(self) -> bool:

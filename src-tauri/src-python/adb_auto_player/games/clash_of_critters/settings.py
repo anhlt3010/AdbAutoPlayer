@@ -98,7 +98,7 @@ class FishingContestSettings(BaseModel):
     """Settings for the Cuộc Thi Câu Cá task."""
 
     tap_lead_seconds: TapLeadSeconds = Field(
-        default=0.15,
+        default=0.2,
         title="Tap Lead (seconds)",
         description=(
             "Seconds between the tap command and the game seeing the tap. Raise it "
