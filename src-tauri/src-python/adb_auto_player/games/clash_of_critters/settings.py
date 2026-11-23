@@ -12,6 +12,7 @@ FormationAttempts = Annotated[int, Field(ge=1, le=20)]
 WinRatePercent = Annotated[int, Field(ge=0, le=100)]
 AdvanceCount = Annotated[int, Field(ge=1, le=1000)]
 TrayPollSeconds = Annotated[float, Field(ge=0.1, le=5)]
+CardTeachingWaitSeconds = Annotated[int, Field(ge=10, le=3600)]
 
 
 class AutoBattleSettings(BaseModel):
@@ -58,6 +59,15 @@ class AutoBattleSettings(BaseModel):
         description=(
             "After swiping the tray, how often it is checked for having stopped "
             "moving. A slow emulator may need a longer interval."
+        ),
+    )
+    card_teaching_wait_seconds: CardTeachingWaitSeconds = Field(
+        default=180,
+        title="Card Teaching Wait (seconds)",
+        description=(
+            "When the tray has cards the bot does not recognize, the formation "
+            "window opens and the bot waits this long for you to teach them. "
+            "After that the formation is dropped for the next one."
         ),
     )
 

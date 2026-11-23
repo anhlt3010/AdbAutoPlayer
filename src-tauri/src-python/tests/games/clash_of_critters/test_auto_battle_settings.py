@@ -32,3 +32,14 @@ def test_bounds_rejected() -> None:
 def test_old_keep_alive_removed() -> None:
     assert "keep_alive" not in Settings.model_fields
     assert "auto_battle" in Settings.model_fields
+
+
+def test_card_teaching_wait_default() -> None:
+    assert AutoBattleSettings().card_teaching_wait_seconds == 180
+
+
+def test_card_teaching_wait_is_bounded() -> None:
+    with pytest.raises(ValidationError):
+        AutoBattleSettings(card_teaching_wait_seconds=9)
+    with pytest.raises(ValidationError):
+        AutoBattleSettings(card_teaching_wait_seconds=3601)
