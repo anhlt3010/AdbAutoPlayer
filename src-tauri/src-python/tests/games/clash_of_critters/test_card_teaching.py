@@ -69,9 +69,7 @@ def test_load_missing_folder(tmp_path: Path, db: TatariDb) -> None:
 def test_load_skips_unreadable(tmp_path: Path, db: TatariDb) -> None:
     _add(tmp_path, "fire_8_a")
     (tmp_path / UNRECOGNIZED_DIR_NAME / "bad.png").write_bytes(b"junk")
-    assert [card.id for card in load_waiting_cards(tmp_path, db).cards] == [
-        "fire_8_a"
-    ]
+    assert [card.id for card in load_waiting_cards(tmp_path, db).cards] == ["fire_8_a"]
 
 
 def test_teach_ok_removes_duplicates(tmp_path: Path, db: TatariDb) -> None:

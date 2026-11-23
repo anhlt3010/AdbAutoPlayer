@@ -17,6 +17,7 @@ from adb_auto_player.decorators import register_command, register_custom_routine
 from adb_auto_player.games.afk_journey.gui_category import AFKJCategory
 from adb_auto_player.models.decorators import GUIMetadata
 
+
 class MyFeatureMixin(AFKJourneyBase):
     @register_command(
         name="MyFeature",
@@ -26,7 +27,9 @@ class MyFeatureMixin(AFKJourneyBase):
             tooltip="Short description shown in the UI",
         ),
     )
-    @register_custom_routine_choice(label="My Feature")  # omit if no custom routine needed
+    @register_custom_routine_choice(
+        label="My Feature"
+    )  # omit if no custom routine needed
     def run_my_feature(self) -> None:
         """Run My Feature."""
         self.start_up(device_streaming=False)

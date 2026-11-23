@@ -92,10 +92,12 @@
 ```python
 TeachStatus = Literal["ok", "unknown_crop", "unknown_evolution", "wrong_element"]
 
+
 class WaitingCard(BaseModel):
-    id: str          # file stem in the unrecognized folder
+    id: str  # file stem in the unrecognized folder
     element: str
-    image: str       # PNG data URI of the full card crop
+    image: str  # PNG data URI of the full card crop
+
 
 class CardChoice(BaseModel):
     evolution_id: str
@@ -104,14 +106,18 @@ class CardChoice(BaseModel):
     glitter: bool
     sprite: str | None
 
+
 class WaitingCardsResponse(BaseModel):
     cards: list[WaitingCard]
     # Picker data, only for the elements of the waiting cards; sorted by
     # tatari number, then glitter, then tier.
     choices: dict[str, list[CardChoice]]
 
+
 def load_waiting_cards(config_dir: Path, db: TatariDb) -> WaitingCardsResponse: ...
-def teach_card(config_dir: Path, db: TatariDb, crop_id: str, evolution_id: str) -> TeachStatus: ...
+def teach_card(
+    config_dir: Path, db: TatariDb, crop_id: str, evolution_id: str
+) -> TeachStatus: ...
 ```
 
 - `teach_card` finds the crop only by comparing `crop_id` with the stems listed in the folder. It never joins `crop_id` into a path. It saves with `CardTemplateStore(config_dir / TEMPLATE_DIR_NAME).save(evolution_id, crop)`. Then it deletes the crop and every other readable crop whose `art_match_score(other, crop) >= 0.8`.
@@ -146,14 +152,21 @@ class TeachCardBody(ProfileContext):
     crop_id: str
     evolution_id: str
 
+
 class TeachCardResponse(BaseModel):
     status: TeachStatus
 
-@tauri_profile_aware_command
-async def get_unrecognized_cards(app_handle: AppHandle, body: ProfileContext) -> WaitingCardsResponse: ...
 
 @tauri_profile_aware_command
-async def teach_card(app_handle: AppHandle, body: TeachCardBody) -> TeachCardResponse: ...
+async def get_unrecognized_cards(
+    app_handle: AppHandle, body: ProfileContext
+) -> WaitingCardsResponse: ...
+
+
+@tauri_profile_aware_command
+async def teach_card(
+    app_handle: AppHandle, body: TeachCardBody
+) -> TeachCardResponse: ...
 ```
 
 - Both run in `_executor` with `copy_context()`, like `get_formation_view`. `config_dir` is `SettingsLoader.get_app_config_dir()`, and `db` is `formation_view._load_db(SettingsLoader.games_dir() / "clash_of_critters" / "tatari_db")`. Make `_load_db` public as `load_db` and update its one caller. Rename the imported `teach_card` (`import ... as teach_card_impl`) so it does not clash with the command name.

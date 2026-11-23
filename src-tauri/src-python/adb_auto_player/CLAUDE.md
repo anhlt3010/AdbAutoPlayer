@@ -38,7 +38,7 @@ All three decorator types are required to fully wire a game into the UI. Auto-di
 
 ```python
 region = self.get_screenshot().crop((x1, y1, x2, y2))  # PIL crop
-results = self.ocr_backend.detect_text(region)           # returns list[OcrResult]
+results = self.ocr_backend.detect_text(region)  # returns list[OcrResult]
 for r in results:
     print(r.text, r.box)
 ```

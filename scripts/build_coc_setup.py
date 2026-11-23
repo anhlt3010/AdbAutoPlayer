@@ -41,10 +41,22 @@ DOCS_URL = "https://anhlt3010.github.io/AdbAutoPlayer/"
 # (file, old, new) text swaps applied in the staging copy only.
 REBRAND = (
     ("src-tauri/src/tray.rs", "Show AdbAutoPlayer", f"Show {PRODUCT_NAME}"),
-    ("src-tauri/src/tray.rs", '.tooltip("AdbAutoPlayer")', f'.tooltip("{PRODUCT_NAME}")'),
+    (
+        "src-tauri/src/tray.rs",
+        '.tooltip("AdbAutoPlayer")',
+        f'.tooltip("{PRODUCT_NAME}")',
+    ),
     ("src-tauri/src/main.rs", "AdbAutoPlayer_crash.log", f"{PRODUCT_NAME}_crash.log"),
-    ("src-tauri/src/main.rs", "AdbAutoPlayer - Startup Error", f"{PRODUCT_NAME} - Startup Error"),
-    ("src-tauri/src/discord.rs", '"username": "AdbAutoPlayer"', f'"username": "{PRODUCT_NAME}"'),
+    (
+        "src-tauri/src/main.rs",
+        "AdbAutoPlayer - Startup Error",
+        f"{PRODUCT_NAME} - Startup Error",
+    ),
+    (
+        "src-tauri/src/discord.rs",
+        '"username": "AdbAutoPlayer"',
+        f'"username": "{PRODUCT_NAME}"',
+    ),
     (
         "src-tauri/src/discord.rs",
         "https://raw.githubusercontent.com/AdbAutoPlayer/AdbAutoPlayer/refs/heads/main/app-icon.png",
@@ -55,8 +67,16 @@ REBRAND = (
         "https://AdbAutoPlayer.github.io/AdbAutoPlayer/",
         DOCS_URL,
     ),
-    ("src/lib/components/modern/StatusBar.svelte", ">AdbAutoPlayer<", f">{PRODUCT_NAME}<"),
-    ("src/lib/components/updater/UpdateContainer.svelte", "new version of AdbAutoPlayer", f"new version of {PRODUCT_NAME}"),
+    (
+        "src/lib/components/modern/StatusBar.svelte",
+        ">AdbAutoPlayer<",
+        f">{PRODUCT_NAME}<",
+    ),
+    (
+        "src/lib/components/updater/UpdateContainer.svelte",
+        "new version of AdbAutoPlayer",
+        f"new version of {PRODUCT_NAME}",
+    ),
 )
 REPO_URL = "https://github.com/anhlt3010/AdbAutoPlayer"
 UPDATER_ENDPOINT = f"{REPO_URL}/releases/latest/download/latest.json"
@@ -158,7 +178,9 @@ def _link_node_modules(stage: Path) -> None:
         sys.exit("node_modules missing in the repo - run `pnpm install` first")
     dst = stage / "node_modules"
     subprocess.run(
-        ["cmd", "/c", "mklink", "/J", str(dst), str(src)], check=True, capture_output=True
+        ["cmd", "/c", "mklink", "/J", str(dst), str(src)],
+        check=True,
+        capture_output=True,
     )
 
 

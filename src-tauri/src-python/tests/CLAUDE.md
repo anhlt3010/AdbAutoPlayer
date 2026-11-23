@@ -35,8 +35,10 @@ from adb_auto_player.games.afk_journey.mixins.my_mixin import MyMixin
 ```python
 from adb_auto_player.games.afk_journey.mixins.my_mixin import MyMixin
 
+
 class _Stub(MyMixin):
     """Minimal stub — only pure-logic methods exercised."""
+
 
 def test_something():
     bot = _Stub()
@@ -48,5 +50,6 @@ def test_something():
 
 ```python
 from pathlib import Path
+
 TEST_DATA_DIR = Path(__file__).parent / "data"  # put PNGs here
 ```
