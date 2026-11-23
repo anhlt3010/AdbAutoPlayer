@@ -13,6 +13,7 @@ WinRatePercent = Annotated[int, Field(ge=0, le=100)]
 AdvanceCount = Annotated[int, Field(ge=1, le=1000)]
 TrayPollSeconds = Annotated[float, Field(ge=0.1, le=5)]
 CardTeachingWaitSeconds = Annotated[int, Field(ge=10, le=3600)]
+TapLeadSeconds = Annotated[float, Field(ge=0.0, le=0.5)]
 
 
 class AutoBattleSettings(BaseModel):
@@ -93,6 +94,19 @@ class ArtifactAdventureSettings(BaseModel):
     )
 
 
+class FishingContestSettings(BaseModel):
+    """Settings for the Cuộc Thi Câu Cá task."""
+
+    tap_lead_seconds: TapLeadSeconds = Field(
+        default=0.15,
+        title="Tap Lead (seconds)",
+        description=(
+            "Seconds between the tap command and the game seeing the tap. Raise it "
+            "if taps on the yellow zone land late, lower it if they land early."
+        ),
+    )
+
+
 class Settings(TomlSettings):
     """Clash of Critters Settings model."""
 
@@ -101,4 +115,7 @@ class Settings(TomlSettings):
     )
     artifact_adventure: ArtifactAdventureSettings = Field(
         default_factory=ArtifactAdventureSettings, title="Phiêu Lưu Cổ Vật"
+    )
+    fishing_contest: FishingContestSettings = Field(
+        default_factory=FishingContestSettings, title="Cuộc Thi Câu Cá"
     )

@@ -3,6 +3,11 @@ from pathlib import Path
 import cv2
 import numpy as np
 import pytest
+from pydantic import ValidationError
+from adb_auto_player.games.clash_of_critters.settings import (
+    FishingContestSettings,
+    Settings,
+)
 from adb_auto_player.games.clash_of_critters.main import (
     fishing_button_state,
     plan_tap,
@@ -126,3 +131,19 @@ def test_smoothed_speed():
     assert smoothed_speed([(100, 0.0), (130, 0.1)]) == pytest.approx(300.0)
     assert smoothed_speed([(100, 0.0)]) == 0.0
     assert smoothed_speed([(100, 1.0), (130, 1.0)]) == 0.0
+
+
+def test_fishing_contest_settings_default():
+    assert FishingContestSettings().tap_lead_seconds == 0.15
+    assert "fishing_contest" in Settings.model_fields
+
+
+@pytest.mark.parametrize("value", [-0.01, 0.51])
+def test_fishing_contest_tap_lead_out_of_range_is_rejected(value):
+    with pytest.raises(ValidationError):
+        FishingContestSettings(tap_lead_seconds=value)
+
+
+@pytest.mark.parametrize("value", [0.0, 0.5])
+def test_fishing_contest_tap_lead_range_ends_are_accepted(value):
+    assert FishingContestSettings(tap_lead_seconds=value).tap_lead_seconds == value

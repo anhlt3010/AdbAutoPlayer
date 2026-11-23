@@ -10,3 +10,6 @@ card_teaching_wait_seconds = 180
 [artifact_adventure]
 min_win_rate_percent = 40
 limited_advance_count = 100
+
+[fishing_contest]
+tap_lead_seconds = 0.15
