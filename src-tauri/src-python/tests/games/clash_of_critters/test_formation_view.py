@@ -381,6 +381,40 @@ def test_dojo_typed_stage_without_element_is_unreadable() -> None:
     assert (response.status, response.stage) == ("element_unreadable", "4-3")
 
 
+def test_a_dojo_has_ten_stages_so_a_typed_eleventh_is_invalid() -> None:
+    response = load_formation_view(
+        "4-11", grab=_no_grab, data_root=REAL_ROOT, mode="dojo", element="grass"
+    )
+    assert response.status == "stage_invalid"
+    assert response.formations == []
+
+
+def test_a_dojo_stage_read_from_the_screen_above_ten_is_unreadable(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        formation_view, "read_stage_from_screenshot", lambda *_: StageId(4, 11)
+    )
+    response = load_formation_view(
+        None, grab=_dojo_grab("dojo_prep_cleared.png"), data_root=REAL_ROOT, mode="dojo"
+    )
+    assert response.status == "stage_unreadable"
+
+
+def test_cards_cut_off_by_the_screen_edge_do_not_vote(monkeypatch) -> None:
+    seen: list[object] = []
+
+    def classify(icon):
+        seen.append(icon)
+        return "fire"
+
+    # One whole card and one cut by the right edge of the screen, in each tray row.
+    monkeypatch.setattr(formation_view, "find_card_lefts", lambda *_: [20, 1000])
+    monkeypatch.setattr(formation_view, "classify_element", classify)
+    assert read_tray_element(_dojo("dojo_prep_cleared.png")) == "fire"
+    assert len(seen) == len(DOJO_LAYOUT.tray_rows_y)  # only the whole cards
+
+
 def test_dojo_unknown_element_is_unreadable() -> None:
     response = load_formation_view(
         "4-3", grab=_no_grab, data_root=REAL_ROOT, mode="dojo", element="wind"
@@ -397,7 +431,7 @@ def test_dojo_screen_without_label_is_stage_unreadable() -> None:
 
 def test_dojo_typed_stage_without_file_names_the_element() -> None:
     response = load_formation_view(
-        "4-99", grab=_no_grab, data_root=REAL_ROOT, mode="dojo", element="grass"
+        "9-1", grab=_no_grab, data_root=REAL_ROOT, mode="dojo", element="grass"
     )
     assert (response.status, response.element, response.mode) == (
         "no_formation",

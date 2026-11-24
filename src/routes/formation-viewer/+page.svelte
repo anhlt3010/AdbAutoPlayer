@@ -52,10 +52,7 @@
   const maxStage = $derived(mode === "dojo" ? DOJO_MAX_STAGE : undefined);
   const canStepDown = $derived(stepStage(stageInput, -1, maxStage) !== null);
   const canStepUp = $derived(stepStage(stageInput, 1, maxStage) !== null);
-  // The element row opens by itself when the tray could not tell the element.
-  const showElementPicker = $derived(
-    mode === "dojo" && (elementPickerOpen || problem === "element_unreadable"),
-  );
+  const showElementPicker = $derived(mode === "dojo" && elementPickerOpen);
 
   const elementLabel = $derived.by(() => {
     const labels: Record<string, string> = {
@@ -126,6 +123,10 @@
       } else if (result.status === "element_unreadable") {
         element = null;
       }
+      // The element row opens by itself when the tray could not tell the element.
+      if (result.status === "element_unreadable") {
+        elementPickerOpen = true;
+      }
     } catch (error) {
       if (request === latestRequest) {
         problem = "error";
@@ -163,6 +164,9 @@
     stageInput = "";
     element = null;
     elementPickerOpen = false;
+    // The old tab may be the cards one: show the formation of the new mode (an
+    // event that asks for the cards tab switches to it right after).
+    tab = "formation";
   }
 
   function onStageKeydown(event: KeyboardEvent) {

@@ -223,6 +223,8 @@ def read_stage_from_screenshot(
 
 # At least this many tray cards must agree on the element.
 _MIN_ELEMENT_VOTES = 2
+# A Võ Đường has ten stages.
+_DOJO_MAX_STAGE = 10
 
 
 def read_tray_element(
@@ -250,8 +252,11 @@ def read_tray_element(
             center = Point(card_left + layout.card_size[0] // 2, row_y)
             left, top, right, bottom = card_box(center, layout)
             card = screenshot[top:bottom, left:right]
-            if card.size == 0:
-                continue
+            if (
+                card.shape[0] < layout.card_size[1]
+                or card.shape[1] < layout.card_size[0]
+            ):
+                continue  # cut off by the edge of the screen: not a whole card
             if layout.card_size != BATTLE_LAYOUT.card_size:
                 # ELEMENT_ICON_BOX is measured on the battle card size.
                 card = cv2.resize(card, BATTLE_LAYOUT.card_size)
@@ -321,7 +326,7 @@ def _load_dojo_view(
     element = element if element in ELEMENTS else None
     if stage_text is not None:
         stage = parse_stage(stage_text.translate(_DASHES))
-        if stage is None:
+        if stage is None or stage.number > _DOJO_MAX_STAGE:
             return _empty("stage_invalid", None, "dojo")
     else:
         try:
@@ -330,7 +335,7 @@ def _load_dojo_view(
             logging.debug(f"Formation viewer could not take a screenshot: {error!r}")
             return _empty("no_device", None, "dojo")
         stage = read_stage_from_screenshot(screenshot, DOJO_LAYOUT.stage_label_box)
-        if stage is None:
+        if stage is None or stage.number > _DOJO_MAX_STAGE:
             return _empty("stage_unreadable", None, "dojo")
         # What the screen shows wins: the bot goes through all five Võ Đường, so an
         # element the page remembers from an earlier read can be out of date.

@@ -18,23 +18,21 @@ const WINDOW_HEIGHT = 560;
 // locked if Tauri answers neither "created" nor "error".
 const CREATE_TIMEOUT_MS = 5000;
 
-let opening: Promise<void> | null = null;
+// Calls run one after the other (open() never rejects): a call made while the
+// window is being created waits for it and then finds that window, so both do
+// not try to create the same window label and the later call keeps its mode.
+let opening: Promise<void> = Promise.resolve();
 
 /**
  * Open the formation viewer window, or bring the open one to the front and ask
  * it to read the device screen again. Only one viewer window exists.
- *
- * A second click while the first one is still opening the window is ignored,
- * otherwise both would try to create the same window label.
  */
 export function openFormationViewer(
   profileIndex: number,
   tab?: "cards",
   mode?: ViewerMode,
 ): Promise<void> {
-  opening ??= open(profileIndex, tab, mode).finally(() => {
-    opening = null;
-  });
+  opening = opening.then(() => open(profileIndex, tab, mode));
   return opening;
 }
 
