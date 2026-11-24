@@ -62,8 +62,9 @@ export async function scanEmulatorPorts(
 /**
  * Clash of Critters formation viewer: the formations of the typed stage.
  *
- * Without a stage it reads the stage from one screenshot of the device. Never
- * sends input to the device.
+ * Without a stage it reads the stage from one screenshot of the device. In
+ * "dojo" mode it shows a Võ Đường stage, with the element given or read from the
+ * tray. Never sends input to the device.
  */
 export async function getFormationView(
     body: Commands["get_formation_view"]["input"],

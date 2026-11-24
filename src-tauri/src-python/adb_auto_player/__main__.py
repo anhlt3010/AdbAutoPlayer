@@ -67,6 +67,7 @@ from adb_auto_player.games.clash_of_critters.card_teaching import (
 from adb_auto_player.games.clash_of_critters.tatari_db import TatariDb
 from adb_auto_player.games.clash_of_critters.formation_view import (
     FormationViewResponse,
+    ViewMode,
     load_db,
     load_formation_view,
 )
@@ -570,6 +571,8 @@ async def scan_emulator_ports(
 
 class FormationViewBody(ProfileContext):
     stage: str | None = None
+    mode: ViewMode = "battle"
+    element: str | None = None
 
 
 @tauri_profile_aware_command
@@ -579,14 +582,19 @@ async def get_formation_view(
 ) -> FormationViewResponse:
     """Clash of Critters formation viewer: the formations of the typed stage.
 
-    Without a stage it reads the stage from one screenshot of the device. Never
-    sends input to the device.
+    Without a stage it reads the stage from one screenshot of the device. In
+    "dojo" mode it shows a Võ Đường stage, with the element given or read from the
+    tray. Never sends input to the device.
     """
     ctx = copy_context()
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(
         _executor,
-        lambda: ctx.run(load_formation_view, body.stage),
+        lambda: ctx.run(
+            lambda: load_formation_view(
+                body.stage, mode=body.mode, element=body.element
+            )
+        ),
     )
 
 

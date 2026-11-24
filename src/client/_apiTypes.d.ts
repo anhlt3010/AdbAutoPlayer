@@ -18,7 +18,9 @@ export type RootModelTupleDictStrAnyDictStrAnyStr = [unknown, unknown, unknown]
 export type RootModelListStr = string[]
 export type ProfileIndex2 = number
 export type Stage = (string | null)
-export type Status = ("ok" | "no_device" | "stage_unreadable" | "stage_invalid" | "no_formation")
+export type Mode = ("battle" | "dojo")
+export type Element = (string | null)
+export type Status = ("ok" | "no_device" | "stage_unreadable" | "stage_invalid" | "no_formation" | "element_unreadable")
 export type Stage1 = (string | null)
 export type Level = (number | null)
 export type Row = number
@@ -30,8 +32,10 @@ export type Tier = number
 export type Glitter = boolean
 export type Units = ViewUnit[]
 export type Formations = ViewFormation[]
+export type Element1 = (string | null)
+export type Mode1 = ("battle" | "dojo")
 export type Id = string
-export type Element = string
+export type Element2 = string
 export type Image = string
 export type Cards = WaitingCard[]
 export type EvolutionId1 = string
@@ -184,6 +188,8 @@ profile_index: ProfileIndex1
 export interface FormationViewBody {
 profile_index: ProfileIndex2
 stage?: Stage
+mode?: Mode
+element?: Element
 [k: string]: unknown
 }
 /**
@@ -194,6 +200,8 @@ status: Status
 stage: Stage1
 formations: Formations
 sprites: Sprites
+element?: Element1
+mode?: Mode1
 [k: string]: unknown
 }
 /**
@@ -233,7 +241,7 @@ choices: Choices
  */
 export interface WaitingCard {
 id: Id
-element: Element
+element: Element2
 image: Image
 [k: string]: unknown
 }
