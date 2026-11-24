@@ -9,6 +9,9 @@ export const FORMATION_VIEWER_REFRESH_EVENT = "formation-viewer:refresh";
 // Asks an open viewer to show its "unrecognized cards" tab.
 export const FORMATION_VIEWER_TAB_EVENT = "formation-viewer:show-cards";
 
+/** What the viewer shows: the auto battle formations or the ones of a Võ Đường. */
+export type ViewerMode = "battle" | "dojo";
+
 const WINDOW_WIDTH = 420;
 const WINDOW_HEIGHT = 560;
 // Give up waiting for the new window after this long, so the button never stays
@@ -27,14 +30,19 @@ let opening: Promise<void> | null = null;
 export function openFormationViewer(
   profileIndex: number,
   tab?: "cards",
+  mode?: ViewerMode,
 ): Promise<void> {
-  opening ??= open(profileIndex, tab).finally(() => {
+  opening ??= open(profileIndex, tab, mode).finally(() => {
     opening = null;
   });
   return opening;
 }
 
-async function open(profileIndex: number, tab?: "cards"): Promise<void> {
+async function open(
+  profileIndex: number,
+  tab?: "cards",
+  mode?: ViewerMode,
+): Promise<void> {
   const tr = get(t);
   const failTitle = tr("Failed to open the formation viewer");
   try {
@@ -43,8 +51,12 @@ async function open(profileIndex: number, tab?: "cards"): Promise<void> {
       await existing.unminimize();
       await existing.show();
       await existing.setFocus();
+      // Only a caller that names a mode switches the open viewer to it: the
+      // automatic "teach the cards" event of a run passes none and must not flip
+      // an open Võ Đường viewer back to the auto battle one.
       await emitTo(FORMATION_VIEWER_LABEL, FORMATION_VIEWER_REFRESH_EVENT, {
         profile_index: profileIndex,
+        ...(mode ? { mode } : {}),
       });
       if (tab === "cards") {
         await emitTo(FORMATION_VIEWER_LABEL, FORMATION_VIEWER_TAB_EVENT, {});
@@ -52,7 +64,7 @@ async function open(profileIndex: number, tab?: "cards"): Promise<void> {
       return;
     }
     const created = new WebviewWindow(FORMATION_VIEWER_LABEL, {
-      url: `/formation-viewer?profile=${profileIndex}${tab ? `&tab=${tab}` : ""}`,
+      url: `/formation-viewer?profile=${profileIndex}&mode=${mode ?? "battle"}${tab ? `&tab=${tab}` : ""}`,
       title: tr("Formation viewer"),
       width: WINDOW_WIDTH,
       height: WINDOW_HEIGHT,

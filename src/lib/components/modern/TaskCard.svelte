@@ -3,6 +3,7 @@
   import type { MenuButton } from "#lib/menu/model.ts";
   import { profiles, ui } from "#lib/stores.svelte.ts";
   import { openFormationViewer } from "#lib/formation/viewer.ts";
+  import type { ViewerMode } from "#lib/formation/viewer.ts";
 
   interface Props {
     b: MenuButton;
@@ -15,18 +16,23 @@
   const isHidden = $derived(ui.isTaskHidden(b.taskKey));
   // Task keys are "<game title>::<command args>" and the args of a command are its
   // full registered name ("<game module>.<function>"). Only the Clash of Critters
-  // auto battle has a formation viewer.
-  const FORMATION_VIEWER_TASK_KEY =
-    "Clash of Critters::clash_of_critters.auto_battle";
-  const hasFormationViewer = $derived(b.taskKey === FORMATION_VIEWER_TASK_KEY);
+  // auto battle and Võ Đường Huy Hiệu have a formation viewer.
+  const FORMATION_VIEWER_MODES: Record<string, ViewerMode> = {
+    "Clash of Critters::clash_of_critters.auto_battle": "battle",
+    "Clash of Critters::clash_of_critters.badge_dojo": "dojo",
+  };
+  const viewerMode = $derived(
+    b.taskKey ? FORMATION_VIEWER_MODES[b.taskKey] : undefined,
+  );
 </script>
 
 {#snippet formationButton()}
-  {#if hasFormationViewer}
+  {#if viewerMode}
+    {@const mode = viewerMode}
     <button
       class="hide-btn formation-btn"
       class:palette={variant === "palette"}
-      onclick={() => openFormationViewer(profiles.active)}
+      onclick={() => openFormationViewer(profiles.active, undefined, mode)}
       title={$t("Show formation")}
       aria-label={$t("Show formation")}
     >
