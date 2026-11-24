@@ -10,10 +10,22 @@
   import {
     FORMATION_VIEWER_REFRESH_EVENT,
     FORMATION_VIEWER_TAB_EVENT,
+    type ViewerMode,
   } from "#lib/formation/viewer.ts";
   import type { FormationView } from "#lib/formation/types.ts";
 
+  // A Võ Đường has 10 stages and a 3 column x 4 row field.
+  const DOJO_MAX_STAGE = 10;
+  const DOJO_ROWS = 4;
+  const DOJO_COLUMNS = 3;
+  const ELEMENTS = ["water", "fire", "grass", "rock", "lightning"] as const;
+
   let profileIndex = $state(0);
+  let mode = $state<ViewerMode>("battle");
+  // Võ Đường only: the element read from the tray (or picked), kept so that the
+  // stage buttons and a typed stage reuse it.
+  let element = $state<string | null>(null);
+  let elementPickerOpen = $state(false);
   let tab = $state<"formation" | "cards">("formation");
   let unrecognizedCount = $state(0);
   // Bumped to make the unrecognized cards tab load its list again.
@@ -37,8 +49,24 @@
 
   const formations = $derived(view?.formations ?? []);
   const current = $derived(formations[formationIndex] ?? null);
-  const canStepDown = $derived(stepStage(stageInput, -1) !== null);
-  const canStepUp = $derived(stepStage(stageInput, 1) !== null);
+  const maxStage = $derived(mode === "dojo" ? DOJO_MAX_STAGE : undefined);
+  const canStepDown = $derived(stepStage(stageInput, -1, maxStage) !== null);
+  const canStepUp = $derived(stepStage(stageInput, 1, maxStage) !== null);
+  // The element row opens by itself when the tray could not tell the element.
+  const showElementPicker = $derived(
+    mode === "dojo" && (elementPickerOpen || problem === "element_unreadable"),
+  );
+
+  const elementLabel = $derived.by(() => {
+    const labels: Record<string, string> = {
+      water: $t("Water"),
+      fire: $t("Fire"),
+      grass: $t("Grass"),
+      rock: $t("Rock"),
+      lightning: $t("Lightning"),
+    };
+    return (name: string) => labels[name] ?? name;
+  });
 
   const problemText = $derived.by(() => {
     switch (problem) {
@@ -50,6 +78,8 @@
         );
       case "stage_invalid":
         return $t("Wrong stage format. Use chapter-number, for example 15-50.");
+      case "element_unreadable":
+        return $t("Could not tell the element from the tray. Pick it below.");
       case "no_formation":
         return $t("No prepared formation for stage {{stage}}.", {
           stage: answeredStage,
@@ -73,6 +103,8 @@
       const result = await getFormationView({
         profile_index: profileIndex,
         stage,
+        mode,
+        element,
       });
       if (request !== latestRequest) {
         return;
@@ -89,6 +121,11 @@
       if (result.stage && !inputDirty) {
         stageInput = result.stage;
       }
+      if (result.element) {
+        element = result.element;
+      } else if (result.status === "element_unreadable") {
+        element = null;
+      }
     } catch (error) {
       if (request === latestRequest) {
         problem = "error";
@@ -102,12 +139,30 @@
   }
 
   function step(delta: -1 | 1) {
-    const next = stepStage(stageInput, delta);
+    const next = stepStage(stageInput, delta, maxStage);
     if (next === null) {
       return;
     }
     stageInput = next;
     void load(next);
+  }
+
+  /** Võ Đường: the user picks the element the tray did not tell. */
+  function pickElement(name: string) {
+    element = name;
+    elementPickerOpen = false;
+    void load(stageInput.trim() || null);
+  }
+
+  /** Show another mode: forget what the old one showed and read the screen. */
+  function switchMode(next: ViewerMode) {
+    mode = next;
+    view = null;
+    problem = null;
+    answeredStage = "";
+    stageInput = "";
+    element = null;
+    elementPickerOpen = false;
   }
 
   function onStageKeydown(event: KeyboardEvent) {
@@ -119,6 +174,9 @@
   onMount(() => {
     const params = new URLSearchParams(window.location.search);
     profileIndex = Number(params.get("profile") ?? "0") || 0;
+    if (params.get("mode") === "dojo") {
+      mode = "dojo";
+    }
     if (params.get("tab") === "cards") {
       tab = "cards";
     }
@@ -131,10 +189,14 @@
       } catch (error) {
         console.error(error);
       }
-      unlisten = await listen<{ profile_index: number }>(
+      unlisten = await listen<{ profile_index: number; mode?: ViewerMode }>(
         FORMATION_VIEWER_REFRESH_EVENT,
         (event) => {
           profileIndex = event.payload.profile_index;
+          // No mode in the event keeps the current one (automatic events).
+          if (event.payload.mode && event.payload.mode !== mode) {
+            switchMode(event.payload.mode);
+          }
           cardsReload++;
           void load(null);
         },
@@ -187,7 +249,7 @@
         bind:value={stageInput}
         oninput={() => (inputDirty = true)}
         onkeydown={onStageKeydown}
-        placeholder="15-50"
+        placeholder={mode === "dojo" ? "4-2" : "15-50"}
         aria-label={$t("Stage")}
       />
       <button
@@ -197,6 +259,15 @@
         aria-label="+">+</button
       >
     </div>
+    {#if mode === "dojo"}
+      <button
+        class="element-badge"
+        onclick={() => (elementPickerOpen = !elementPickerOpen)}
+        title={$t("Element")}
+        aria-label={$t("Element")}
+        >{element ? elementLabel(element) : $t("Element")}</button
+      >
+    {/if}
     {#if current?.level != null}
       <span class="level">Lv {current.level}</span>
     {/if}
@@ -225,6 +296,18 @@
       aria-label={$t("Refresh (read the screen)")}>⟳</button
     >
   </header>
+
+  {#if showElementPicker && tab === "formation"}
+    <div class="elements">
+      {#each ELEMENTS as name (name)}
+        <button
+          class="chip"
+          class:active={element === name}
+          onclick={() => pickElement(name)}>{elementLabel(name)}</button
+        >
+      {/each}
+    </div>
+  {/if}
 
   <!-- Kept mounted so the tab label shows the count from the start. -->
   <div class="cards-tab" class:hidden={tab !== "cards"}>
@@ -255,7 +338,16 @@
     {/if}
 
     {#if current}
-      <FormationGrid units={current.units} sprites={view?.sprites ?? {}} />
+      {#if mode === "dojo"}
+        <FormationGrid
+          units={current.units}
+          sprites={view?.sprites ?? {}}
+          rows={DOJO_ROWS}
+          columns={DOJO_COLUMNS}
+        />
+      {:else}
+        <FormationGrid units={current.units} sprites={view?.sprites ?? {}} />
+      {/if}
     {/if}
   {/if}
 </main>
@@ -352,6 +444,28 @@
   .level {
     font-size: 12px;
     color: var(--text-3);
+  }
+
+  .element-badge,
+  .chip {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    background: var(--bg-2);
+    color: var(--text-2, var(--text-1));
+    border: 1px solid var(--line);
+    cursor: pointer;
+  }
+
+  .chip.active {
+    color: var(--text-1);
+    border-color: var(--accent);
+  }
+
+  .elements {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .spacer {

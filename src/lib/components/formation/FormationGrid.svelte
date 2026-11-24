@@ -6,22 +6,33 @@
     units: ViewUnit[];
     // Sprite data URI of each evolution_id.
     sprites: Record<string, string>;
+    // Size of the field: only these cells are drawn (auto battle 5x5, Võ Đường 3x4).
+    rows?: number;
+    columns?: number;
   }
 
-  let { units, sprites }: Props = $props();
+  const BATTLE_FIELD_SIZE = 5;
 
-  const FIELD_SIZE = 5;
-  const cells = Array.from({ length: FIELD_SIZE * FIELD_SIZE }, (_, i) => ({
-    row: Math.floor(i / FIELD_SIZE) + 1,
-    col: (i % FIELD_SIZE) + 1,
-  }));
+  let {
+    units,
+    sprites,
+    rows = BATTLE_FIELD_SIZE,
+    columns = BATTLE_FIELD_SIZE,
+  }: Props = $props();
+
+  const cells = $derived(
+    Array.from({ length: rows * columns }, (_, i) => ({
+      row: Math.floor(i / columns) + 1,
+      col: (i % columns) + 1,
+    })),
+  );
 
   const unitAt = $derived(
     new Map(units.map((unit) => [`${unit.row},${unit.col}`, unit])),
   );
 </script>
 
-<div class="grid">
+<div class="grid" style:--columns={columns}>
   {#each cells as cell (`${cell.row},${cell.col}`)}
     {@const unit = unitAt.get(`${cell.row},${cell.col}`)}
     <div class="cell" class:filled={unit !== undefined}>
@@ -50,9 +61,11 @@
 <style>
   .grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(var(--columns), 1fr);
     gap: 4px;
     width: 100%;
+    /* A narrower field keeps the cell size of the 5 column one. */
+    max-width: calc(var(--columns) / 5 * 100%);
   }
 
   .cell {
