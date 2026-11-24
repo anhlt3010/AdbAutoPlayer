@@ -21,7 +21,11 @@ from adb_auto_player.games.clash_of_critters.card_recognition import (
     read_image,
 )
 from adb_auto_player.games.clash_of_critters.formation_view import sprite_data_uri
-from adb_auto_player.games.clash_of_critters.tatari_db import Sprite, TatariDb
+from adb_auto_player.games.clash_of_critters.tatari_db import (
+    ELEMENTS,
+    Sprite,
+    TatariDb,
+)
 from pydantic import BaseModel
 
 TeachStatus = Literal["ok", "unknown_crop", "unknown_evolution", "wrong_element"]
@@ -67,7 +71,13 @@ def _crops(config_dir: Path) -> dict[str, tuple[np.ndarray, str]]:
         image = read_image(path)
         if image is None:
             continue
-        element = classify_element(image[top:bottom, left:right])
+        # A crop saved with a known element (Võ Đường) carries it in its name.
+        prefix = path.stem.split("_", 1)[0]
+        element = (
+            prefix
+            if "_" in path.stem and prefix in ELEMENTS
+            else classify_element(image[top:bottom, left:right])
+        )
         if element is not None:
             crops[path.stem] = (image, element)
     return crops

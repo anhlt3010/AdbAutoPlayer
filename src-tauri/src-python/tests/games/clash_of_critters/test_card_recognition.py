@@ -1,6 +1,7 @@
 """Tests for recognizing tray cards from a real preparation-screen capture."""
 
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -349,6 +350,37 @@ def test_unreadable_crop_ignored_by_dedup(tmp_path: Path) -> None:
     recognizer = _nothing_found(tmp_path)
     recognizer.recognize(_unrecognized("fire_8_a"))
     assert recognizer.waiting_count() == 2
+
+
+def _saved_names(tmp_path: Path) -> list[str]:
+    return sorted(p.name for p in (tmp_path / "unrecognized").glob("*.png"))
+
+
+def test_unrecognized_card_with_a_known_element_is_saved_with_its_prefix(
+    tmp_path: Path,
+) -> None:
+    recognizer = _nothing_found(tmp_path)
+    assert recognizer.recognize(_unrecognized("fire_8_a"), element="fire") is None
+    (name,) = _saved_names(tmp_path)
+    assert re.fullmatch(r"fire_[0-9a-f]{12}\.png", name)
+
+
+def test_unrecognized_card_without_a_known_element_keeps_the_plain_name(
+    tmp_path: Path,
+) -> None:
+    recognizer = _nothing_found(tmp_path)
+    assert recognizer.recognize(_unrecognized("fire_8_a")) is None
+    (name,) = _saved_names(tmp_path)
+    assert re.fullmatch(r"[0-9a-f]{12}\.png", name)
+
+
+def test_a_prefixed_and_a_plain_crop_of_the_same_card_are_saved_once(
+    tmp_path: Path,
+) -> None:
+    recognizer = _nothing_found(tmp_path)
+    recognizer.recognize(_unrecognized("fire_8_a"))
+    recognizer.recognize(_unrecognized("fire_8_b"), element="fire")
+    assert recognizer.waiting_count() == 1
 
 
 def test_waiting_count_without_debug_dir(tmp_path: Path) -> None:

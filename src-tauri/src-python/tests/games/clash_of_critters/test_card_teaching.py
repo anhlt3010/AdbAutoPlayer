@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 
 import cv2
+import numpy as np
 import pytest
 from adb_auto_player.games.clash_of_critters import card_recognition as cr_module
 from adb_auto_player.games.clash_of_critters.card_recognition import (
@@ -112,3 +113,58 @@ def test_reteach_replaces_only_that_template(tmp_path: Path, db: TatariDb) -> No
     _add(tmp_path, "fire_8_a")
     assert teach_card(tmp_path, db, "fire_8_a", "fire-8-2") == "ok"
     assert other.read_bytes() == b"existing"
+
+
+# --- crops saved with the element in their name (Võ Đường) ----------------------
+
+
+def _add_as(config_dir: Path, fixture: str, crop_id: str) -> None:
+    """Copy a fixture crop into the unrecognized folder under another name."""
+    folder = config_dir / UNRECOGNIZED_DIR_NAME
+    folder.mkdir(parents=True, exist_ok=True)
+    shutil.copy(DATA_DIR / f"unrecognized_{fixture}.png", folder / f"{crop_id}.png")
+
+
+def test_prefixed_crop_is_listed_with_its_element_even_when_the_icon_reads_none(
+    tmp_path: Path, db: TatariDb
+) -> None:
+    folder = tmp_path / UNRECOGNIZED_DIR_NAME
+    folder.mkdir()
+    grey = np.full((190, 160, 3), 128, dtype=np.uint8)  # no readable icon colour
+    cv2.imwrite(str(folder / "grass_abc123abc123.png"), grey)
+    result = load_waiting_cards(tmp_path, db)
+    assert [(card.id, card.element) for card in result.cards] == [
+        ("grass_abc123abc123", "grass")
+    ]
+    assert "grass" in result.choices
+
+
+def test_the_prefix_beats_the_icon_colour(tmp_path: Path, db: TatariDb) -> None:
+    # A water-coloured crop named as a fire card: the name is what the bot knew.
+    _add_as(tmp_path, "water_10_a", "fire_abc123abc123")
+    result = load_waiting_cards(tmp_path, db)
+    assert [card.element for card in result.cards] == ["fire"]
+
+
+def test_teach_a_prefixed_crop(tmp_path: Path, db: TatariDb) -> None:
+    _add_as(tmp_path, "water_10_a", "fire_abc123abc123")
+    assert teach_card(tmp_path, db, "fire_abc123abc123", "fire-8-2") == "ok"
+    assert (tmp_path / TEMPLATE_DIR_NAME / "fire" / "fire-8-2.png").is_file()
+    assert not list((tmp_path / UNRECOGNIZED_DIR_NAME).glob("*.png"))
+
+
+def test_teach_a_prefixed_crop_of_another_element_is_refused(
+    tmp_path: Path, db: TatariDb
+) -> None:
+    _add_as(tmp_path, "fire_8_a", "water_abc123abc123")
+    before = _files(tmp_path)
+    result = teach_card(tmp_path, db, "water_abc123abc123", "fire-8-2")
+    assert result == "wrong_element"
+    assert _files(tmp_path) == before
+
+
+def test_a_name_that_is_not_an_element_prefix_falls_back_to_the_icon(
+    tmp_path: Path, db: TatariDb
+) -> None:
+    _add_as(tmp_path, "fire_8_a", "wind_abc123abc123")
+    assert [card.element for card in load_waiting_cards(tmp_path, db).cards] == ["fire"]

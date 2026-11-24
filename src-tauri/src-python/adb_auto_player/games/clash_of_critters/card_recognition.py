@@ -365,6 +365,7 @@ class CardRecognizer:
             The evolution id (glitter ids end in "g"), or None when the card is
             deployed or not recognized with enough confidence.
         """
+        told_element = element
         if element is None:
             left, top, right, bottom = ELEMENT_ICON_BOX
             element = classify_element(card_bgr[top:bottom, left:right])
@@ -378,7 +379,7 @@ class CardRecognizer:
         result = self._match(card_bgr, element)
         if result is None:
             logging.debug(f"A {element} card was not recognized.")
-            self._save_unrecognized(card_bgr)
+            self._save_unrecognized(card_bgr, told_element)
             return None
         self._templates.save(result, card_bgr)
         return result
@@ -389,8 +390,17 @@ class CardRecognizer:
             return 0
         return sum(1 for _ in self._debug_dir.glob("*.png"))
 
-    def _save_unrecognized(self, card_bgr: np.ndarray) -> None:
-        """Save the crop of an unrecognized card, unless that card is saved already."""
+    def _save_unrecognized(
+        self, card_bgr: np.ndarray, element: str | None = None
+    ) -> None:
+        """Save the crop of an unrecognized card, unless that card is saved already.
+
+        Args:
+            card_bgr: The card crop.
+            element: The element the caller told (a Võ Đường tray holds one element).
+                It goes into the file name (``<element>_<hash>.png``) because the
+                icon colour of such a card can read as another element.
+        """
         if self._debug_dir is None:
             return
         self._debug_dir.mkdir(parents=True, exist_ok=True)
@@ -401,6 +411,8 @@ class CardRecognizer:
             if art_match_score(card_bgr, saved) >= _TEMPLATE_MIN_SCORE:
                 return
         name = hashlib.sha1(card_bgr.tobytes()).hexdigest()[:12]
+        if element in ELEMENTS:
+            name = f"{element}_{name}"
         ok, encoded = cv2.imencode(".png", card_bgr)
         if ok:
             (self._debug_dir / f"{name}.png").write_bytes(encoded.tobytes())
