@@ -608,6 +608,23 @@ def test_waits_until_the_cards_are_taught(
     assert no_sleep.call_args_list == [call(1.0), call(1.0)]
 
 
+@pytest.mark.parametrize(("layout", "mode"), [(None, "battle"), (DOJO_LAYOUT, "dojo")])
+def test_the_teaching_event_names_the_mode_of_the_run(
+    bot: MagicMock,
+    no_sleep: MagicMock,
+    caplog: pytest.LogCaptureFixture,
+    layout: object,
+    mode: str,
+) -> None:
+    # The window opens in this mode, so its formation tab reads the right screen.
+    caplog.set_level(logging.INFO)
+    if layout is not None:
+        bot._layout = layout
+    bot._get_recognizer.return_value.waiting_count.side_effect = [1, 0]
+    bot._await_card_teaching()
+    assert _flagged(caplog)[0].viewer_mode == mode
+
+
 def test_wait_times_out(
     bot: MagicMock, no_sleep: MagicMock, caplog: pytest.LogCaptureFixture
 ) -> None:

@@ -326,6 +326,31 @@ def test_dojo_screen_gives_formations_of_the_detected_element() -> None:
     assert response.formations
 
 
+def test_a_readable_tray_beats_the_remembered_element() -> None:
+    # The page sends the element it knows with every load; a screen read after the
+    # bot moved to another Võ Đường must still follow the tray.
+    response = load_formation_view(
+        None,
+        grab=_dojo_grab("dojo_prep_cleared.png"),
+        data_root=REAL_ROOT,
+        mode="dojo",
+        element="fire",
+    )
+    assert (response.status, response.stage, response.element) == ("ok", "4-2", "grass")
+
+
+def test_an_unreadable_tray_falls_back_to_the_given_element(monkeypatch) -> None:
+    monkeypatch.setattr(formation_view, "read_tray_element", lambda *_: None)
+    response = load_formation_view(
+        None,
+        grab=_dojo_grab("dojo_prep_cleared.png"),
+        data_root=REAL_ROOT,
+        mode="dojo",
+        element="fire",
+    )
+    assert (response.stage, response.element) == ("4-2", "fire")
+
+
 def test_dojo_screen_without_element_keeps_the_stage(monkeypatch) -> None:
     monkeypatch.setattr(formation_view, "read_tray_element", lambda *_: None)
     response = load_formation_view(

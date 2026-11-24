@@ -409,6 +409,7 @@ class CardRecognizer:
             if saved is None or saved.shape != card_bgr.shape:
                 continue
             if art_match_score(card_bgr, saved) >= _TEMPLATE_MIN_SCORE:
+                self._name_with_element(path, element)
                 return
         name = hashlib.sha1(card_bgr.tobytes()).hexdigest()[:12]
         if element in ELEMENTS:
@@ -416,6 +417,21 @@ class CardRecognizer:
         ok, encoded = cv2.imencode(".png", card_bgr)
         if ok:
             (self._debug_dir / f"{name}.png").write_bytes(encoded.tobytes())
+
+    @staticmethod
+    def _name_with_element(path: Path, element: str | None) -> None:
+        """Give a saved crop without an element prefix the element the caller told.
+
+        A crop saved before the prefix existed can have been listed under the wrong
+        element (the icon colour of such a card is unreliable); seeing the same card
+        again with its element known fixes the name once.
+        """
+        if element not in ELEMENTS or path.stem.split("_", 1)[0] in ELEMENTS:
+            return
+        try:
+            path.rename(path.with_name(f"{element}_{path.name}"))
+        except OSError as error:
+            logging.debug(f"Could not rename the crop {path.name}: {error!r}")
 
     def _load(self, sprite: Sprite) -> np.ndarray | None:
         """Read a sprite as BGRA, or None if its file cannot be read."""

@@ -52,6 +52,15 @@ def test_flagged_record_emits_open_cards_event() -> None:
     payload = emit.call_args_list[1].args[2]
     assert isinstance(payload, OpenCardsEvent)
     assert payload.profile_index == PROFILE
+    assert payload.viewer_mode is None  # the task named no mode
+
+
+def test_flagged_record_forwards_the_viewer_mode() -> None:
+    with patch("adb_auto_player.__main__.Emitter.emit") as emit:
+        TauriQueueHandler(MagicMock(), PROFILE).emit(
+            _record(open_card_teaching=True, viewer_mode="dojo")
+        )
+    assert emit.call_args_list[1].args[2].viewer_mode == "dojo"
 
 
 def test_plain_record_emits_no_open_cards_event() -> None:

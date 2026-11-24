@@ -332,7 +332,9 @@ def _load_dojo_view(
         stage = read_stage_from_screenshot(screenshot, DOJO_LAYOUT.stage_label_box)
         if stage is None:
             return _empty("stage_unreadable", None, "dojo")
-        element = element or read_tray_element(screenshot)
+        # What the screen shows wins: the bot goes through all five Võ Đường, so an
+        # element the page remembers from an earlier read can be out of date.
+        element = read_tray_element(screenshot) or element
     if element is None:
         return _empty("element_unreadable", stage, "dojo")
     formations = load_dojo_formations(root / "tatari_dojo", element, stage)
@@ -359,7 +361,8 @@ def load_formation_view(
         mode: "battle" for the auto battle stages, "dojo" for a Võ Đường.
         element: Dojo mode only: the element of the Võ Đường when the user or an
             earlier answer already knows it. A typed stage without it answers
-            "element_unreadable"; a screenshot reads it from the tray.
+            "element_unreadable". A screenshot reads the element from the tray
+            first; the given one is only the fallback when the tray is unreadable.
 
     Returns:
         The formations, or a status telling why none can be shown.

@@ -38,6 +38,7 @@
   } from "#pytauri/apiClient.ts";
   import { t } from "#lib/i18n/i18n.ts";
   import { openFormationViewer } from "#lib/formation/viewer.ts";
+  import type { ViewerMode } from "#lib/formation/viewer.ts";
 
   let { children } = $props();
 
@@ -101,12 +102,17 @@
       unsubscribers.push(stateUnsub);
 
       // The auto battle needs the user to teach it unrecognized tray cards.
-      const cardsUnsub = await listen<{ profile_index: number }>(
-        EventNames.OPEN_CARDS_VIEWER,
-        (event) => {
-          void openFormationViewer(event.payload.profile_index, "cards");
-        },
-      );
+      // The event names the mode of the run (a Võ Đường run opens the dojo viewer).
+      const cardsUnsub = await listen<{
+        profile_index: number;
+        viewer_mode?: ViewerMode | null;
+      }>(EventNames.OPEN_CARDS_VIEWER, (event) => {
+        void openFormationViewer(
+          event.payload.profile_index,
+          "cards",
+          event.payload.viewer_mode ?? undefined,
+        );
+      });
       unsubscribers.push(cardsUnsub);
     };
 

@@ -197,7 +197,10 @@ class TauriQueueHandler(logging.Handler):
                 Emitter.emit(
                     self.app_handle,
                     "formation-viewer:open-cards",
-                    OpenCardsEvent(profile_index=self.profile_index),
+                    OpenCardsEvent(
+                        profile_index=self.profile_index,
+                        viewer_mode=getattr(record, "viewer_mode", None),
+                    ),
                 )
         except Exception:
             # Silence IPC errors during rapid window events
@@ -295,6 +298,8 @@ class TaskCompletedEventEvent(BaseModel):
 
 class OpenCardsEvent(BaseModel):
     profile_index: int
+    # The formation viewer mode of the run that asks (None: the task named none).
+    viewer_mode: ViewMode | None = None
 
 
 class EmptyModel(BaseModel):

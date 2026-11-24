@@ -12,6 +12,7 @@ from adb_auto_player.game import Game
 from adb_auto_player.games.clash_of_critters.battle_layout import (
     ALL_FILTER_POINT,
     BATTLE_LAYOUT,
+    DOJO_LAYOUT,
     ELEMENT_FILTER_POINTS,
     PrepLayout,
     card_box,
@@ -503,7 +504,12 @@ class DeployMixin(Game):
             return True
         logging.info(
             f"Có {waiting} thẻ chưa nhận ra, mở cửa sổ đội hình để chỉ cho bot.",
-            extra={"open_card_teaching": True},
+            extra={
+                "open_card_teaching": True,
+                # The window opens in the mode of this run (its formation tab
+                # reads the stage with the box of that screen).
+                "viewer_mode": "dojo" if self._layout is DOJO_LAYOUT else "battle",
+            },
         )
         limit = self.settings.auto_battle.card_teaching_wait_seconds
         deadline = monotonic() + limit

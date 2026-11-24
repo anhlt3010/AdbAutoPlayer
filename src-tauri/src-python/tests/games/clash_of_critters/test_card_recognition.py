@@ -383,6 +383,25 @@ def test_a_prefixed_and_a_plain_crop_of_the_same_card_are_saved_once(
     assert recognizer.waiting_count() == 1
 
 
+def test_an_old_plain_crop_gets_the_element_the_caller_knows(tmp_path: Path) -> None:
+    # A plain crop saved before the prefix existed can hold a wrong icon colour:
+    # when the same card is seen again with its element known, the saved file is
+    # renamed so the cards tab lists it with that element.
+    recognizer = _nothing_found(tmp_path)
+    recognizer.recognize(_unrecognized("fire_8_a"))
+    (plain,) = _saved_names(tmp_path)
+    recognizer.recognize(_unrecognized("fire_8_b"), element="grass")
+    assert _saved_names(tmp_path) == [f"grass_{plain}"]
+
+
+def test_a_prefixed_crop_is_never_renamed(tmp_path: Path) -> None:
+    recognizer = _nothing_found(tmp_path)
+    recognizer.recognize(_unrecognized("fire_8_a"), element="fire")
+    before = _saved_names(tmp_path)
+    recognizer.recognize(_unrecognized("fire_8_b"), element="grass")
+    assert _saved_names(tmp_path) == before
+
+
 def test_waiting_count_without_debug_dir(tmp_path: Path) -> None:
     assert _spy(tmp_path).waiting_count() == 0
 
