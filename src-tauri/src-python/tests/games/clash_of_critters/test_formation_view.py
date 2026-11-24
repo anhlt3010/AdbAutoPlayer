@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 import pytest
 from adb_auto_player.games.clash_of_critters import formation_view
+from adb_auto_player.games.clash_of_critters.battle_layout import DOJO_LAYOUT
 from adb_auto_player.games.clash_of_critters.formation import (
     Formation,
     FormationUnit,
@@ -19,6 +20,7 @@ from adb_auto_player.games.clash_of_critters.formation_view import (
     build_response,
     load_formation_view,
     read_stage_from_screenshot,
+    read_tray_element,
     sprite_data_uri,
 )
 from adb_auto_player.games.clash_of_critters.tatari_db import Sprite, TatariDb
@@ -257,3 +259,123 @@ def test_failing_grab_means_no_device() -> None:
     response = load_formation_view(None, grab=grab, data_root=REAL_ROOT)
     assert response.status == "no_device"
     assert response.formations == []
+
+
+# --- Võ Đường mode -------------------------------------------------------
+
+ASSETS_DIR = Path(__file__).parents[5] / "docs" / "superpowers" / "specs" / "assets"
+DOJO_BOX = DOJO_LAYOUT.stage_label_box
+
+
+def _dojo(name: str) -> np.ndarray:
+    image = cv2.imread(str(ASSETS_DIR / name))
+    assert image is not None, name
+    return image
+
+
+def _dojo_grab(name: str):
+    return lambda: _dojo(name)
+
+
+def _votes(elements: list[str | None]):
+    """A classify_element replacement that answers the list in call order."""
+    answers = iter(elements)
+    return lambda _icon: next(answers, None)
+
+
+def test_dojo_prep_screen_reads_its_stage_with_the_dojo_box() -> None:
+    screen = _dojo("dojo_prep_cleared.png")
+    assert read_stage_from_screenshot(screen, DOJO_BOX) == StageId(4, 2)
+
+
+def test_dojo_prep_screen_votes_its_element() -> None:
+    assert read_tray_element(_dojo("dojo_prep_cleared.png")) == "grass"
+    assert read_tray_element(_dojo("dojo_prep_scrolled.png")) == "grass"
+
+
+def test_screen_without_a_tray_has_no_element() -> None:
+    assert read_tray_element(_capture("camp_screen.png")) is None
+
+
+def test_one_vote_is_not_enough(monkeypatch) -> None:
+    monkeypatch.setattr(
+        formation_view, "classify_element", _votes(["grass", None, None])
+    )
+    assert read_tray_element(_dojo("dojo_prep_cleared.png")) is None
+
+
+def test_tied_vote_is_unreadable(monkeypatch) -> None:
+    monkeypatch.setattr(
+        formation_view,
+        "classify_element",
+        _votes(["grass", "grass", "fire", "fire"]),
+    )
+    assert read_tray_element(_dojo("dojo_prep_cleared.png")) is None
+
+
+def test_dojo_screen_gives_formations_of_the_detected_element() -> None:
+    response = load_formation_view(
+        None, grab=_dojo_grab("dojo_prep_cleared.png"), data_root=REAL_ROOT, mode="dojo"
+    )
+    assert (response.status, response.stage, response.element, response.mode) == (
+        "ok",
+        "4-2",
+        "grass",
+        "dojo",
+    )
+    assert response.formations
+
+
+def test_dojo_screen_without_element_keeps_the_stage(monkeypatch) -> None:
+    monkeypatch.setattr(formation_view, "read_tray_element", lambda *_: None)
+    response = load_formation_view(
+        None, grab=_dojo_grab("dojo_prep_cleared.png"), data_root=REAL_ROOT, mode="dojo"
+    )
+    assert (response.status, response.stage, response.element) == (
+        "element_unreadable",
+        "4-2",
+        None,
+    )
+
+
+def test_dojo_typed_stage_with_element_skips_the_screenshot() -> None:
+    response = load_formation_view(
+        "4-3", grab=_no_grab, data_root=REAL_ROOT, mode="dojo", element="grass"
+    )
+    assert (response.status, response.stage, response.element) == (
+        "ok",
+        "4-3",
+        "grass",
+    )
+
+
+def test_dojo_typed_stage_without_element_is_unreadable() -> None:
+    response = load_formation_view(
+        "4-3", grab=_no_grab, data_root=REAL_ROOT, mode="dojo"
+    )
+    assert (response.status, response.stage) == ("element_unreadable", "4-3")
+
+
+def test_dojo_unknown_element_is_unreadable() -> None:
+    response = load_formation_view(
+        "4-3", grab=_no_grab, data_root=REAL_ROOT, mode="dojo", element="wind"
+    )
+    assert response.status == "element_unreadable"
+
+
+def test_dojo_screen_without_label_is_stage_unreadable() -> None:
+    response = load_formation_view(
+        None, grab=_grab_of("camp_screen.png"), data_root=REAL_ROOT, mode="dojo"
+    )
+    assert response.status == "stage_unreadable"
+
+
+def test_dojo_typed_stage_without_file_names_the_element() -> None:
+    response = load_formation_view(
+        "4-99", grab=_no_grab, data_root=REAL_ROOT, mode="dojo", element="grass"
+    )
+    assert (response.status, response.element, response.mode) == (
+        "no_formation",
+        "grass",
+        "dojo",
+    )
