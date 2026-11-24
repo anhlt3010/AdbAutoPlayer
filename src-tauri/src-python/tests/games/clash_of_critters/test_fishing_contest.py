@@ -88,6 +88,40 @@ def test_result_template_survives_the_wrapped_line():
     assert _result_match(screen) > 0.9
 
 
+def test_reward_claim_template_matches_the_reward_screen():
+    # "Phần Thưởng!" screen after a catch: "Nhận Ngay" sits at y 1656-1731.
+    screen = cv2.imread(str(DATA / "fishing_reward_screen.png"))
+    template = cv2.imread(str(TEMPLATES / "fishing_reward_claim_button.png"))
+    result = cv2.matchTemplate(screen, template, cv2.TM_CCOEFF_NORMED)
+    _, score, _, loc = cv2.minMaxLoc(result)
+    assert score > 0.9
+    assert loc == (385, 1656)
+
+
+def test_reward_screen_dims_the_fishing_button():
+    screen = cv2.imread(str(DATA / "fishing_reward_screen.png"))
+    assert fishing_button_state(screen) is None
+
+
+def test_close_fishing_popup_presses_nhan_ngay_of_the_reward_screen():
+    taps = []
+    asked = []
+    found = SimpleNamespace(template=coc_main.FISHING_REWARD_CLAIM_BUTTON)
+
+    def find_any_template(templates):
+        asked.append(templates)
+        return found
+
+    bot = SimpleNamespace(
+        _tap_common_button=lambda: False,
+        find_any_template=find_any_template,
+        tap=lambda target, log=True: taps.append(target),
+    )
+    assert ClashOfCritters._close_fishing_popup(bot) is True
+    assert coc_main.FISHING_REWARD_CLAIM_BUTTON in asked[0]
+    assert taps == [found]
+
+
 _L, _R, _V = 308, 806, 352.0  # the bobber: triangle wave, measured on MuMu
 _WIDTH = _R - _L
 _START_X = 700  # truth: x at game time 0, moving right

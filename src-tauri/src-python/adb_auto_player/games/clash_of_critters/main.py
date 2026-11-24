@@ -37,6 +37,10 @@ FISHING_CONTEST_TITLE = "fishing_contest_title.png"
 # dimmed top area closes it (a tap on the fish does not).
 FISHING_CONTEST_RESULT = "fishing_contest_result.png"
 _FISHING_RESULT_CLOSE = Point(540, 250)
+# "Nhận Ngay" of the "Phần Thưởng!" screen shown after a catch. Text only (x 385-700,
+# y 1656-1731): the button sits higher than the one of the "Bàn Tay Vàng" popup, so
+# `ARTIFACT_ADVENTURE_CLAIM_BUTTON` only matches it at ~0.63.
+FISHING_REWARD_CLAIM_BUTTON = "fishing_reward_claim_button.png"
 # Round fishing button. Its rod picture, the rod count and the "x1" badge change, so
 # its state is read from the colour of the left edge of the circle: green = cast,
 # grey = waiting for a bite, purple = a fish bites (tap to reel in).
@@ -593,7 +597,11 @@ class ClashOfCritters(BadgeDojoMixin):
         if self._tap_common_button():
             return True
         result = self.find_any_template(
-            [ARTIFACT_ADVENTURE_CLAIM_BUTTON, FISHING_CONTEST_RESULT]
+            [
+                FISHING_REWARD_CLAIM_BUTTON,
+                ARTIFACT_ADVENTURE_CLAIM_BUTTON,
+                FISHING_CONTEST_RESULT,
+            ]
         )
         if result is None:
             return False
