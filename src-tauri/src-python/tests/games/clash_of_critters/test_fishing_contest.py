@@ -15,6 +15,7 @@ from adb_auto_player.games.clash_of_critters.main import (
     fishing_button_state,
     BobberClock,
     HeadingTracker,
+    TensionBarStats,
     plan_tap,
     read_tension_bar,
 )
@@ -292,6 +293,7 @@ def _tap_times(
         ),
         get_screenshot=lambda: None,
         tap=lambda *_args, **_kwargs: taps.append(clock[0]),
+        _stream_frame_stats=lambda: (None, None),
     )
     ClashOfCritters._play_tension_bar(fake)
     return taps
@@ -333,6 +335,43 @@ def test_tension_bar_uses_the_lead_setting(monkeypatch):
 
 def test_tension_bar_no_tap_without_a_zone(monkeypatch):
     assert _tap_times(monkeypatch, None, 0.15, end=2.0) == []
+
+
+def test_tension_bar_logs_its_stats(monkeypatch, caplog):
+    caplog.set_level("INFO")
+    _tap_times(monkeypatch, (590, 610), _FRESH_DELAY + _TAP_DELAY, end=1.2)
+    stats = [m for m in caplog.messages if m.startswith("Tension bar stats:")]
+    assert len(stats) == 1
+    assert "screenshots (no stream)" in stats[0]
+
+
+def test_tension_stats_count_stream_frames_per_second():
+    stats = TensionBarStats(10.0, 100)
+    stats.add(10.5, 110, 10.45)
+    stats.add(11.0, 130, 10.9)
+    line = stats.summary(11.0, hits=2)
+    assert "2 taps" in line
+    assert "stream 30 frames = 30.0 fps" in line
+    assert "2 loop passes" in line
+    assert "longest pass gap 0.50 s" in line
+    assert "oldest frame 0.10 s" in line
+
+
+def test_tension_stats_without_a_stream():
+    stats = TensionBarStats(0.0, None)
+    stats.add(0.1, None, None)
+    assert "screenshots (no stream)" in stats.summary(0.1, hits=0)
+
+
+def test_stream_frame_stats_without_a_stream():
+    fake = SimpleNamespace(_stream=None)
+    assert ClashOfCritters._stream_frame_stats(fake) == (None, None)
+
+
+def test_stream_frame_stats_reads_the_stream():
+    stream = SimpleNamespace(get_frame_stats=lambda: (7, 1.5))
+    fake = SimpleNamespace(_stream=stream)
+    assert ClashOfCritters._stream_frame_stats(fake) == (7, 1.5)
 
 
 def test_fishing_contest_settings_default():

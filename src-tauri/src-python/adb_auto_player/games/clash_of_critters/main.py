@@ -314,6 +314,67 @@ class BobberClock:
         return best
 
 
+class TensionBarStats:
+    """Diagnostics of one tension bar: are fresh frames reaching the loop?
+
+    Taps that miss on a busy machine (two profiles streaming at once) come from
+    stale or too few frames; this puts numbers in the log to tell.
+    """
+
+    def __init__(self, now: float, frame_count: int | None) -> None:
+        """Start measuring.
+
+        Args:
+            now: `monotonic()` at the start.
+            frame_count: Frames decoded by the stream so far, None when the bot
+                takes screenshots instead of streaming.
+        """
+        self._start = now
+        self._first_count = frame_count
+        self._last_count = frame_count
+        self.passes = 0
+        self.max_age = 0.0
+        self.max_pass_gap = 0.0
+        self._last_pass = now
+
+    def add(self, now: float, frame_count: int | None, frame_at: float | None) -> None:
+        """Record one pass of the loop.
+
+        Args:
+            now: `monotonic()` of the pass.
+            frame_count: Frames decoded by the stream so far (None: no stream).
+            frame_at: `monotonic()` of the last decoded frame.
+        """
+        self.passes += 1
+        self.max_pass_gap = max(self.max_pass_gap, now - self._last_pass)
+        self._last_pass = now
+        self._last_count = frame_count
+        if frame_at is not None:
+            self.max_age = max(self.max_age, now - frame_at)
+
+    def summary(self, now: float, hits: int) -> str:
+        """Describe the bar that just ended.
+
+        Args:
+            now: `monotonic()` at the end.
+            hits: Taps sent during the bar.
+
+        Returns:
+            One log line.
+        """
+        seconds = max(now - self._start, 1e-6)
+        if self._first_count is None or self._last_count is None:
+            source = "screenshots (no stream)"
+        else:
+            frames = self._last_count - self._first_count
+            source = f"stream {frames} frames = {frames / seconds:.1f} fps"
+        return (
+            f"Tension bar stats: {seconds:.1f} s, {hits} taps, {source}, "
+            f"{self.passes} loop passes, longest pass gap {self.max_pass_gap:.2f} s, "
+            f"oldest frame {self.max_age:.2f} s."
+        )
+
+
 def plan_tap(
     clock: BobberClock,
     zone: tuple[int, int],
@@ -550,12 +611,15 @@ class ClashOfCritters(BadgeDojoMixin):
         tracker = HeadingTracker()
         seen_at = pass_at = monotonic()
         hits = 0
+        stream_count, _ = self._stream_frame_stats()
+        stats = TensionBarStats(seen_at, stream_count)
         while monotonic() - seen_at < _TENSION_BAR_GONE_SECONDS:
             sleep(_TENSION_BAR_POLL_SECONDS)  # lets the stream decoder run
             bar = read_tension_bar(self.get_screenshot())
             now = monotonic()
             if bar is None:
                 continue
+            stats.add(now, *self._stream_frame_stats())
             seen_at = now
             window = max(_TAP_WINDOW_SECONDS, now - pass_at)
             pass_at = now
@@ -587,6 +651,13 @@ class ClashOfCritters(BadgeDojoMixin):
             zone = None
             zone_blocked_until = monotonic() + lead + _ZONE_REFRESH_SECONDS
         logging.info("Tension bar gone.")
+        logging.info(stats.summary(seen_at, hits))
+
+    def _stream_frame_stats(self) -> tuple[int | None, float | None]:
+        """Frame counter and time of the last frame of the stream (None: no stream)."""
+        if self._stream is None:
+            return None, None
+        return self._stream.get_frame_stats()
 
     def _close_fishing_popup(self) -> bool:
         """Close a popup of the fishing screen (reward, catch result, common).

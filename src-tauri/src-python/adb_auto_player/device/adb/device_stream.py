@@ -135,6 +135,9 @@ class DeviceStream:
         self.controller = controller
         self.fps = fps
         self.latest_frame: np.ndarray | None = None
+        # Diagnostics: how many frames were decoded and when the last one was.
+        self.frame_count = 0
+        self.last_frame_at: float | None = None
         self._frame_lock = threading.Lock()
         self._running = False
         self._is_bluestacks = False
@@ -240,6 +243,16 @@ class DeviceStream:
         with self._frame_lock:
             return self.latest_frame
 
+    def get_frame_stats(self) -> tuple[int, float | None]:
+        """Get the diagnostics of the stream.
+
+        Returns:
+            The number of frames decoded so far and the `time.monotonic()` of the
+            last one (None before the first frame).
+        """
+        with self._frame_lock:
+            return self.frame_count, self.last_frame_at
+
     def _handle_stream(self) -> None:
         """Generic stream handler."""
         # Keep the streamed display in sync with screenshot()/tap() on devices
@@ -290,6 +303,8 @@ class DeviceStream:
                         ndarray = frame.to_ndarray(format="rgb24")
                         with self._frame_lock:
                             self.latest_frame = ndarray
+                            self.frame_count += 1
+                            self.last_frame_at = time.monotonic()
 
                 buffer.clear()
 
