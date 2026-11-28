@@ -48,3 +48,5 @@ find = { where = ["src-python"], exclude = ["tests*", "*/tests*"] }
 
 [tool.setuptools.package-data]
 "*" = ["*.pyd", "*.so"]
+# tid table read by the quick deploy of Clash of Critters
+"adb_auto_player.games.clash_of_critters.quick_formation" = ["data/*.json"]

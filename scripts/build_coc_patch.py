@@ -23,6 +23,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 GAME_DIR = "src-tauri/src-python/adb_auto_player/games/clash_of_critters"
 DATA_DIRS = ("templates", "tatari_db", "tatari_formations", "tatari_dojo")
+PY_PACKAGES = ("quick_formation",)  # sub-packages that go next to the .py files
 PY_DEST = "Lib/site-packages/adb_auto_player/games/clash_of_critters"
 DATA_DEST = "games/clash_of_critters"
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
@@ -71,6 +72,9 @@ def _map_path(path: str) -> str | None:
         return f"{PY_DEST}/{rel}" if rel.endswith(".py") else None
     if rel.split("/", 1)[0] in DATA_DIRS:
         return f"{DATA_DEST}/{rel}"
+    # The quick_formation package (code and its tid table), without README and tests.
+    if rel.split("/", 1)[0] in PY_PACKAGES and rel.endswith((".py", ".json")):
+        return f"{PY_DEST}/{rel}"
     return None
 
 

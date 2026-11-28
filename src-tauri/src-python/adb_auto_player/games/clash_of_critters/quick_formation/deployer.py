@@ -125,7 +125,9 @@ class QuickDeployer:
         """
         cells = self.cells(units, layout)
         started = time.monotonic()
+        logging.info(f"Quick deploy: chuẩn bị xếp {len(cells)} quân vào sân.")
         self._patcher.install(cells)
+        logging.info("Quick deploy: đã ghi đội hình vào game, bấm Triển Khai Nhanh.")
         try:
             self._press()
             time.sleep(self._settle)

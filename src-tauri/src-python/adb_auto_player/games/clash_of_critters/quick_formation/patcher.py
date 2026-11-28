@@ -23,7 +23,9 @@ Quick Deploy button keeps working normally).
 from __future__ import annotations
 
 import json
+import logging
 import struct
+import time
 from pathlib import Path
 
 from . import luabc as bc
@@ -157,9 +159,17 @@ class FormationPatcher:
                 protos = {n: self._lm.proto_at(saved[n]) for n in _FUNCTIONS}
                 if _verified(protos):
                     self._protos = protos
+                    logging.info(
+                        "Quick deploy: dùng lại vị trí hàm xếp đội hình đã nhớ."
+                    )
             except (KeyError, RuntimeError, ValueError, struct.error):
                 self._protos = None
         if self._protos is None:
+            logging.info(
+                "Quick deploy: đang tìm hàm xếp đội hình trong bộ nhớ game "
+                "(lần đầu sau khi mở game mất khoảng 30 giây, bot vẫn đang chạy)..."
+            )
+            started = time.monotonic()
             lua = LuaState(self.mem)
             module = lua.module(MODULE)
             protos = {n: lua.closure_proto(module[n]["address"]) for n in _FUNCTIONS}
@@ -169,6 +179,10 @@ class FormationPatcher:
                 )
             self._protos = protos
             state["protos"] = {n: p.address for n, p in protos.items()}
+            logging.info(
+                f"Quick deploy: đã tìm thấy hàm xếp đội hình "
+                f"({time.monotonic() - started:.0f} giây)."
+            )
         auto = self._protos["AutoLineup"]
         words = self._lm.code(auto)
         if words[0] & 127 == bc.op("EQK"):  # the original function starts with EQK
