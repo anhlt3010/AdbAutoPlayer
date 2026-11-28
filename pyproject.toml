@@ -99,6 +99,11 @@ banned-api."cv2.split".msg = "Use direct numpy indexing (image[:, :, channel]) i
     "D101", "D102", "D103",
     "PLR0913", "PLR2004",
 ]
+# Self-contained module (also runs as `python -m quick_formation`), written outside
+# the repo style: long comments, magic Lua opcodes, exception names kept as documented.
+"**/clash_of_critters/quick_formation/**/*.py" = [
+    "E501", "N818", "PLR2004",
+]
 "**/__main__.py" = [
     "D101", "D102", "D103", "PLW0603"
 ]

@@ -31,6 +31,10 @@ from adb_auto_player.games.clash_of_critters.formation import (
     Formation,
     FormationUnit,
 )
+from adb_auto_player.games.clash_of_critters.quick_formation import (
+    QuickDeployer,
+    QuickDeployError,
+)
 from adb_auto_player.games.clash_of_critters.tatari_db import TatariDb
 from adb_auto_player.models.geometry import Point
 from adb_auto_player.ocr import RapidOCRBackend
@@ -64,6 +68,8 @@ _FILL_ATTEMPTS = 5
 _TEACH_POLL_SECONDS = 1.0
 # Times the user is asked again because a pass saved new unrecognized cards.
 _TEACH_ROUNDS = 3
+# "Triển Khai Nhanh" button of the preparation screen (1080x1920).
+_QUICK_DEPLOY_POINT = Point(390, 1800)
 
 
 @dataclass(frozen=True)
@@ -101,6 +107,19 @@ class DeployMixin(Game):
     _deployed_count: int | None = None
     # Cells of the field that hold a unit (set while a formation is deployed).
     _occupied: set[tuple[int, int]] | None = None
+    _quick_deployer: QuickDeployer | None = None
+
+    def _get_quick_deployer(self) -> QuickDeployer:
+        if self._quick_deployer is None:
+            self._quick_deployer = QuickDeployer(
+                shell=lambda cmd: self.device.d.shell(cmd, encoding=None),
+                press_quick_deploy=lambda: self.tap(
+                    self._apply_vertical_offset(_QUICK_DEPLOY_POINT), log=False
+                ),
+                read_deployed_count=self._read_deployed_count,
+                state_dir=SettingsLoader.get_app_config_dir(),
+            )
+        return self._quick_deployer
 
     def _get_recognizer(self) -> CardRecognizer:
         if self._recognizer is None:
@@ -352,6 +371,35 @@ class DeployMixin(Game):
         return needed - sum(len(units) for units in missing.values())
 
     def _deploy_formation(self, formation: Formation) -> DeployResult:
+        """Deploy a formation at once, falling back to drag and drop.
+
+        The quick deploy is only used on the normal preparation screen (the Võ Đường
+        layout is not supported) and must be confirmed by the deployed counter.
+
+        Args:
+            formation: The formation to deploy.
+
+        Returns:
+            The tatari on the field and how many the formation can have.
+        """
+        if self._layout is BATTLE_LAYOUT:
+            try:
+                result = self._get_quick_deployer().deploy(formation.units)
+                if result.verified:
+                    self._deployed_count = result.count
+                    return DeployResult(result.count, result.needed)
+                logging.warning(
+                    "Quick deploy could not be confirmed by the counter, "
+                    "deploying by drag and drop."
+                )
+            except QuickDeployError as error:
+                logging.warning(
+                    f"Quick deploy is not available ({error}), "
+                    "deploying by drag and drop."
+                )
+        return self._deploy_formation_by_drag(formation)
+
+    def _deploy_formation_by_drag(self, formation: Formation) -> DeployResult:
         """Clear the field and deploy a formation one element at a time.
 
         For each element of the formation the tray is filtered to that element

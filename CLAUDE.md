@@ -151,6 +151,11 @@ crop region; emulator slowness is configurable via `template_timeout`).
 uv run pytest src-python/tests/path/to/test_file.py -q
 ```
 
+## Emulator Checks
+
+- Never ask the user whether MuMu is running: check it yourself. `Get-Process` for `MuMu*`/`adb` gives the adb in use (`%LOCALAPPDATA%\CocAutoPlayer\binaries\adb.exe`); then `adb devices` (`127.0.0.1:5555` and `:7555` are the same instance), `adb -s <dev> shell "su -c id"` for root, `pidof com.farlightgames.pgame.gp.vn` for the game and `dumpsys window | grep mCurrentFocus` for the screen.
+- Read-only live check of quick deploy (no taps): from `games/clash_of_critters/` run `python -m quick_formation status --adb "<adb path>"`. Ask before any command that taps or patches the game (`apply`).
+
 ## Changelog & Release
 
 - Keep changelog entries focused: only include changes the user confirmed.
